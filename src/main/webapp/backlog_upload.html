@@ -1,0 +1,23 @@
+<lift:surround with="default" at="content">
+    <p>
+        This tool prints scrum tasks in a mm file to pdf.
+    </p>
+    <lift:snippet type="backlogUpload:upload" form="post" multipart="true">
+      <choose:post>
+            Select the story you want to print.
+            <tr>
+              <td>Name</td>
+              <td><storySelection:stories><input type="text"/></storySelection:stories></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><input type="submit" value="Select"/></td>
+            </tr>
+        </choose:post>
+
+        <choose:get>
+            Select a mm file to upload: <upload:fileUpload/><br />
+            <input type="submit" value="Upload File"/>
+        </choose:get>
+    </lift:snippet>
+</lift:surround>

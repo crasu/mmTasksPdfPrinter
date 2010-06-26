@@ -1,0 +1,3 @@
+mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind or Freeplane file. It is a Scala/Lift Servlet which parses a mm-file and creates a PDF with your Story and Task cards. If you want to run it locally, I recommend using Winstone (http://winstone.sourceforge.net/).
+
+The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis. It combines the steps 3 and 4 described under http://www.the-nerd-group.com/2010/04/generating-task-cards-from-sprint-planning-notes-in-freemind/
