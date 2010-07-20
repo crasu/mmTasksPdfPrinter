@@ -24,9 +24,14 @@ class Boot {
 
     // Add statefull dispatchers
     LiftRules.dispatch.append {
-      case Req(List("your_tasks"), _, _)  =>
-        () => TaskCreator.reply()
+      case req if ( req.path.partPath == List("your_tasks") ) =>
+        () => {
+          /* The next line is a workaround for a bug in Lift Version 1.0.3 */
+          S.session.getOrElse(throw new Exception("No backlog found")).runParams(req)
+          TaskCreator.reply()
+        }
     }
+
   }
 }
 

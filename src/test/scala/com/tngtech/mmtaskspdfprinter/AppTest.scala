@@ -5,7 +5,6 @@ import _root_.junit.framework._
 import Assert._
 import _root_.scala.xml.XML
 import _root_.net.liftweb.util._
-import net.liftweb.common._
 
 object AppTest {
   def suite: Test = {

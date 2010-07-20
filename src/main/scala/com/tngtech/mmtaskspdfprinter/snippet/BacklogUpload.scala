@@ -5,7 +5,6 @@ import net.liftweb.http._
 import net.liftweb.mapper._
 import net.liftweb.http.S._
 import net.liftweb.http.SHtml._
-import net.liftweb.common._
 
 import net.liftweb.util._
 import net.liftweb.util.Helpers._
