@@ -9,12 +9,13 @@ import java.io.ByteArrayOutputStream
 import com.itextpdf.text.PageSize
 
 import com.tngtech.mmtaskspdfprinter.scrum._
+import com.tngtech.mmtaskspdfprinter.pdf.config._
 
 @RunWith(classOf[JUnitRunner])
 class PdfPrinterTest extends Spec with MustMatchers {
     describe("PdfPrinter") {
       val pdfBytes = new ByteArrayOutputStream()
-      val printer = new PdfPrinter(pdfBytes, PageSize.A4)
+      val printer = new PdfPrinter(pdfBytes, new Configuration())
       val backlog = SprintBacklog("2010-21")
       backlog.stories += {
         var story = Story("Some Story: A tale about...")
@@ -44,7 +45,7 @@ class PdfPrinterTest extends Spec with MustMatchers {
 
   describe("An empty PdfPrinter") {
     val pdfBytes = new ByteArrayOutputStream()
-    val printer = new PdfPrinter(pdfBytes, PageSize.A4)
+    val printer = new PdfPrinter(pdfBytes, new Configuration())
     it("must complain about saving an empty file") {
       evaluating  { printer.toFile } must produce [PrinterException]
     }

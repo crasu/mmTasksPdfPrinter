@@ -1,3 +1,39 @@
-mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind or Freeplane file. It is a Scala/Lift Servlet which parses a mm-file and creates a PDF with your Story and Task cards. If you want to run it locally, I recommend using Winstone (http://winstone.sourceforge.net/).
+= Introduction =
+mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind
+or Freeplane file. It is a Scala/Lift Servlet which parses a mm-file and creates
+a PDF with your Story and Task cards.
 
-The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis. It combines the steps 3 and 4 described under http://www.the-nerd-group.com/2010/04/generating-task-cards-from-sprint-planning-notes-in-freemind/
+= Convention =
+The tool assumes that you've applied these rules on your Mind Map:
+- Sprints are on the first hierarchic level and match the pattern 'Sprint \d{4}-\d+' e. g. 'Sprint 2010-05'
+- Stories are marked with an Excellent/Star icon
+- There might be an arbitrary number of nodes between a Sprint and a Story
+    and the text inside these nodes is added to the Story name
+- Tasks are marked with an Look here/Paperclip icon
+- There might be an arbitrary number of nodes between a Story and a Task
+    and the text inside these nodes is used as Category of the Task
+- There might be an arbitrary number of nodes after a Task
+    and the text inside these nodes is treated as Subtask
+- If Sprints, Stories or Tasks contain parenthesis (ether '(' and ')' or '{' and '}')
+    with a number inside, the tool will assume that this is the number of Scrum Points
+- The sequence of nodes determines the priority of a Sprint
+
+Hint: Per default Alt+i is the hotkey for attaching icons to a node in Freemind
+
+= Configuration =
+The configuration is completely optional. The files are searched in the
+currend working directory during startup.
+
+== design.conf ==
+Here is an example for a configuration file:
+hide_priority=1 # If this parameter is set the priority will not be printed.
+colour=123 234 012 # Colour used to the stories in RGB.
+
+== logo.png, logo.gif or logo.jpg ==
+ This image will be used instead of the TNG Logo.
+
+= Running it locally =
+I recommend using Winstone to run it locally (http://winstone.sourceforge.net/).
+
+= Credits =
+The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis.

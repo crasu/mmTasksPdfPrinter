@@ -5,14 +5,15 @@ import java.io.IOException
 import com.itextpdf.text._
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
+import com.tngtech.mmtaskspdfprinter.pdf.config._
 import scala.List
 
-class PdfPrinter(val outputStream: OutputStream, val pageSize: Rectangle) {
-  private val doc = new Document(pageSize)
+class PdfPrinter(val outputStream: OutputStream, val config: Configuration) {
+  private val doc = new Document(config.pageSize)
   doc.setMargins(8.0f, 8.0f, 8.0f, 8.0f)
   private val contentSize = new Rectangle(
-    pageSize.getWidth() - doc.leftMargin - doc.rightMargin(),
-    pageSize.getHeight() - doc.topMargin - doc.bottomMargin())
+    config.pageSize.getWidth() - doc.leftMargin - doc.rightMargin(),
+    config.pageSize.getHeight() - doc.topMargin - doc.bottomMargin())
 
   PdfWriter.getInstance(doc, outputStream)
   doc.open()
@@ -32,8 +33,8 @@ class PdfPrinter(val outputStream: OutputStream, val pageSize: Rectangle) {
   }
 
   private def createTaskPages() {
-    var storyPrinter = new StoryPrinter(contentSize)
-    var taskPrinter = new TaskPrinter(contentSize)
+    var storyPrinter = new StoryPrinter(contentSize, config)
+    var taskPrinter = new TaskPrinter(contentSize, config)
     storiesToPrint.foreach(story => {
         storyPrinter.addStory(story)
         taskPrinter.addStory(story)

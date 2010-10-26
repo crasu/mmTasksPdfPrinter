@@ -28,7 +28,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   }
 
   describe("MmParser description extractor") {
-    val desc = "   Sprint 2010-20 (123 pts) {5 beers} SomeMoreText   "
+    val desc = <node TEXT="    Sprint 2010-20 (123 pts) {5 beers} SomeMoreText    " />
     val extractDescription = PrivateMethod[String]('extractDescription)
     val exp = "Sprint 2010-20 SomeMoreText"
     it("must remove things in brackets and whitespaces") {
@@ -40,21 +40,21 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   describe("MmParser scrum points extractor") {
     val extractScrumPoints = PrivateMethod[Int]('extractScrumPoints)
 
-    val descBrackets = "   Sprint 2010-20 (123 pts) SomeMoreText   "
+    val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
     val expBrackets = 123
     it("must be able to parse points in brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descBrackets)
       act must be (expBrackets)
     }
 
-    val descCurely = "   Sprint 2010-20 { 7 pts} SomeMoreText   "
+    val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
     val expCurely = 7
     it("must be able to parse points in curely brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descCurely)
       act must be (expCurely)
     }
 
-    val descCombined = "   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   "
+    val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
     val expCombined = 5
     it("must be able to parse points even if it is ambiguous") {
       val act = MmParser invokePrivate extractScrumPoints(descCombined)
@@ -63,32 +63,15 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   }
 
   describe("MmParser") {
-    val aTaskNode = XML.loadString("""
-      <node CREATED="1269526450124" ID="Freemind_Link_1309764532" MODIFIED="1269529996041" TEXT="bar &quot;foobar&quot;">
-        <icon BUILTIN="attach"/>
-      </node>""")
-    val isTask = PrivateMethod[Boolean]('isTask)
-    it("must be able to tell if a node represents a task") {
-      val aTaskNodeIsATask = MmParser invokePrivate isTask(aTaskNode)
-      aTaskNodeIsATask must be (true)
-    }
-    val notATaskNode = XML.loadString(""" 
-      <node CREATED="1269526450124" ID="Freemind_Link_1309764532" MODIFIED="1269529996041" TEXT="bar &quot;foobar&quot;">
-        <icon BUILTIN="somethingDifferent"/>
-      </node>""")
-    it("or if it is not a task") {
-      val notATaskNodeIsATask = MmParser invokePrivate isTask(notATaskNode)
-      notATaskNodeIsATask must be (false)
-    }
-  }
-
-  describe("MmParser") {
     val subtaskTree = XML.loadString("""
-      <node CREATED="1265988639762" ID="ID_713677349" MODIFIED="1265988645059" TEXT="write module">
-        <node CREATED="1269529671283" ID="Freemind_Link_662706228" MODIFIED="1269529673077" TEXT="mod1"/>
-        <node CREATED="1269529673537" ID="Freemind_Link_775829959" MODIFIED="1269529675471" TEXT="mod2">
-          <node CREATED="1269529676056" ID="Freemind_Link_841377711" MODIFIED="1269529680690" TEXT="part a"/>
-          <node CREATED="1269529680994" ID="Freemind_Link_437477332" MODIFIED="1269529682616" TEXT="part b"/>\n\
+      <node CREATED="1265988639753" ID="ID_713677348" MODIFIED="1265988645059" TEXT="My Task">
+      <icon BUILTIN="bookmark"/>
+        <node CREATED="1265988639762" ID="ID_713677349" MODIFIED="1265988645059" TEXT="write module">
+          <node CREATED="1269529671283" ID="Freemind_Link_662706228" MODIFIED="1269529673077" TEXT="mod1"/>
+          <node CREATED="1269529673537" ID="Freemind_Link_775829959" MODIFIED="1269529675471" TEXT="mod2">
+            <node CREATED="1269529676056" ID="Freemind_Link_841377711" MODIFIED="1269529680690" TEXT="part a"/>
+            <node CREATED="1269529680994" ID="Freemind_Link_437477332" MODIFIED="1269529682616" TEXT="part b"/>\n\
+          </node>
         </node>
       </node>""")
     val exp = List(Subtask("write module mod1"),
@@ -96,41 +79,8 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
                   Subtask("write module mod2 part b"))
     val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
     it("must be able to parse all subtasks of a task") {
-      val subtasks = MmParser invokePrivate traverseSubtasks("", subtaskTree)
+      val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
       subtasks.toList must be (exp)
-    }
-  }
-
-  describe("MmParser") {
-    val taskTree = XML.loadString("""
-      <node CREATED="1265988596571" ID="ID_389219738" MODIFIED="1269597472370" TEXT="write remote control perl script (8)">
-        <icon BUILTIN="attach"/>
-        <node CREATED="1265988639762" ID="ID_713677349" MODIFIED="1265988645059" TEXT="write module"/>
-      </node>""")
-    val extractTask = PrivateMethod[Task]('extractTask)
-    val exp = Task("write remote control perl script", "Cat")
-    exp.subtasks += Subtask("write module")
-    it("must be able to parse a task") {
-      val act = MmParser invokePrivate extractTask("Cat", taskTree)
-      act must be (exp)
-    }
-  }
-
-  describe("MmParser") {
-    val catTree = XML.loadString("""
-      <node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1272014962570" TEXT="cat {29}">
-        <node CREATED="1265988549931" ID="ID_316971051" MODIFIED="1272014950967" TEXT="subcat{16}">
-          <node CREATED="1265988596571" ID="ID_389219738" MODIFIED="1269597472370" TEXT="write remote control perl script (8)">
-            <icon BUILTIN="attach"/>
-          </node>
-        </node>
-      </node>""")
-    val traverseCategories = PrivateMethod[Seq[Task]]('traverseCategories)
-    val exp = List(Task("write remote control perl script", 
-                            "cat subcat"))
-    it("must be able to parse a category") {
-      val act = MmParser invokePrivate traverseCategories("", catTree)
-      act.toList must be (exp)
     }
   }
 
@@ -139,37 +89,17 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       <node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1269529884698" TEXT="asdf (15)">
         <icon BUILTIN="full-1"/>
         <node CREATED="1269526448681" ID="Freemind_Link_1892252504" MODIFIED="1269526465865" TEXT="foo">
-          <icon BUILTIN="attach"/>
+          <icon BUILTIN="bookmark"/>
         </node>
         <node CREATED="1269526450124" ID="Freemind_Link_1309764532" MODIFIED="1269529996041" TEXT="bar &quot;foobar&quot;">
-          <icon BUILTIN="attach"/>
+          <icon BUILTIN="bookmark"/>
         </node>
       </node>""")
-    val traverseStory = PrivateMethod[Story]('traverseStory)
-    val exp = Story("asdf", 15, 1)
-    exp.tasks += Task("foo", "")
-    exp.tasks += Task("bar \"foobar\"", "")
+    val traverseStories = PrivateMethod[List[Story]]('traverseStories)
+    val exp = List(Story("foo", Story.NO_ESTIMATION, 1),
+                   Story("bar \"foobar\"", Story.NO_ESTIMATION, 2))
     it("must be able to parse stories") {
-      val act = MmParser invokePrivate traverseStory(storyTree, 1)
-      act must be (exp)
-    }
-  }
-
-  describe("MmParser") {
-    val sprintTree = XML.loadString("""
-      <node CREATED="1265988535423" ID="ID_692299973" MODIFIED="1272014974692" POSITION="right" TEXT="Sprint 2010-21 (59)">
-        <node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1272014962570" TEXT="Some Story: A tale about... {29}"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Another Story (30)"/>\n\
-        <node CREATED="12695050169765" ID="ID_474350440" MODIFIED="1269597503934" TEXT="Equals Story (5/10/23/11 = 49pts)"/>
-      </node>""")
-
-    val traverseSprint = PrivateMethod[SprintBacklog]('traverseSprint)
-    val exp = SprintBacklog("2010-21")
-    exp.stories += Story("Some Story: A tale about...", 29, 1)
-    exp.stories += Story("Another Story", 30, 2)
-    exp.stories += Story("Equals Story", 49, 3)
-    it("must be able to parse a sprint") {
-      val act = MmParser invokePrivate traverseSprint(sprintTree, "2010-21")
+      val act = MmParser invokePrivate traverseStories(storyTree)
       act must be (exp)
     }
   }
@@ -182,11 +112,11 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="NoSprint"/>
       </map>""")
 
-    val traverseBacklog = PrivateMethod[Seq[SprintBacklog]]('traverseBacklog)
+    val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
     val exp = List(SprintBacklog("2010-20"),
                    SprintBacklog("2010-21"))
     it("must be able to detect every sprint") {
-      val act = MmParser invokePrivate traverseBacklog(root)
+      val act = MmParser invokePrivate traverseBacklogs(root)
       act.toList must be (exp)
     }
   }
@@ -201,7 +131,6 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           s.tasks += Task("bar \"foobar\"", "")
           s
         }
-        sb.stories += Story("csasd", Story.NO_ESTIMATION, 2)
         sb
       },
       {
@@ -239,8 +168,21 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
          }
          s.tasks += Task("task2", "cat subcat1")
          s.tasks += Task("taskX", "cat subcat2")
+         s.tasks += Task("\"taskX\"Hallo&<NANA>", "cat subcat2")
          s
         }
+        sb
+      },
+      {
+        var sb = SprintBacklog("2010-22")
+        sb.stories += Story("Some huge story With some big story Some medium sized story1 And finally: A story1", Story.NO_ESTIMATION, 1)
+        sb.stories += Story("Some huge story With some big story Some medium sized story1 And finally: A story2", Story.NO_ESTIMATION, 2)
+        sb.stories += Story("Some huge story With some big story Some medium sized story2 And finally: A story1", Story.NO_ESTIMATION, 3)
+        sb.stories += Story("Some huge story With some big story Some medium sized story2 And finally: A story2", Story.NO_ESTIMATION, 4)
+        sb.stories += Story("Some huge story And another big story Another story1", Story.NO_ESTIMATION, 5)
+        sb.stories += Story("Some huge story And another big story Another story2", Story.NO_ESTIMATION, 6)
+        sb.stories += Story("Some huge story And yet another big story Yet another story1", Story.NO_ESTIMATION, 7)
+        sb.stories += Story("Some huge story And yet another big story Yet another story2", Story.NO_ESTIMATION, 8)
         sb
       }
     )

@@ -3,13 +3,15 @@ package com.tngtech.mmtaskspdfprinter.pdf
 import com.itextpdf.text._
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
+import com.tngtech.mmtaskspdfprinter.pdf.config._
 import scala.List
 
 object StoryPrinter {
   private val rowSize = 4
 }
 
-class StoryPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
+class StoryPrinter(contentSize: Rectangle, config: Configuration) 
+					extends PagePrinter(contentSize, config) {
 
   override def addStory(story: Story) {
     if (noOfElements % StoryPrinter.rowSize == 0) {
@@ -46,23 +48,23 @@ class StoryPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
   }
 
   private def createSeperator(height: Int) = {
-    val cell = new PdfPCell(PagePrinter.companyBanner, false)
+    val cell = new PdfPCell(config.companyBanner, false)
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(0)
     cell.setIndent(0)
     cell.setFixedHeight(height)
     cell.setColspan(2)
-    cell.setBackgroundColor(new BaseColor(44, 106, 168))
+    cell.setBackgroundColor(new BaseColor(config.colour(0), config.colour(1), config.colour(2)))
     cell
   }
 
   private def createFooter() = {
-    val cell = new PdfPCell(PagePrinter.companyBanner, false)
+    val cell = new PdfPCell(config.companyBanner, false)
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(1)
     cell.setPaddingLeft(5)
     cell.setIndent(0)
-    cell.setFixedHeight(PagePrinter.companyBanner.getScaledHeight +
+    cell.setFixedHeight(config.companyBanner.getScaledHeight +
                         cell.getPaddingTop + cell.getPaddingBottom)
     cell.setColspan(2)
     cell
@@ -70,10 +72,11 @@ class StoryPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
 
   private def createStoryCell(height: Float, story: Story) = {
     val storyPhrase = new Phrase()
-    storyPhrase.add(new Chunk("\n" + story.name, PagePrinter.hugeFont))
+    storyPhrase.add(new Chunk("\n" + story.name, config.hugeFont))
     val storyCell = new PdfPCell(storyPhrase)
     storyCell.setBorder(Rectangle.NO_BORDER)
     storyCell.setPadding(5)
+    storyCell.setPaddingRight(30)
     storyCell.setIndent(0)
     storyCell.setFixedHeight(height)
     storyCell
@@ -86,17 +89,22 @@ class StoryPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
                    else ""+story.priority
     val points = if (story.scrumPoints == Story.NO_ESTIMATION) undefined
                  else ""+story.scrumPoints
-    metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
-                              PagePrinter.bigFont))
-    metaPhrase.add(new Chunk("\nPoints:    " + points + "\n\n\n",
-                              PagePrinter.bigFont))
+    if (config.hidePriority == 0) {
+      metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
+                                config.bigFont))
+    } else {
+      metaPhrase.add(new Chunk("\n\n\n", config.bigFont))
+    }
+    metaPhrase.add(new Chunk("\nPoints:    " + points + "\n\n",
+                              config.bigFont))
     metaPhrase.add(new Chunk("\nOpened:  "+undefined+"\n\n",
-                              PagePrinter.bigFont))
+                              config.bigFont))
     metaPhrase.add(new Chunk("\nFinished: "+undefined,
-                              PagePrinter.bigFont))
+                              config.bigFont))
     val metaCell = new PdfPCell(metaPhrase)
     metaCell.setBorder(Rectangle.NO_BORDER)
     metaCell.setPadding(0)
+    metaCell.setPaddingTop(5)
     metaCell.setIndent(0)
     metaCell.setBorder(Rectangle.NO_BORDER)
     metaCell

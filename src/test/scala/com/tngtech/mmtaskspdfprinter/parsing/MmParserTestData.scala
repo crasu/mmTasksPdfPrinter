@@ -5,8 +5,9 @@ val validData = """<map version="0.9.0">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
 <node CREATED="1265988225850" ID="ID_204900544" MODIFIED="1269505504609" TEXT="Product Backlog">
 <node CREATED="1269526293331" ID="Freemind_Link_879171622" MODIFIED="1272014836816" POSITION="right" TEXT="Sprint 2010-20 (123 pts)">
-<node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1269529884698" TEXT="asdf">
+<node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1287734314282" TEXT="asdf">
 <icon BUILTIN="full-1"/>
+<icon BUILTIN="bookmark"/>
 <node CREATED="1269526448681" ID="Freemind_Link_1892252504" MODIFIED="1269526465865" TEXT="foo">
 <icon BUILTIN="attach"/>
 </node>
@@ -21,7 +22,8 @@ val validData = """<map version="0.9.0">
 </node>
 </node>
 <node CREATED="1265988535423" ID="ID_692299973" MODIFIED="1272014974692" POSITION="right" TEXT="Sprint 2010-21 (59)">
-<node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1272014962570" TEXT="Some Story: A tale about... {29}">
+<node CREATED="1265988501967" FOLDED="true" ID="ID_1335473995" MODIFIED="1287733198786" TEXT="Some Story: A tale about... {29}">
+<icon BUILTIN="bookmark"/>
 <node CREATED="1265988549931" ID="ID_316971051" MODIFIED="1272014950967" TEXT="Dev {16}">
 <node CREATED="1265988588697" ID="ID_1496815280" MODIFIED="1272014945145" TEXT="buy Mindstorms set (5)">
 <icon BUILTIN="attach"/>
@@ -52,7 +54,8 @@ val validData = """<map version="0.9.0">
 </node>
 </node>
 </node>
-<node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Another Story (30)">
+<node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1287733202853" TEXT="Another Story (30)">
+<icon BUILTIN="bookmark"/>
 <node CREATED="1269505021134" ID="ID_713445495" MODIFIED="1269505030260" TEXT="Do one thing">
 <icon BUILTIN="attach"/>
 </node>
@@ -76,9 +79,50 @@ val validData = """<map version="0.9.0">
 </node>
 </node>
 <node CREATED="1269505162313" ID="ID_758787876" MODIFIED="1269505164675" TEXT="subcat2">
-<node CREATED="1269505171335" ID="ID_93219649" MODIFIED="1269505176017" TEXT="taskX">
+<node CREATED="1269505171335" ID="ID_202500509" MODIFIED="1269505176017" TEXT="taskX">
 <icon BUILTIN="attach"/>
 </node>
+<node CREATED="1269505171336" ID="ID_93219649" MODIFIED="1269505176017" TEXT="&quot;taskX&quot;Hallo&amp;&lt;NANA&gt;">
+<icon BUILTIN="attach"/>
+</node>
+</node>
+</node>
+</node>
+</node>
+<node CREATED="1287734317873" ID="ID_945443255" MODIFIED="1287734323145" POSITION="right" TEXT="Sprint 2010-22">
+<node CREATED="1287734329316" ID="ID_994416562" MODIFIED="1287734333252" TEXT="Some huge story">
+<node CREATED="1287734333770" ID="ID_576202868" MODIFIED="1287734338226" TEXT="With some big story">
+<node CREATED="1287734365069" ID="ID_1971993250" MODIFIED="1287734394601" TEXT="Some medium sized story1">
+<node CREATED="1287734350089" ID="ID_1621364873" MODIFIED="1287734417655" TEXT="And finally: A story1">
+<icon BUILTIN="bookmark"/>
+</node>
+<node CREATED="1287734350089" ID="ID_846920374" MODIFIED="1287734417654" TEXT="And finally: A story2">
+<icon BUILTIN="bookmark"/>
+</node>
+</node>
+<node CREATED="1287734365069" ID="ID_1112307983" MODIFIED="1287734396468" TEXT="Some medium sized story2">
+<node CREATED="1287734350089" ID="ID_507984110" MODIFIED="1287734417654" TEXT="And finally: A story1">
+<icon BUILTIN="bookmark"/>
+</node>
+<node CREATED="1287734350089" ID="ID_1378063983" MODIFIED="1287734417654" TEXT="And finally: A story2">
+<icon BUILTIN="bookmark"/>
+</node>
+</node>
+</node>
+<node CREATED="1287734339144" ID="ID_123019483" MODIFIED="1287734342408" TEXT="And another big story">
+<node CREATED="1287734447254" ID="ID_995898884" MODIFIED="1287734458304" TEXT="Another story1">
+<icon BUILTIN="bookmark"/>
+</node>
+<node CREATED="1287734453198" ID="ID_147548877" MODIFIED="1287734458304" TEXT="Another story2">
+<icon BUILTIN="bookmark"/>
+</node>
+</node>
+<node CREATED="1287734342839" ID="ID_305349259" MODIFIED="1287734347372" TEXT="And yet another big story">
+<node CREATED="1287734465894" ID="ID_1410554895" MODIFIED="1287734496533" TEXT="Yet another story1">
+<icon BUILTIN="bookmark"/>
+</node>
+<node CREATED="1287734490819" ID="ID_1766413658" MODIFIED="1287734496533" TEXT="Yet another story2">
+<icon BUILTIN="bookmark"/>
 </node>
 </node>
 </node>

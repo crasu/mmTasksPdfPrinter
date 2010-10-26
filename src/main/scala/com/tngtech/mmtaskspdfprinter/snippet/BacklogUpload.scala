@@ -36,13 +36,11 @@ class BacklogUpload {
   }
 
   private def askForSprint(xhtml: Group) = {
-    var backlogs = List[SprintBacklog]()
-       uploadContainer.is.foreach(someFile => {
-        val xml = XML.loadString(new String(someFile.file, "UTF-8"))
-        backlogs ++= MmParser.parse(xml)
-      })
+     val file = uploadContainer.is.openOr(throw new Exception("Upload failed")).file
+     val xml = XML.loadString(new String(file, "UTF-8"))
+     val backlogs = MmParser.parse(xml).toList
 
-      bind("storySelection", chooseTemplate("choose", "post", xhtml),
+     bind("storySelection", chooseTemplate("choose", "post", xhtml),
                "stories" -> extractStorySelection(backlogs))
   }
 

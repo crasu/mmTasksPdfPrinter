@@ -20,7 +20,8 @@ object TaskPrinter {
   }
 }
 
-class TaskPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
+class TaskPrinter(contentSize: Rectangle, config: Configuration) 
+					extends PagePrinter(contentSize, config) {
   override def addStory(story: Story) {
     story.tasks.foreach(addTask(story, _))
   }
@@ -59,20 +60,20 @@ class TaskPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
 
   private def taskToPhrase(story: Story, task: Task) = {
     val phrase = new Phrase()
-    phrase.add(new Chunk(story.name + "\n", PagePrinter.normalFont))
-    phrase.add(new Chunk(task.category + "\n", PagePrinter.smallFont))
-    phrase.add(new Chunk(task.description + "\n", PagePrinter.bigFont))
+    phrase.add(new Chunk(story.name + "\n", config.normalFont))
+    phrase.add(new Chunk(task.category + "\n", config.smallFont))
+    phrase.add(new Chunk(task.description + "\n", config.bigFont))
 
     task.subtasks.take(TaskPrinter.maxNoOfSubtasks - 1).foreach {subtask =>
       phrase.add(TaskPrinter.square)
-      phrase.add(new Chunk(" " + subtask.description + "\n", PagePrinter.normalFont))
+      phrase.add(new Chunk(" " + subtask.description + "\n", config.normalFont))
     }
     val remainingTasks = task.subtasks.drop(TaskPrinter.maxNoOfSubtasks - 1)
     if (!remainingTasks.isEmpty) {
       val descriptions = remainingTasks.map(_.description)
       val concated = descriptions.mkString(", ")
       phrase.add(TaskPrinter.square)
-      phrase.add(new Chunk(" " + concated + "\n", PagePrinter.normalFont))
+      phrase.add(new Chunk(" " + concated + "\n", config.normalFont))
     }
     phrase
   }
@@ -86,7 +87,7 @@ class TaskPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
     cell.setIndent(0)
     cell.addElement(phrase)
     cell.setFixedHeight(outerCell.getFixedHeight() - 3)
-    cell.setFixedHeight(outerCell.getFixedHeight() - PagePrinter.companyLogo.getScaledHeight - 3)
+    cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - 3)
     table.addCell(cell)
     
     cell = new PdfPCell()
@@ -94,8 +95,8 @@ class TaskPrinter(contentSize: Rectangle) extends PagePrinter(contentSize) {
     cell.setPadding(0)
     cell.setPaddingLeft(5.0f)
     cell.setIndent(0)
-    cell.addElement(PagePrinter.companyLogo)
-    cell.setFixedHeight(PagePrinter.companyLogo.getScaledHeight)
+    cell.addElement(config.companyLogo)
+    cell.setFixedHeight(config.companyLogo.getScaledHeight)
     table.addCell(cell)
 
     outerCell.addElement(table)

@@ -28,11 +28,12 @@ case class Story(val name: String, val scrumPoints: Int, val priority: Int) {
   override def equals(that: Any) = that match {
       case other: Story => other.name == name &&
                       other.scrumPoints == scrumPoints &&
+                      other.priority == priority &&
                       other.tasks == tasks
       case _ => false
     }
   override def hashCode() = 41*((41*name.hashCode) + scrumPoints.hashCode)+tasks.hashCode
-  override def toString() = "Story(Name: " + name + ", Points: " + scrumPoints + "; " + tasks.mkString(" ,") + ")"
+  override def toString() = "Story(Name: " + name + ", Points: " + scrumPoints + ", Priority: " + priority + "; " + tasks.mkString(", ") + ")"
 }
 
 case class Task(val description: String, val category: String) {
