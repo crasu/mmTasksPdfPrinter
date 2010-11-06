@@ -175,14 +175,14 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       },
       {
         var sb = SprintBacklog("2010-22")
-        sb.stories += Story("Some huge story With some big story Some medium sized story1 And finally: A story1", Story.NO_ESTIMATION, 1)
-        sb.stories += Story("Some huge story With some big story Some medium sized story1 And finally: A story2", Story.NO_ESTIMATION, 2)
-        sb.stories += Story("Some huge story With some big story Some medium sized story2 And finally: A story1", Story.NO_ESTIMATION, 3)
-        sb.stories += Story("Some huge story With some big story Some medium sized story2 And finally: A story2", Story.NO_ESTIMATION, 4)
-        sb.stories += Story("Some huge story And another big story Another story1", Story.NO_ESTIMATION, 5)
-        sb.stories += Story("Some huge story And another big story Another story2", Story.NO_ESTIMATION, 6)
-        sb.stories += Story("Some huge story And yet another big story Yet another story1", Story.NO_ESTIMATION, 7)
-        sb.stories += Story("Some huge story And yet another big story Yet another story2", Story.NO_ESTIMATION, 8)
+        sb.stories += Story("Story leaf 1-1", Story.NO_ESTIMATION, 1)
+        sb.stories += Story("Story leaf 1-2", Story.NO_ESTIMATION, 2)
+        sb.stories += Story("Story leaf 2-1", Story.NO_ESTIMATION, 3)
+        sb.stories += Story("Story leaf 2-2", Story.NO_ESTIMATION, 4)
+        sb.stories += Story("Story leaf 3-1", Story.NO_ESTIMATION, 5)
+        sb.stories += Story("Story leaf 3-2", Story.NO_ESTIMATION, 6)
+        sb.stories += Story("Yet another leaf 4-1", Story.NO_ESTIMATION, 7)
+        sb.stories += Story("Yet another leaf 4-2", Story.NO_ESTIMATION, 8)
         sb
       }
     )

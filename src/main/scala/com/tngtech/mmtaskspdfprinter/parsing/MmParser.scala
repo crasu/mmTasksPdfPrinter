@@ -43,7 +43,7 @@ object MmParser {
 
     var priority = 1
     pathsToStories.map(path => {
-        val desc = path.map( node => extractDescription(node) ).reverse.mkString(" ")
+        val desc = extractDescription(path.head)
         val points = extractScrumPoints(path.head)
         val story = Story(desc, points, priority)
         priority += 1
