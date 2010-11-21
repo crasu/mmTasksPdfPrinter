@@ -2,6 +2,7 @@ package com.tngtech.mmtaskspdfprinter.pdf
 
 import com.itextpdf.text._
 import com.itextpdf.text.pdf._
+import com.tngtech.mmtaskspdfprinter.pdf.config._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import scala.List
 

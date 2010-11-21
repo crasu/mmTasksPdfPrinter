@@ -1,4 +1,4 @@
-package com.tngtech.mmtaskspdfprinter.pdf
+package com.tngtech.mmtaskspdfprinter.pdf.config
 
 import scala.io.Source
 import com.itextpdf.text.pdf._
