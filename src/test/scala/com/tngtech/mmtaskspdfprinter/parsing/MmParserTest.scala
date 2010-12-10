@@ -109,12 +109,20 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       <map version="0.9.0">
         <node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1272014962570" TEXT="Sprint 2010-20"/>
         <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Sprint 2010-21"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="NoSprint"/>
+        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Sprint 43"/>
+        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="something else"/>
+        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" Product Backlog "/>
+        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" Backlog"/>
+        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" backlog"/>
       </map>""")
 
     val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
-    val exp = List(SprintBacklog("2010-20"),
-                   SprintBacklog("2010-21"))
+    val exp = List(SprintBacklog("Sprint 2010-20"),
+                   SprintBacklog("Sprint 2010-21"),
+                   SprintBacklog("Sprint 43"),
+                   SprintBacklog("Product Backlog"),
+                   SprintBacklog("Backlog"),
+                   SprintBacklog("backlog"))
     it("must be able to detect every sprint") {
       val act = MmParser invokePrivate traverseBacklogs(root)
       act.toList must be (exp)
@@ -124,7 +132,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   describe("MmParser") {
     val exp = List(
       {
-        var sb = SprintBacklog("2010-20")
+        var sb = SprintBacklog("Sprint 2010-20")
         sb.stories += {
           var s = Story("asdf", Story.NO_ESTIMATION, 1)
           s.tasks += Task("foo", "")
@@ -134,7 +142,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         sb
       },
       {
-        var sb = SprintBacklog("2010-21")
+        var sb = SprintBacklog("Sprint 2010-21")
         sb.stories += {
           var s = Story("Some Story: A tale about...", 29, 1)
           s.tasks += Task("buy Mindstorms set", "Dev")
@@ -174,7 +182,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         sb
       },
       {
-        var sb = SprintBacklog("2010-22")
+        var sb = SprintBacklog("Sprint 2010-22")
         sb.stories += Story("Story leaf 1-1", Story.NO_ESTIMATION, 1)
         sb.stories += Story("Story leaf 1-2", Story.NO_ESTIMATION, 2)
         sb.stories += Story("Story leaf 2-1", Story.NO_ESTIMATION, 3)

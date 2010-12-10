@@ -21,6 +21,8 @@ import java.io._
 class BacklogUpload {
   private object uploadContainer extends RequestVar[Box[FileParamHolder]](Empty)
 
+  private var backlogs:List[SprintBacklog] = List()
+
   def upload(xhtml: Group) = {
     if (S.get_?) {
       askForFileToUpload(xhtml) // First step
@@ -36,12 +38,21 @@ class BacklogUpload {
   }
 
   private def askForSprint(xhtml: Group) = {
-     val file = uploadContainer.is.openOr(throw new Exception("Upload failed")).file
-     val xml = XML.loadString(new String(file, "UTF-8"))
-     val backlogs = MmParser.parse(xml).toList
+    if (uploadContainer.is.isEmpty) {
+      if (backlogs.isEmpty) {
+        throw new Exception("Recovery failed")
+      } else {
+         bind("storySelection", chooseTemplate("choose", "post", xhtml),
+                 "stories" -> extractStorySelection(backlogs))
+      }
+    } else {
+       val file = uploadContainer.is.open_!.file
+       val xml = XML.loadString(new String(file, "UTF-8"))
+       backlogs = MmParser.parse(xml).toList
 
-     bind("storySelection", chooseTemplate("choose", "post", xhtml),
-               "stories" -> extractStorySelection(backlogs))
+       bind("storySelection", chooseTemplate("choose", "post", xhtml),
+                 "stories" -> extractStorySelection(backlogs))
+    }
   }
 
   private def extractStorySelection(allBacklogs: List[SprintBacklog]) = {

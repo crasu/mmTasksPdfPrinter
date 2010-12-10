@@ -7,7 +7,7 @@ import scala.xml._
 object MmParser {
   private val STORY_ANNOTATION = "bookmark"
   private val TASK_ANNOTATION = "attach"
-  private val SPRINT_PATTERN = """\s*Sprint\s+(\d{4}-\d+).*""".r
+  private val BACKLOG_PATTERN = """(?i)\s*(.*Sprint.*|.*Backlog.*)\s*""".r // ToDo: Ignore case
 
   def parse(root: Elem): Seq[SprintBacklog] = {
     if (!sanityCheck(root)) {
@@ -23,16 +23,14 @@ object MmParser {
   }
 
   private def traverseBacklogs(root: Node) = {
-    var backlogs = (root\"node").flatMap(possibleBacklogNode => {
-        (possibleBacklogNode\"@TEXT").toString() match {
-          case SPRINT_PATTERN(name) => {
-              val backlog = SprintBacklog(name)
-              backlog.stories = traverseStories(possibleBacklogNode)
-              List(backlog)
-          }
-          case _ =>  List()
-        }
-      })
+    var backlogs = (root\"node").flatMap(possibleBacklogNode =>
+      (possibleBacklogNode\"@TEXT").toString match {
+        case BACKLOG_PATTERN(name) =>
+          val backlog = SprintBacklog(extractDescription(name))
+          backlog.stories = traverseStories(possibleBacklogNode)
+          List(backlog)
+        case _ =>  List()
+    })
     backlogs
   }
 
@@ -100,14 +98,18 @@ object MmParser {
     }
   }
 
-  private def extractDescription(node: Node) = {
+  private def extractDescription(node: Node): String = {
     val text = (node\"@TEXT").toString
+    extractDescription(text)
+  }
+  
+  private def extractDescription(text: String): String = {
     var result = text.replaceAll("""\(\s*\d+.*\)""", "") // Things in brackets
     result = result.replaceAll("""\{\s*\d+.*\}""", "") // Things in curly brackets
     result = StringEscapeUtils.unescapeHtml(result)
     result = result.replaceAll("""^\s+""", "")
     result = result.replaceAll("""\s+$""", "")
     result = result.replaceAll("""\s+""", " ")
-    result
+    result    
   }
 }
