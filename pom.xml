@@ -46,6 +46,7 @@
           <arguments>
             <argument>-jar</argument>
             <argument>${project.build.directory}/sbt-launch-0.7.2.jar</argument>
+            <argument>update</argument>
             <argument>test</argument>
             <argument>proguard</argument>
           </arguments>
