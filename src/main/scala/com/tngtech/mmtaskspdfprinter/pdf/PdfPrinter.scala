@@ -2,11 +2,10 @@ package com.tngtech.mmtaskspdfprinter.pdf
 
 import java.io.OutputStream
 import java.io.IOException
-import com.itextpdf.text._
+import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.pdf.config._
-import scala.List
 
 class PdfPrinter(val outputStream: OutputStream, val config: Configuration) {
   private val doc = new Document(config.pageSize)

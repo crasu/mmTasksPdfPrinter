@@ -1,10 +1,9 @@
 package com.tngtech.mmtaskspdfprinter.pdf
 
-import com.itextpdf.text._
+import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.pdf.config._
 import com.tngtech.mmtaskspdfprinter.scrum._
-import scala.List
 
 object TaskPrinter {
   private val columnSize = 3
@@ -21,11 +20,9 @@ object TaskPrinter {
   }
 }
 
-class TaskPrinter(contentSize: Rectangle, config: Configuration) 
+class TaskPrinter(contentSize: Rectangle, config: Configuration)
 					extends PagePrinter(contentSize, config) {
-  override def addStory(story: Story) {
-    story.tasks.foreach(addTask(story, _))
-  }
+  override def addStory(story: Story) = story.tasks.foreach(addTask(story, _))
 
   protected def addTask(story: Story, task: Task) {
     if (noOfElements % TaskPrinter.noOfElementsPerPage == 0) {
@@ -41,17 +38,17 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
   private def addNewPage() {
     val page = new PdfPTable(TaskPrinter.columnSize)
     page.setWidthPercentage(100)
-    pages += page
+    pages = pages :+ page
   }
 
-  private def createCell(story: Story, task: Task) = {
+  private def createCell(story: Story, task: Task): PdfPCell = {
     val cell = createFramingCell()
     var content = taskToPhrase(story, task)
     createInnerTable(cell, content)
     cell
   }
 
-  private def createFramingCell() = {
+  private def createFramingCell(): PdfPCell = {
     val cell = new PdfPCell()
     cell.setPadding(0)
     cell.setIndent(0)
@@ -59,7 +56,7 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
     cell
   }
 
-  private def taskToPhrase(story: Story, task: Task) = {
+  private def taskToPhrase(story: Story, task: Task): Phrase = {
     val phrase = new Phrase()
     phrase.add(new Chunk(story.name + "\n", config.normalFont))
     phrase.add(new Chunk(task.category + "\n", config.smallFont))
@@ -79,7 +76,7 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
     phrase
   }
 
-  private def createInnerTable(outerCell: PdfPCell, phrase: Phrase) = {
+  private def createInnerTable(outerCell: PdfPCell, phrase: Phrase) {
     var table = new PdfPTable(1)
     table.setWidthPercentage(100.0f)
     var cell = new PdfPCell()
@@ -90,7 +87,7 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
     cell.setFixedHeight(outerCell.getFixedHeight() - 3)
     cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - 3)
     table.addCell(cell)
-    
+
     cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(0)
@@ -103,7 +100,7 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
     outerCell.addElement(table)
   }
 
-  override def printPages() = {
+  override def printPages(): Seq[PdfPTable] = {
     fillWithEmptyCells
     pages
   }

@@ -1,6 +1,7 @@
 package com.tngtech.mmtaskspdfprinter.snippet
 
 import net.liftweb._
+import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.mapper._
 import net.liftweb.http.S._

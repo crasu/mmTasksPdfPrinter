@@ -14,7 +14,7 @@ object MmParser {
       throw new ParsingException("Provided XML data is not a valid mm-file.")
     }
 
-    traverseBacklogs(root\"node" first)
+    traverseBacklogs(root\"node" head)
   }
 
   private def sanityCheck(root: Elem) = {
@@ -23,7 +23,7 @@ object MmParser {
   }
 
   private def traverseBacklogs(root: Node) = {
-    var backlogs = (root\"node").flatMap(possibleBacklogNode =>
+    val backlogs = (root\"node").flatMap(possibleBacklogNode =>
       (possibleBacklogNode\"@TEXT").toString match {
         case BACKLOG_PATTERN(name) =>
           val backlog = SprintBacklog(extractDescription(name))
@@ -50,11 +50,11 @@ object MmParser {
       }).toList
   }
 
-  private def findIcon(path: List[Node], lookedFor: String): List[List[Node]] = {
+  private def findIcon(path: Seq[Node], lookedFor: String): Seq[Seq[Node]] = {
     if ( ((path.head)\"icon").exists(icon => (icon\"@BUILTIN").toString() == lookedFor) ) {
       return List(path)
     }
-    ((path.head)\"node").flatMap(child => findIcon(child :: path, lookedFor)).toList
+    ((path.head)\"node").flatMap(child => findIcon(child +: path, lookedFor)).toList
   }
 
   private def traverseTasks(sprintNode: Node): List[Task] = {
@@ -82,16 +82,16 @@ object MmParser {
       }).toList
   }
 
-  private def findLeaves(path: List[Node]): List[List[Node]] = {
+  private def findLeaves(path: Seq[Node]): Seq[Seq[Node]] = {
     if (((path.head)\"node").isEmpty) {
       return List(path)
     }
-    ((path.head)\"node").flatMap(child => findLeaves(child :: path)).toList
+    ((path.head)\"node").flatMap(child => findLeaves(child +: path)).toList
   }
 
   private def extractScrumPoints(node: Node): Int = {
     val text = (node\"@TEXT").toString
-    var pointsExtractor = """.*[\(\{](.*=)?\s*(\d+).*[\)\}].*""".r
+    val pointsExtractor = """.*[\(\{](.*=)?\s*(\d+).*[\)\}].*""".r
     text match {
       case pointsExtractor(_, points) => Integer.parseInt(points)
       case _ => Story.NO_ESTIMATION

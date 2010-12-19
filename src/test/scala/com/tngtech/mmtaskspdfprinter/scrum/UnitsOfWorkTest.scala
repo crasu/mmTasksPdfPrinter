@@ -10,8 +10,8 @@ import org.scalatest.PrivateMethodTester
 class UnitsOfWorkTest extends Spec with MustMatchers {
   describe("A task") {
     val t = Task("A task", "Dev")
-    t.subtasks += Subtask("First subtask")
-    t.subtasks += Subtask("Second subtask")
+    t.subtasks :+= Subtask("First subtask")
+    t.subtasks :+= Subtask("Second subtask")
 
     val exp = List(Subtask("First subtask"),
                    Subtask("Second subtask"))
@@ -23,8 +23,8 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
 
   describe("A story") {
      val s = Story("A story")
-     s.tasks += Task("First task", "Dev")
-     s.tasks += Task("Second task", "CT")
+     s.tasks :+= Task("First task", "Dev")
+     s.tasks :+= Task("Second task", "CT")
 
      val exp = List(Task("First task", "Dev"),
                     Task("Second task", "CT"))
@@ -50,8 +50,8 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
 
   describe("A sprint backlog") {
      val s = SprintBacklog("A sprint backlog")
-     s.stories += Story("First story")
-     s.stories += Story("Second story")
+     s.stories :+= Story("First story")
+     s.stories :+= Story("Second story")
 
      val exp = List(Story("First story"),
                     Story("Second story"))

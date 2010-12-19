@@ -2,7 +2,7 @@ package com.tngtech.mmtaskspdfprinter.scrum
 import java.io._
 
 case class SprintBacklog(val name: String) {
-  var stories = List[Story]()
+  var stories = Seq[Story]()
   override def equals(that: Any) = that match {
       case other: SprintBacklog => other.name == name &&
                       other.stories == stories
@@ -24,7 +24,7 @@ object Story {
 }
 
 case class Story(val name: String, val scrumPoints: Int, val priority: Int) {
-  var tasks = List[Task]()
+  var tasks = Seq[Task]()
   override def equals(that: Any) = that match {
       case other: Story => other.name == name &&
                       other.scrumPoints == scrumPoints &&
@@ -37,7 +37,7 @@ case class Story(val name: String, val scrumPoints: Int, val priority: Int) {
 }
 
 case class Task(val description: String, val category: String) {
-  var subtasks = List[Subtask]()
+  var subtasks = Seq[Subtask]()
   override def equals(that: Any) = that match {
       case other: Task => other.description == description &&
                       other.category == category &&

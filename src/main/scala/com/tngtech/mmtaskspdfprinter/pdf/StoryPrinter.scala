@@ -1,10 +1,9 @@
 package com.tngtech.mmtaskspdfprinter.pdf
 
-import com.itextpdf.text._
+import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.pdf.config._
-import scala.List
 
 object StoryPrinter {
   private val rowSize = 4
@@ -27,27 +26,27 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
   private def addNewPage() {
     val page = new PdfPTable(1)
     page.setWidthPercentage(100.0f)
-    pages += page
+    pages = page +: pages
   }
 
-  private def createStoryRow(story: Story) = {
+  private def createStoryRow(story: Story): PdfPCell = {
     val innerTable = new PdfPTable(2)
     innerTable.setWidthPercentage(100.0f)
     innerTable.setWidths(Array(75, 25))
     val sepHeight = 5
     val footer = createFooter()
-    innerTable.addCell(createSeperator(sepHeight))
+    innerTable.addCell(createSeparator(sepHeight))
     val contentHeight = contentSize.getHeight() / StoryPrinter.rowSize -
                         footer.getFixedHeight - sepHeight * 2
     innerTable.addCell(createStoryCell(contentHeight, story))
     innerTable.addCell(createMetaCell(contentHeight, story))
     innerTable.addCell(footer)
-    innerTable.addCell(createSeperator(sepHeight))
+    innerTable.addCell(createSeparator(sepHeight))
 
     new PdfPCell(innerTable)
   }
 
-  private def createSeperator(height: Int) = {
+  private def createSeparator(height: Int): PdfPCell = {
     val cell = new PdfPCell(config.companyBanner, false)
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(0)
@@ -58,7 +57,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     cell
   }
 
-  private def createFooter() = {
+  private def createFooter(): PdfPCell = {
     val cell = new PdfPCell(config.companyBanner, false)
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(1)
@@ -70,7 +69,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     cell
   }
 
-  private def createStoryCell(height: Float, story: Story) = {
+  private def createStoryCell(height: Float, story: Story): PdfPCell = {
     val storyPhrase = new Phrase()
     storyPhrase.add(new Chunk("\n" + story.name, config.hugeFont))
     val storyCell = new PdfPCell(storyPhrase)
@@ -82,7 +81,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     storyCell
   }
 
-  private def createMetaCell(height: Float, story: Story) = {
+  private def createMetaCell(height: Float, story: Story): PdfPCell = {
     val metaPhrase = new Phrase()
     val undefined =  "________"
     val priority = if (story.priority == Story.NO_PRIORITY) undefined
@@ -110,7 +109,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     metaCell
   }
 
-  override def printPages() = {
+  override def printPages(): Seq[PdfPTable] = {
     fillWithEmptyCells
     pages
   }

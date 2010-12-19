@@ -78,7 +78,7 @@ class Configuration {
     else {
       val awtImg =
         java.awt.Toolkit.getDefaultToolkit()
-          .createImage(Configuration.LOGO_BASE_NAME + existingSuffix.get())
+          .createImage(Configuration.LOGO_BASE_NAME + existingSuffix.get)
       Image.getInstance(awtImg, null)
     }
   }

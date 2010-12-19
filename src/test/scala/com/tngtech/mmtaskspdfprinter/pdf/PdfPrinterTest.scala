@@ -17,19 +17,19 @@ class PdfPrinterTest extends Spec with MustMatchers {
       val pdfBytes = new ByteArrayOutputStream()
       val printer = new PdfPrinter(pdfBytes, new Configuration())
       val backlog = SprintBacklog("2010-21")
-      backlog.stories += {
-        var story = Story("Some Story: A tale about...")
-        story.tasks += Task("buy Mindstorms set", "Dev")
-        story.tasks += {
-          var task = Task("write remote control perl script", "Dev")
-          task.subtasks += Subtask("write module mod1")
-          task.subtasks += Subtask("write module mod2 part a")
-          task.subtasks += Subtask("write module mod2 part b")
+      backlog.stories :+= {
+        val story = Story("Some Story: A tale about...")
+        story.tasks :+= Task("buy Mindstorms set", "Dev")
+        story.tasks :+= {
+          val task = Task("write remote control perl script", "Dev")
+          task.subtasks :+= Subtask("write module mod1")
+          task.subtasks :+= Subtask("write module mod2 part a")
+          task.subtasks :+= Subtask("write module mod2 part b")
           task
         }
-        story.tasks += Task("install replacement firmware", "Dev")
-        story.tasks += Task("CT", "regression")
-        story.tasks += Task("Deployment", "deploy to production")
+        story.tasks :+= Task("install replacement firmware", "Dev")
+        story.tasks :+= Task("CT", "regression")
+        story.tasks :+= Task("Deployment", "deploy to production")
         story
       }
       it("must add tasks to the pdf") {
