@@ -44,6 +44,7 @@
         <configuration>
           <executable>java</executable>
           <arguments>
+            <argument>-Duser.home=.</argument>
             <argument>-jar</argument>
             <argument>${project.build.directory}/sbt-launch-0.7.2.jar</argument>
             <argument>update</argument>

@@ -11,6 +11,9 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
 
   val toolsConfig = config("tools")
 
+  val iTextUrl = new java.net.URL("http://maven.itextpdf.com/")
+  val iTextRepo = Resolver.url("com.itextpdf", iTextUrl)
+
   override def libraryDependencies = Set(
     "net.liftweb" %% "lift-mapper" % "2.1" % "compile->default",
     "commons-lang" % "commons-lang" % "2.4" % "compile->default",
