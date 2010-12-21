@@ -39,21 +39,12 @@ class BacklogUpload {
   }
 
   private def askForSprint(xhtml: Group) = {
-    if (uploadContainer.is.isEmpty) {
-      if (backlogs.isEmpty) {
-        throw new Exception("Recovery failed")
-      } else {
-         bind("storySelection", chooseTemplate("choose", "post", xhtml),
-                 "stories" -> extractStorySelection(backlogs))
-      }
-    } else {
-       val file = uploadContainer.is.open_!.file
-       val xml = XML.loadString(new String(file, "UTF-8"))
-       backlogs = MmParser.parse(xml).toList
+    val file = uploadContainer.is.open_!.file
+    val xml = XML.loadString(new String(file, "UTF-8"))
+    backlogs = MmParser.parse(xml).toList
 
-       bind("storySelection", chooseTemplate("choose", "post", xhtml),
-                 "stories" -> extractStorySelection(backlogs))
-    }
+    bind("storySelection", chooseTemplate("choose", "post", xhtml),
+             "stories" -> extractStorySelection(backlogs))
   }
 
   private def extractStorySelection(allBacklogs: List[SprintBacklog]) = {
