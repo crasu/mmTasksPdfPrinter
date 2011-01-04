@@ -1,50 +1,24 @@
 package com.tngtech.mmtaskspdfprinter.scrum
 import java.io._
 
-case class SprintBacklog(val name: String) {
-  var stories = Seq[Story]()
-  override def equals(that: Any) = that match {
-      case other: SprintBacklog => other.name == name &&
-                      other.stories == stories
-      case _ => false
-    }
-  override def hashCode() = 41*(name.hashCode)+stories.hashCode
-  override def toString() = "SprintBacklog(Name: " + name + "; " + stories.mkString(", ") + ")"
-}
+case class SprintBacklog(val name: String, val stories: Story*)
 
 object Story {
-  val NO_ESTIMATION = -1
-  val NO_PRIORITY = -1
-  def apply(name: String) = {
-    new Story(name, NO_ESTIMATION, NO_PRIORITY)
-  }
-  def apply(name: String, scrumPoints: Int) = {
-    new Story(name, scrumPoints, NO_PRIORITY)
-  }
+  def apply(name: String, scrumPoints: Int, priority: Int, tasks: Task*): Story =
+    Story(name, Some(scrumPoints), Some(priority), tasks: _*)
+  def apply(name: String, scrumPoints: Option[Int], priority: Int, tasks: Task*): Story =
+    Story(name, scrumPoints, Some(priority), tasks: _*)
+  def apply(name: String, scrumPoints: Int, priority: Option[Int], tasks: Task*): Story =
+    Story(name, Some(scrumPoints), priority, tasks: _*)
 }
 
-case class Story(val name: String, val scrumPoints: Int, val priority: Int) {
-  var tasks = Seq[Task]()
-  override def equals(that: Any) = that match {
-      case other: Story => other.name == name &&
-                      other.scrumPoints == scrumPoints &&
-                      other.priority == priority &&
-                      other.tasks == tasks
-      case _ => false
-    }
-  override def hashCode() = 41*((41*name.hashCode) + scrumPoints.hashCode)+tasks.hashCode
-  override def toString() = "Story(Name: " + name + ", Points: " + scrumPoints + ", Priority: " + priority + "; " + tasks.mkString(", ") + ")"
-}
+case class Story(val name: String, 
+                 val scrumPoints: Option[Int], 
+                 val priority: Option[Int],
+                 val tasks: Task*)
 
-case class Task(val description: String, val category: String) {
-  var subtasks = Seq[Subtask]()
-  override def equals(that: Any) = that match {
-      case other: Task => other.description == description &&
-                      other.category == category &&
-                      other.subtasks == subtasks
-      case _ => false
-    }
-  override def hashCode() = 41*((41*description.hashCode) + category.hashCode)+subtasks.hashCode
-  override def toString() = "Task(Desc: " + description + ", Cat: " + category + "; " + subtasks.mkString(", ") + ")"
-}
-case class Subtask(val description: String) extends Serializable
+case class Task(val description: String, 
+                val category: String,
+                val subtasks: Subtask*)
+
+case class Subtask(val description: String)

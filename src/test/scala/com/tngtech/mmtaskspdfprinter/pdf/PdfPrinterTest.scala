@@ -16,28 +16,25 @@ class PdfPrinterTest extends Spec with MustMatchers {
     describe("PdfPrinter") {
       val pdfBytes = new ByteArrayOutputStream()
       val printer = new PdfPrinter(pdfBytes, new Configuration())
-      val backlog = SprintBacklog("2010-21")
-      backlog.stories :+= {
-        val story = Story("Some Story: A tale about...")
-        story.tasks :+= Task("buy Mindstorms set", "Dev")
-        story.tasks :+= {
-          val task = Task("write remote control perl script", "Dev")
-          task.subtasks :+= Subtask("write module mod1")
-          task.subtasks :+= Subtask("write module mod2 part a")
-          task.subtasks :+= Subtask("write module mod2 part b")
-          task
-        }
-        story.tasks :+= Task("install replacement firmware", "Dev")
-        story.tasks :+= Task("CT", "regression")
-        story.tasks :+= Task("Deployment", "deploy to production")
-        story
-      }
+      val backlog = SprintBacklog("2010-21",
+        Story("Some Story: A tale about...", None, None,
+          Task("buy Mindstorms set", "Dev"),
+          Task("write remote control perl script", "Dev",
+            Subtask("write module mod1"),
+            Subtask("write module mod2 part a"),
+            Subtask("write module mod2 part b")
+          ),
+          Task("install replacement firmware", "Dev"),
+          Task("CT", "regression"),
+          Task("Deployment", "deploy to production")
+        )
+      )
       it("must add tasks to the pdf") {
         printer.addSprintBacklog(backlog)
         printer.numberOfStories must be (1)
       }
 
-    it("and it must write to a file") {
+      it("and it must write to a file") {
         printer.toFile
         pdfBytes.size must not be(0)
       }

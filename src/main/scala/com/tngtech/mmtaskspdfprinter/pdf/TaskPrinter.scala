@@ -106,8 +106,8 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
   }
 
   private def fillWithEmptyCells() {
-    val emptyStory = Story("")
     val emptyTask = Task("", "")
+    val emptyStory = Story("", None, None)
     while (noOfElements % TaskPrinter.noOfElementsPerPage != 0) {
       addTask(emptyStory, emptyTask)
     }

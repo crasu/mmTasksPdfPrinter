@@ -24,15 +24,13 @@ class Configuration {
 
     val keyValuePair = """^\s*([^=]+)\s*=\s*([^=]+)\s*(#.*)?$""".r
     val empty = """^\s*(#.*)?$""".r
-    Map() ++ lines.flatMap( line => {
-        line match {
-          case keyValuePair(key, value, null) => List((key.trim -> value.trim))
-          case keyValuePair(key, value, comment) => List((key.trim -> value.trim))
-          case empty(null) => List()
-          case empty(comment) => List()
-          case invalid => throw new ConfigException("Invalid config line: " + invalid)
-        }
-      })
+    Map() ++ lines.flatMap {
+      case keyValuePair(key, value, null) => List((key.trim -> value.trim))
+      case keyValuePair(key, value, comment) => List((key.trim -> value.trim))
+      case empty(null) => List()
+      case empty(comment) => List()
+      case invalid => throw new ConfigException("Invalid config line: " + invalid)
+    }
   }
   
   private def getAndRemove(key: String, default: String) = {

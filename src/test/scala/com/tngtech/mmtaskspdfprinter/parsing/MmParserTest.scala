@@ -38,24 +38,24 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   }
 
   describe("MmParser scrum points extractor") {
-    val extractScrumPoints = PrivateMethod[Int]('extractScrumPoints)
+    val extractScrumPoints = PrivateMethod[Option[Int]]('extractScrumPoints)
 
     val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
-    val expBrackets = 123
+    val expBrackets = Some(123)
     it("must be able to parse points in brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descBrackets)
       act must be (expBrackets)
     }
 
     val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
-    val expCurely = 7
+    val expCurely = Some(7)
     it("must be able to parse points in curely brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descCurely)
       act must be (expCurely)
     }
 
     val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
-    val expCombined = 5
+    val expCombined = Some(5)
     it("must be able to parse points even if it is ambiguous") {
       val act = MmParser invokePrivate extractScrumPoints(descCombined)
       act must be (expCombined)
@@ -75,8 +75,8 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         </node>
       </node>""")
     val exp = List(Subtask("write module mod1"),
-                  Subtask("write module mod2 part a"),
-                  Subtask("write module mod2 part b"))
+                   Subtask("write module mod2 part a"),
+                   Subtask("write module mod2 part b"))
     val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
     it("must be able to parse all subtasks of a task") {
       val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
@@ -96,8 +96,8 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         </node>
       </node>""")
     val traverseStories = PrivateMethod[List[Story]]('traverseStories)
-    val exp = List(Story("foo", Story.NO_ESTIMATION, 1),
-                   Story("bar \"foobar\"", Story.NO_ESTIMATION, 2))
+    val exp = List(Story("foo", None, 1),
+                   Story("bar \"foobar\"", None, 2))
     it("must be able to parse stories") {
       val act = MmParser invokePrivate traverseStories(storyTree)
       act must be (exp)
@@ -131,68 +131,47 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
   describe("MmParser") {
     val exp = List(
-      {
-        val sb = SprintBacklog("Sprint 2010-20")
-        sb.stories :+= {
-          val s = Story("asdf", Story.NO_ESTIMATION, 1)
-          s.tasks :+= Task("foo", "")
-          s.tasks :+= Task("bar \"foobar\"", "")
-          s
-        }
-        sb
-      },
-      {
-        val sb = SprintBacklog("Sprint 2010-21")
-        sb.stories :+= {
-          val s = Story("Some Story: A tale about...", 29, 1)
-          s.tasks :+= Task("buy Mindstorms set", "Dev")
-          s.tasks :+= {
-            val t = Task("write remote control perl script", "Dev")
-            t.subtasks :+= Subtask("write unit tests")
-            t.subtasks :+= Subtask("write module mod1")
-            t.subtasks :+= Subtask("write module mod2 part a")
-            t.subtasks :+= Subtask("write module mod2 part b")
-            t
-          }
-          s.tasks :+= Task("install replacement firmware", "Dev")
-          s.tasks :+= Task("regression", "CT")
-          s.tasks :+= Task("deploy to production", "Deployment")
-          s
-        }
-        sb.stories :+= {
-         val s = Story("Another Story", 30, 2)
-         s.tasks :+= Task("Do one thing", "")
-         s.tasks :+= Task("do another thing", "")
-         s.tasks :+= {
-           val t = Task("task1", "cat subcat1")
-           t.subtasks :+= Subtask("subtask1")
-           t.subtasks :+= Subtask("subtask2")
-           t.subtasks :+= Subtask("subtask3")
-           t.subtasks :+= Subtask("subtask4")
-           t.subtasks :+= Subtask("subtask5")
-           t.subtasks :+= Subtask("subtask6")
-           t.subtasks :+= Subtask("subtask7")
-           t
-         }
-         s.tasks :+= Task("task2", "cat subcat1")
-         s.tasks :+= Task("taskX", "cat subcat2")
-         s.tasks :+= Task("\"taskX\"Hallo&<NANA>", "cat subcat2")
-         s
-        }
-        sb
-      },
-      {
-        val sb = SprintBacklog("Sprint 2010-22")
-        sb.stories :+= Story("Story leaf 1-1", Story.NO_ESTIMATION, 1)
-        sb.stories :+= Story("Story leaf 1-2", Story.NO_ESTIMATION, 2)
-        sb.stories :+= Story("Story leaf 2-1", Story.NO_ESTIMATION, 3)
-        sb.stories :+= Story("Story leaf 2-2", Story.NO_ESTIMATION, 4)
-        sb.stories :+= Story("Story leaf 3-1", Story.NO_ESTIMATION, 5)
-        sb.stories :+= Story("Story leaf 3-2", Story.NO_ESTIMATION, 6)
-        sb.stories :+= Story("Yet another leaf 4-1", Story.NO_ESTIMATION, 7)
-        sb.stories :+= Story("Yet another leaf 4-2", Story.NO_ESTIMATION, 8)
-        sb
-      }
+      SprintBacklog("Sprint 2010-20", 
+        Story("asdf", None, 1, 
+          Task("foo", ""), Task("bar \"foobar\"", "")
+        )
+      ),
+      SprintBacklog("Sprint 2010-21", 
+        Story("Some Story: A tale about...", 29, 1, 
+          Task("buy Mindstorms set", "Dev"),
+          Task("write remote control perl script", "Dev", 
+            Subtask("write unit tests"),
+            Subtask("write module mod1"),
+            Subtask("write module mod2 part a"),
+            Subtask("write module mod2 part b")
+          ),
+          Task("install replacement firmware", "Dev"),
+          Task("regression", "CT"),
+          Task("deploy to production", "Deployment")
+        ),
+        Story("Another Story", 30, 2, 
+          Task("Do one thing", ""),
+          Task("do another thing", ""),
+          Task("task1", "cat subcat1",
+            Subtask("subtask1"), Subtask("subtask2"), Subtask("subtask3"),
+            Subtask("subtask4"), Subtask("subtask5"), Subtask("subtask6"),
+            Subtask("subtask7")
+          ),
+          Task("task2", "cat subcat1"),
+          Task("taskX", "cat subcat2"),
+          Task("\"taskX\"Hallo&<NANA>", "cat subcat2")
+        )
+      ),
+      SprintBacklog("Sprint 2010-22",
+        Story("Story leaf 1-1", None, 1), 
+        Story("Story leaf 1-2", None, 2),
+        Story("Story leaf 2-1", None, 3), 
+        Story("Story leaf 2-2", None, 4),
+        Story("Story leaf 3-1", None, 5), 
+        Story("Story leaf 3-2", None, 6),
+        Story("Yet another leaf 4-1", None, 7), 
+        Story("Yet another leaf 4-2", None, 8)
+      )
     )
     it("must parse a xml file to an internal data structure") {
       val act = MmParser.parse(validData)

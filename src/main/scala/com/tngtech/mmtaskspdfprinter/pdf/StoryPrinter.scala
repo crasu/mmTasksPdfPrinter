@@ -84,10 +84,8 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
   private def createMetaCell(height: Float, story: Story): PdfPCell = {
     val metaPhrase = new Phrase()
     val undefined =  "________"
-    val priority = if (story.priority == Story.NO_PRIORITY) undefined
-                   else ""+story.priority
-    val points = if (story.scrumPoints == Story.NO_ESTIMATION) undefined
-                 else ""+story.scrumPoints
+    val priority = story.priority.getOrElse(undefined).toString
+    val points = story.scrumPoints.getOrElse(undefined).toString
     if (config.hidePriority == 0) {
       metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
                                 config.bigFont))
@@ -115,7 +113,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
   }
 
   private def fillWithEmptyCells() {
-    val emptyStory = Story("")
+    val emptyStory = Story("", None, None)
     while (noOfElements % StoryPrinter.rowSize != 0) {
       addStory(emptyStory)
     }
