@@ -1,23 +1,53 @@
 <lift:surround with="default" at="content">
-    <p>
-        This tool prints scrum tasks in a mm file to pdf.
-    </p>
     <lift:snippet type="backlogUpload:upload" form="post" multipart="true">
-      <choose:post>
-            Select the sprint you want to print.
-            <tr>
-              <td>Name</td>
-              <td><storySelection:stories><input type="text"/></storySelection:stories></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><input type="submit" value="Select"/></td>
-            </tr>
-        </choose:post>
-
-        <choose:get>
+        <choose:upload>
+            <h2>Step 1: Select a mindmap</h2>
             Select a mm file to upload: <upload:fileUpload/><br />
             <input type="submit" value="Upload File"/>
-        </choose:get>
+        </choose:upload>
+    </lift:snippet>
+    <lift:snippet type="backlogUpload:select" form="post" multipart="true" id="select">
+        <choose:selection>
+            <h2>Step 2: Select a story</h2>
+            Select the sprint you want to print.<br/>
+            <tr>
+              <td>Name</td>
+              <td><storySelection:story><input type="text"/></storySelection:story></td>
+            </tr>
+        </choose:selection>
+    </lift:snippet>
+    <lift:backlogUpload.select>
+        <h2>Step 2: Select a story</h2>
+        Select the sprint you want to print.<br/>
+        <tr>
+          <td>Name</td>
+          <td><storySelection:story><input type="text"/></storySelection:story></td>
+        </tr>
+    </lift:backlogUpload.select>
+    <lift:snippet type="backlogUpload:create" form="post" multipart="true">
+        <choose:create>
+            <h2>Step 3: Select output format</h2>
+            <table>
+                <tr>
+                  <td style="width:120px;"/>
+                  <td>JIRA URL</td>
+                  <td><jira:url><input type="text"/></jira:url></td>
+                </tr>
+                <tr>
+                  <td/>
+                  <td>Username</td>
+                  <td><jira:user><input type="text"/></jira:user></td>
+                </tr>
+                <tr>
+                  <td/>
+                  <td>Password</td>
+                  <td><jira:password><input type="text"/></jira:password></td>
+                </tr>
+                <tr>
+                    <td><pdf:submit><input type="submit"/></pdf:submit></td>
+                    <td colspan="2"><jira:submit><input type="submit"/></jira:submit></td>
+                </tr>
+            </table>
+        </choose:create>
     </lift:snippet>
 </lift:surround>
