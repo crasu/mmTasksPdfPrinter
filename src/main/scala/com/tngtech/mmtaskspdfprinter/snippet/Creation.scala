@@ -1,9 +1,12 @@
 package com.tngtech.mmtaskspdfprinter.snippet
 
 import scala.xml.{NodeSeq, Group, XML}
+import java.net.URL
+import java.net.MalformedURLException
 import net.liftweb.http.{SHtml, S}
 import net.liftweb.util.Helpers._
 import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.http.RequestVar
 
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.pdf._
@@ -14,19 +17,22 @@ import com.tngtech.mmtaskspdfprinter.creation.jira._
  */
 trait Creation {
   self: BacklogUpload =>
+  private object jiraUrl extends RequestVar[Box[String]](Empty)
+  private object jiraUser extends RequestVar[Box[String]](Empty)
+  private object jiraProject extends RequestVar[Box[String]](Empty)
 
   def create(xhtml: Group): NodeSeq = {
-    var jiraUrl, jiraUser, jiraPassword, jiraProject = ""
+    var jiraPassword = ""
 
     if (selectedBacklog.set_? && !selectedBacklog.is.isEmpty) {
       val template = bind("jira", chooseTemplate("choose", "create", xhtml),
-          "url" -> SHtml.text("", jiraUrl = _),
-          "user" -> SHtml.text("", jiraUser = _),
+          "url" -> SHtml.text(jiraUrl.is.getOrElse(""), url => jiraUrl(Full(url))),
+          "user" -> SHtml.text(jiraUser.is.getOrElse(""), user => jiraUser(Full(user))),
           "password" -> SHtml.password("", jiraPassword = _),
-          "project" -> SHtml.text("", jiraProject = _),
+          "project" -> SHtml.text(jiraProject.is.getOrElse(""), proj => jiraProject(Full(proj))),
           "submit" -> SHtml.submit("Send to JIRA",
             () => sendToJira(selectedBacklog.is.get, 
-                             jiraUrl, jiraUser, jiraPassword, jiraProject)))
+                             jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)))
       bind("pdf", template, "submit" -> SHtml.submit("Create PDF",
             () => createPdf(selectedBacklog.is.get)))
     } else {
@@ -42,6 +48,35 @@ trait Creation {
   private def sendToJira(selectedBacklog: SprintBacklog, url: String,
                          user: String, password: String, project: String) {
     val creator = new JiraTaskCreator(url, user, password, project)
-    creator.create(List(selectedBacklog))
+
+    val validationErrors = (
+      validateUrl(url).toList :::
+      validateText("User", user).toList :::
+      validateText("Password", password).toList :::
+      validateText("Project", project).toList
+    )
+
+    if (validationErrors.isEmpty) {
+     try {
+       creator.create(List(selectedBacklog))
+     } catch {
+       case e: Exception => S.error(e.getMessage)
+     }
+    }
+    else {
+      S.error(validationErrors.map {msg => <li>{msg}</li>})
+    }
   }
+
+  private def validateUrl(url: String): Option[String] =
+    try {
+      new URL(url)
+      None
+    } catch {
+      case e: MalformedURLException => Some("Invalid URL. A valid example is: http://localhost:8080")
+    }
+
+  private def validateText(field: String, text: String): Option[String] =
+    if (text.isEmpty) Some(field+" may not be empty")
+    else None
 }

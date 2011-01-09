@@ -13,11 +13,11 @@ object JiraTaskCreator {
 
 class JiraTaskCreator(val url: String, val user: String,
                       val pass: String, val project: String) {
-
   def create(backlogs: List[SprintBacklog]) {
     val rpcClient = new XmlRpcClient()
     val config = new XmlRpcClientConfigImpl()
-    config.setServerURL(new URL(url+JiraTaskCreator.rpcPath))
+    val normalizedUrl = """\/$""".r.replaceAllIn(url, "")
+    config.setServerURL(new URL(normalizedUrl+JiraTaskCreator.rpcPath))
     rpcClient.setConfig(config)
     val loginToken = rpcClient.execute("jira1.login", List(user, pass)).toString
 
