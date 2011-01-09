@@ -1,11 +1,13 @@
-package com.tngtech.mmtaskspdfprinter.pdf
+package com.tngtech.mmtaskspdfprinter.creation.pdf
+
+import scala.collection.mutable.ListBuffer
 
 import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
-import com.tngtech.mmtaskspdfprinter.pdf.config._
+import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 import com.tngtech.mmtaskspdfprinter.scrum._
 
-object TaskPrinter {
+private object TaskPrinter {
   private val columnSize = 3
   private val rowSize = 4
   private val noOfElementsPerPage = columnSize * rowSize
@@ -20,25 +22,32 @@ object TaskPrinter {
   }
 }
 
-class TaskPrinter(contentSize: Rectangle, config: Configuration)
-					extends PagePrinter(contentSize, config) {
-  override def addStory(story: Story) = story.tasks.foreach(addTask(story, _))
+private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
 
-  protected def addTask(story: Story, task: Task) {
-    if (noOfElements % TaskPrinter.noOfElementsPerPage == 0) {
-      addNewPage()
+  def create(stories: List[Story]): Seq[PdfPTable] = {
+    val pages = ListBuffer[PdfPTable]()
+    val storyTaskPairs = for (s <- stories; t <- s.tasks) yield (s, t)
+    storyTaskPairs.zipWithIndex foreach {case ((story, task), index) =>
+        addTask(pages, index, story, task)
+    }
+    fillWithEmptyCells(pages, stories.map(_.tasks.size).sum)
+    pages.toList
+  }
+
+  private def addTask(pages: ListBuffer[PdfPTable], count: Int,
+                      story: Story, task: Task) {
+    if (count % TaskPrinter.noOfElementsPerPage == 0) {
+      addNewPage(pages)
     }
 
     val cell = createCell(story, task)
     pages.last.addCell(cell)
-
-    noOfElements += 1
   }
 
-  private def addNewPage() {
+  private def addNewPage(pages: ListBuffer[PdfPTable]) {
     val page = new PdfPTable(TaskPrinter.columnSize)
     page.setWidthPercentage(100)
-    pages = pages :+ page
+    pages.append(page)
   }
 
   private def createCell(story: Story, task: Task): PdfPCell = {
@@ -100,16 +109,14 @@ class TaskPrinter(contentSize: Rectangle, config: Configuration)
     outerCell.addElement(table)
   }
 
-  override def printPages(): Seq[PdfPTable] = {
-    fillWithEmptyCells
-    pages
-  }
-
-  private def fillWithEmptyCells() {
+  private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfTasksAdded: Int) {
     val emptyTask = Task("", "")
     val emptyStory = Story("", None, None)
-    while (noOfElements % TaskPrinter.noOfElementsPerPage != 0) {
-      addTask(emptyStory, emptyTask)
+    val tasksForFullPage = (
+        (noOfTasksAdded.toDouble / TaskPrinter.noOfElementsPerPage).ceil * TaskPrinter.noOfElementsPerPage
+      ).toInt
+    (noOfTasksAdded until tasksForFullPage) foreach { index =>
+      addTask(pages, index, emptyStory, emptyTask)
     }
   }
 }

@@ -1,4 +1,4 @@
-package com.tngtech.mmtaskspdfprinter.pdf.config
+package com.tngtech.mmtaskspdfprinter.creation.pdf.config
 
 import scala.io.Source
 import com.itextpdf.text.pdf._
@@ -11,37 +11,34 @@ object Configuration {
   private val CONFIG_FILE_NAME = "layout.conf"
   private val LOGO_BASE_NAME = "logo"
   private val IMAGE_SUFFIXES = List(".png", ".gif", ".jpg", ".PNG", ".GIF", ".JPG")
+
+  val defaultConfig = new Configuration()
 }
 
 class Configuration {
-  private var properties = {
-    var lines = List[String]()
+
+  val (hidePriority, colour, pageSize) = {
     val file = new File(Configuration.CONFIG_FILE_NAME)
-    if (file.exists) {
-      lines = Source.
-                  fromFile(file).getLines.toList
-    }
+    val lines =
+      if (file.exists) Source.fromFile(file).getLines.toList
+      else List[String]()
 
     val keyValuePair = """^\s*([^=]+)\s*=\s*([^=]+)\s*(#.*)?$""".r
     val empty = """^\s*(#.*)?$""".r
-    Map() ++ lines.flatMap {
+    val properties = Map() ++ lines.flatMap {
       case keyValuePair(key, value, null) => List((key.trim -> value.trim))
       case keyValuePair(key, value, comment) => List((key.trim -> value.trim))
       case empty(null) => List()
       case empty(comment) => List()
       case invalid => throw new ConfigException("Invalid config line: " + invalid)
     }
-  }
-  
-  private def getAndRemove(key: String, default: String) = {
-    val value = properties.getOrElse(key, default)
-    properties = properties - key
-    value
-  }
 
-  val hidePriority = getAndRemove("hidePriority", "0").toInt
-  val colour = getAndRemove("colour", "44 106 168").split(" ").map(c => c.toInt)
-  val pageSize = PageSize.A4
+    (
+      properties.getOrElse("hidePriority", "0") == "0",
+      properties.getOrElse("colour", "44 106 168").split(" ").map(c => c.toInt),
+      PageSize.A4
+    )
+  }
 
   val (smallFont, normalFont, bigFont, hugeFont) = {
     /*

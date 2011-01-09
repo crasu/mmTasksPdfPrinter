@@ -1,32 +1,38 @@
-package com.tngtech.mmtaskspdfprinter.pdf
+package com.tngtech.mmtaskspdfprinter.creation.pdf
+
+import scala.collection.mutable.ListBuffer
 
 import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
-import com.tngtech.mmtaskspdfprinter.pdf.config._
+import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 
-object StoryPrinter {
+private object StoryPrinter {
   private val rowSize = 4
 }
 
-class StoryPrinter(contentSize: Rectangle, config: Configuration) 
-					extends PagePrinter(contentSize, config) {
+private class StoryPrinter(val contentSize: Rectangle, val config: Configuration) {
 
-  override def addStory(story: Story) {
-    if (noOfElements % StoryPrinter.rowSize == 0) {
-      addNewPage()
+  def create(stories: List[Story]): Seq[PdfPTable] = {
+    val pages = ListBuffer[PdfPTable]()
+    stories.zipWithIndex foreach {case (story, index) => addStory(pages, index, story)}
+    fillWithEmptyCells(pages, stories.size)
+    pages.toList
+  }
+  
+  private def addStory(pages: ListBuffer[PdfPTable], count: Int, story: Story) {
+    if (count % StoryPrinter.rowSize == 0) {
+      addNewPage(pages)
     }
 
     val storyRow = createStoryRow(story)
     pages.last.addCell(storyRow)
-
-    noOfElements += 1
   }
 
-  private def addNewPage() {
+  private def addNewPage(pages: ListBuffer[PdfPTable]) {
     val page = new PdfPTable(1)
     page.setWidthPercentage(100.0f)
-    pages = page +: pages
+    pages.append(page)
   }
 
   private def createStoryRow(story: Story): PdfPCell = {
@@ -86,7 +92,7 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     val undefined =  "________"
     val priority = story.priority.getOrElse(undefined).toString
     val points = story.scrumPoints.getOrElse(undefined).toString
-    if (config.hidePriority == 0) {
+    if (config.hidePriority) {
       metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
                                 config.bigFont))
     } else {
@@ -107,15 +113,13 @@ class StoryPrinter(contentSize: Rectangle, config: Configuration)
     metaCell
   }
 
-  override def printPages(): Seq[PdfPTable] = {
-    fillWithEmptyCells
-    pages
-  }
-
-  private def fillWithEmptyCells() {
+  private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfStoriesAdded: Int) {
     val emptyStory = Story("", None, None)
-    while (noOfElements % StoryPrinter.rowSize != 0) {
-      addStory(emptyStory)
-    }
+    val storiesForFullPage = (
+        (noOfStoriesAdded.toDouble / StoryPrinter.rowSize).ceil * StoryPrinter.rowSize
+      ).toInt
+   (noOfStoriesAdded until storiesForFullPage) foreach { index =>
+     addStory(pages, index, emptyStory)
+   }
   }
 }

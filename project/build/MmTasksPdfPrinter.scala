@@ -20,6 +20,8 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
     "commons-lang" % "commons-lang" % "2.4" % "compile->default",
     "com.itextpdf" % "itextpdf" % "5.0.2" % "compile->default",
     "javax.servlet" % "servlet-api" % "2.3" % "compile->default",
+    "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default",
+    "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default",
     "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default",
     "junit" % "junit" % "4.5" % "test->default",
     "org.scalatest" % "scalatest" % "1.2" % "test->default",

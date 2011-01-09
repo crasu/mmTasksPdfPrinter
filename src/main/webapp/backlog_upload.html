@@ -2,7 +2,7 @@
     <lift:snippet type="backlogUpload:upload" form="post" multipart="true">
         <choose:upload>
             <h2>Step 1: Select a mindmap</h2>
-            Select a mm file to upload: <upload:fileUpload/><br />
+            Select a mm file to upload <upload:fileUpload/><br />
             <input type="submit" value="Upload File"/>
         </choose:upload>
     </lift:snippet>
@@ -10,20 +10,9 @@
         <choose:selection>
             <h2>Step 2: Select a story</h2>
             Select the sprint you want to print.<br/>
-            <tr>
-              <td>Name</td>
-              <td><storySelection:story><input type="text"/></storySelection:story></td>
-            </tr>
+            Name <storySelection:story><input type="text"/></storySelection:story>
         </choose:selection>
     </lift:snippet>
-    <lift:backlogUpload.select>
-        <h2>Step 2: Select a story</h2>
-        Select the sprint you want to print.<br/>
-        <tr>
-          <td>Name</td>
-          <td><storySelection:story><input type="text"/></storySelection:story></td>
-        </tr>
-    </lift:backlogUpload.select>
     <lift:snippet type="backlogUpload:create" form="post" multipart="true">
         <choose:create>
             <h2>Step 3: Select output format</h2>
@@ -42,6 +31,11 @@
                   <td/>
                   <td>Password</td>
                   <td><jira:password><input type="text"/></jira:password></td>
+                </tr>
+               <tr>
+                  <td/>
+                  <td>Project ID</td>
+                  <td><jira:project><input type="text"/></jira:project></td>
                 </tr>
                 <tr>
                     <td><pdf:submit><input type="submit"/></pdf:submit></td>

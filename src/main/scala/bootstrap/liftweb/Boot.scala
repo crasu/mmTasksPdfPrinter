@@ -25,7 +25,7 @@ class Boot {
     // Add statefull dispatchers
     LiftRules.dispatch.append {
       case Req(List("your_tasks"), _, _)  =>
-        () => TaskCreator.reply()
+        () => PdfCreator.create()
     }
 
   }
