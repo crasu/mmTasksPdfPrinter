@@ -9,7 +9,7 @@ import net.liftweb.common.{Box, Full, Empty}
 import net.liftweb.http.RequestVar
 
 import com.tngtech.mmtaskspdfprinter.scrum._
-import com.tngtech.mmtaskspdfprinter.pdf._
+import com.tngtech.mmtaskspdfprinter.creation.pdf._
 import com.tngtech.mmtaskspdfprinter.creation.jira._
 
 /**

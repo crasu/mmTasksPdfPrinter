@@ -11,10 +11,24 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
 	val proguardConfigurationPath: Path = outputPath / "proguard.pro"
 
   val toolsConfig = config("tools")
+  val proguardLibsConfig = config("proguard")
 
   val iTextUrl = new java.net.URL("http://maven.itextpdf.com/")
   val iTextRepo = Resolver.url("com.itextpdf", iTextUrl)
 
+  val lift = "net.liftweb" %% "lift-mapper" % "2.1" % "compile->default"
+  val commons = "commons-lang" % "commons-lang" % "2.4" % "compile->default"
+  val itext = "com.itextpdf" % "itextpdf" % "5.0.2" % "compile->default"
+  val servlet = "javax.servlet" % "servlet-api" % "2.3" % "proguard->default"
+  //val xmlrpcCommon = "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default"
+  val xmlrpcClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default"
+  // val httpCommon = "commons-httpclient" % "commons-httpclient" % "3.0.1" % "proguard->default"
+  val jettyDep =  "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default"
+  val junit = "junit" % "junit" % "4.5" % "test->default"
+  val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test->default"
+  val proguardDep = "net.sf.proguard" % "proguard" % "4.4" % "tools->default"
+  val container = "org.jvnet.hudson.winstone" % "winstone" % "0.9.10-hudson-24" % "tools->default"
+/*
   override def libraryDependencies = Set(
     "net.liftweb" %% "lift-mapper" % "2.1" % "compile->default",
     "commons-lang" % "commons-lang" % "2.4" % "compile->default",
@@ -30,7 +44,7 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
   ) ++ super.libraryDependencies
   def container = libraryDependencies.find(_.name == "winstone").
     getOrElse(throw new java.io.FileNotFoundException("Couldn't find dependency winstone"))
-
+*/
 
   override lazy val `package` = packageAction dependsOn(createClassesJar, removeClasses)
   lazy val createClassesJar = createClassesJarTask(temporaryWarPath) dependsOn(prepareWebapp) describedAs ("Creating classes.jar")
@@ -63,11 +77,21 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
       |-injars %s
       |-outjars %s
       |-libraryjars <java.home>/lib/rt.jar 
-      |-libraryjars <java.home>/lib/jce.jar 
+      |-libraryjars <java.home>/lib/jce.jar
+      |-libraryjars %s
       |-dontskipnonpubliclibraryclasses
       |-dontskipnonpubliclibraryclassmembers
       |-dontnote
       |-ignorewarnings
+      |-dontwarn **$$anonfun$*
+      |-dontwarn scala.collection.immutable.RedBlack$Empty
+      |-dontwarn scala.tools.**,plugintemplate.**
+      |
+      |-keep class * implements org.xml.sax.EntityResolver
+      |
+      |-keepclassmembers class * {
+      |    ** MODULE$;
+      |}
       |-keep public class bootstrap.liftweb.Boot {
       | public *;
       |}
@@ -77,21 +101,35 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
       |-keep public class * extends javax.servlet.** {
       | public *;
       |}
-      |-keep public class javax.servlet.** {
-      | public *;
-      |}
       |-keep public class * extends org.apache.log4j.Appender {
       | public *;
       |}
       |-keep public class * extends org.apache.log4j.Layout {
       | public *;
       |}
+      |-keep public class org.apache.xmlrpc.** {
+      | public *;
+      |}
+      |-keep public class javax.xml.** {
+      | public *;
+      |}
+      |-keep public class org.apache.xmlcommons.** {
+      | public *;
+      |}
+      |-keep public class org.w3c.dom.** {
+      | public *;
+      |}
+      |-keep public class org.xml.sax.** {
+      | public *;
+      |}
       |"""
-
+      val libClasspath = managedClasspath(proguardLibsConfig)
+      val libClasspathString = Path.makeString(libClasspath.get)
       val proguardConfiguration =
         outTemplate.stripMargin.format(
           mkpath(jarPath.asFile),
-          mkpath(shrinkedJarPath.asFile))
+          mkpath(shrinkedJarPath.asFile),
+          libClasspathString)
 			FileUtilities.write(proguardConfigurationPath.asFile, proguardConfiguration, log)
       None
   }
