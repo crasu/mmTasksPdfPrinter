@@ -20,31 +20,20 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
   val commons = "commons-lang" % "commons-lang" % "2.4" % "compile->default"
   val itext = "com.itextpdf" % "itextpdf" % "5.0.2" % "compile->default"
   val servlet = "javax.servlet" % "servlet-api" % "2.3" % "proguard->default"
-  //val xmlrpcCommon = "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default"
-  val xmlrpcClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default"
-  // val httpCommon = "commons-httpclient" % "commons-httpclient" % "3.0.1" % "proguard->default"
+  /*
+   * xmlrpcClient dependencies needed to be resolved manually since:
+   * xmlrpcClient depends on xmLrpcCommon which depends on wsCommons which depends on xml-apis
+   * xml-apis may not be added as dependency since it brings jce.jar would then
+   * also depend on xml-apis and this would cause proguard to fail
+   */
+  val xmlrpcClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default" intransitive
+  val xmlrpcCommon = "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default" intransitive
+  val wsCommons = "org.apache.ws.commons" % "ws-commons-util" % "1.0.1" % "compile->default" intransitive
   val jettyDep =  "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default"
   val junit = "junit" % "junit" % "4.5" % "test->default"
   val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test->default"
   val proguardDep = "net.sf.proguard" % "proguard" % "4.4" % "tools->default"
   val container = "org.jvnet.hudson.winstone" % "winstone" % "0.9.10-hudson-24" % "tools->default"
-/*
-  override def libraryDependencies = Set(
-    "net.liftweb" %% "lift-mapper" % "2.1" % "compile->default",
-    "commons-lang" % "commons-lang" % "2.4" % "compile->default",
-    "com.itextpdf" % "itextpdf" % "5.0.2" % "compile->default",
-    "javax.servlet" % "servlet-api" % "2.3" % "compile->default",
-    "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default",
-    "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default",
-    "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default",
-    "junit" % "junit" % "4.5" % "test->default",
-    "org.scalatest" % "scalatest" % "1.2" % "test->default",
-    "net.sf.proguard" % "proguard" % "4.4" % "tools->default",
-    "org.jvnet.hudson.winstone" % "winstone" % "0.9.10-hudson-24" % "tools->default"
-  ) ++ super.libraryDependencies
-  def container = libraryDependencies.find(_.name == "winstone").
-    getOrElse(throw new java.io.FileNotFoundException("Couldn't find dependency winstone"))
-*/
 
   override lazy val `package` = packageAction dependsOn(createClassesJar, removeClasses)
   lazy val createClassesJar = createClassesJarTask(temporaryWarPath) dependsOn(prepareWebapp) describedAs ("Creating classes.jar")
@@ -105,21 +94,6 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
       | public *;
       |}
       |-keep public class * extends org.apache.log4j.Layout {
-      | public *;
-      |}
-      |-keep public class org.apache.xmlrpc.** {
-      | public *;
-      |}
-      |-keep public class javax.xml.** {
-      | public *;
-      |}
-      |-keep public class org.apache.xmlcommons.** {
-      | public *;
-      |}
-      |-keep public class org.w3c.dom.** {
-      | public *;
-      |}
-      |-keep public class org.xml.sax.** {
       | public *;
       |}
       |"""
