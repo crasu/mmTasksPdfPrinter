@@ -18,7 +18,7 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
     val exp = List(Subtask("First subtask"),
                    Subtask("Second subtask"))
 
-    it("must keep the order of the subtasks") {
+    it("must keep the order of its subtasks") {
       t.subtasks must be (exp)
     }
   }
@@ -33,18 +33,18 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
      val exp = List(Task("First task", "Dev"),
                     Task("Second task", "CT"))
 
-    it("must keep the order of the tasks") {
+    it("must keep the order of its tasks") {
       s.tasks must be (exp)
     }
   }
 
   describe("A story") {
-    it("must be equal") {
+    it("must recognize equal stories") {
       Story("One", None, None) must be (Story("One", None, None))
       Story("One", 16, None) must be (Story("One", 16, None))
       Story("One", 16, 1) must be (Story("One", 16, 1))
     }
-    it("must not be equal") {
+    it("must recognize different stories") {
       Story("One", None, None) must not be (Story("One", 1, None))
       Story("One", 2, None) must not be (Story("One", 1, None))
       Story("One", 16, None) must not be (Story("Two", 16, None))
@@ -62,7 +62,7 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
      val exp = List(Story("First story", None, None),
                     Story("Second story", None, None))
 
-    it("must keep the order of the stories") {
+    it("must keep the order of its stories") {
       s.stories must be (exp)
     }
   }

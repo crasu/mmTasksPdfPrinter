@@ -20,9 +20,19 @@ class JiraTaskCreator(val url: String, val user: String,
     config.setServerURL(new URL(normalizedUrl+JiraTaskCreator.rpcPath))
     rpcClient.setConfig(config)
     val loginToken = rpcClient.execute("jira1.login", List(user, pass)).toString
+    val projects = rpcClient.execute("jira1.getProjectsNoSchemes", List(loginToken)).
+                    asInstanceOf[Array[AnyRef]].
+                      map(_.asInstanceOf[java.util.HashMap[String, String]])
+    val projectKeys: List[String] = projects.map(_.get("key")).toList
+    if (!projectKeys.exists(project == _)) {
+      rpcClient.execute("jira1.logout", List(loginToken))
+      throw new Exception("JIRA project "+project+" doesn't exist!\n" +
+                          "Please create it or choose one of these projects: "+
+                            projectKeys.mkString(", "))
+    }
 
     for (b <- backlogs; s <- b.stories; t <- s.tasks) {
-      val subtasks = t.subtasks.map("- "+_).mkString("\n")
+      val subtasks = t.subtasks.map("- "+_.description).mkString("\n")
       val category =
         if (t.category.isEmpty) ""
         else "Category: " + t.category + "\n"
@@ -39,5 +49,6 @@ class JiraTaskCreator(val url: String, val user: String,
         )
       rpcClient.execute("jira1.createIssue", List(loginToken, args))
     }
+    rpcClient.execute("jira1.logout", List(loginToken))
   }
 }

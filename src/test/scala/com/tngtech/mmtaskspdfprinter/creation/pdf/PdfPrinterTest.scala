@@ -28,7 +28,7 @@ class PdfPrinterTest extends Spec with MustMatchers {
         )
       )
 
-      it("and it must write to a file") {
+      it("it must write to a file without error") {
         val pdf = printer.create(List(backlog))
         pdf.size must not be(0)
       }

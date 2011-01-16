@@ -17,11 +17,11 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
   describe("MmParser sanity check") {
     val sanityCheck = PrivateMethod[Boolean]('sanityCheck)
-    val actForValid = MmParser invokePrivate sanityCheck(validData)
-    it("must be able to detect valid data") {
+    it("must detect valid data") {
+      val actForValid = MmParser invokePrivate sanityCheck(validData)
       actForValid must be (true)
     }
-    it("and invalid data") {
+    it("must detect invalid data") {
       val actForInvalid = MmParser invokePrivate sanityCheck(invalidData)
       actForInvalid must be (false)
     }
@@ -42,21 +42,21 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
     val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
     val expBrackets = Some(123)
-    it("must be able to parse points in brackets") {
+    it("must parse points in brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descBrackets)
       act must be (expBrackets)
     }
 
     val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
     val expCurely = Some(7)
-    it("must be able to parse points in curely brackets") {
+    it("must parse points in curely brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descCurely)
       act must be (expCurely)
     }
 
     val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
     val expCombined = Some(5)
-    it("must be able to parse points even if it is ambiguous") {
+    it("must parse points even if it is ambiguous") {
       val act = MmParser invokePrivate extractScrumPoints(descCombined)
       act must be (expCombined)
     }
@@ -78,7 +78,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
                    Subtask("write module mod2 part a"),
                    Subtask("write module mod2 part b"))
     val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
-    it("must be able to parse all subtasks of a task") {
+    it("must parse all subtasks of a task") {
       val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
       subtasks.toList must be (exp)
     }
