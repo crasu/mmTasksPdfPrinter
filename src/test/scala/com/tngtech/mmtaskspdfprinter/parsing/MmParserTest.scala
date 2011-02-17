@@ -130,6 +130,38 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   }
 
   describe("MmParser") {
+    val root = XML.loadString("""<map version="0.9.0">
+<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
+<node CREATED="1265988225850" ID="ID_204900544" MODIFIED="1269505504609" TEXT="Product Backlog">
+<node CREATED="1269526293331" ID="Freemind_Link_879171622" MODIFIED="1272014836816" POSITION="right" TEXT="Sprint 2010-20 (123 pts)">
+<node CREATED="1269526444157" ID="Freemind_Link_203734451" MODIFIED="1297930433713">
+<richcontent TYPE="NODE"><html>
+  <head>
+
+  </head>
+  <body>
+    <p>
+      csasd <b>2412432</b>
+    </p>
+  </body>
+</html></richcontent>
+<icon BUILTIN="full-2"/>
+<icon BUILTIN="bookmark"/>
+<node CREATED="1269526453385" ID="Freemind_Link_1753761911" MODIFIED="1297932020174" TEXT="no task"/>
+</node>
+</node>
+</node>
+</map>""")
+
+    val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
+    val exp = List(SprintBacklog("Sprint 2010-20", Story("csasd 2412432", None, Some(1))))
+    it("must be able to handle HTML nodes") {
+      val act = MmParser.parse(root)
+      act.toList must be (exp)
+    }
+  }
+
+  describe("MmParser") {
     val exp = List(
       SprintBacklog("Sprint 2010-20", 
         Story("asdf", None, 1, 

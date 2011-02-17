@@ -3,6 +3,7 @@ package com.tngtech.mmtaskspdfprinter.parsing
 import com.tngtech.mmtaskspdfprinter.scrum._
 import org.apache.commons.lang.StringEscapeUtils
 import scala.xml._
+import net.htmlparser.jericho._
 
 object MmParser {
   private val storyAnnotation = "bookmark"
@@ -20,7 +21,7 @@ object MmParser {
 
   private def traverseBacklogs(root: Node) = 
     (root\"node") flatMap {possibleBacklogNode =>
-      (possibleBacklogNode\"@TEXT").head.text match {
+      extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
           val stories = traverseStories(possibleBacklogNode)
           val backlog = SprintBacklog(extractDescription(name), stories: _*)
@@ -81,13 +82,13 @@ object MmParser {
       (path.head\"node") flatMap {child => findLeaves(child +: path)}
 
   private def extractScrumPoints(node: Node): Option[Int] =
-    (node\"@TEXT").head.text match {
+    extractText(node) match {
       case pointsExtractor(_, points) => Some(Integer.parseInt(points))
       case _ => None
     }
 
-  private def extractDescription(node: Node): String = 
-    extractDescription((node\"@TEXT").head.text)
+  private def extractDescription(node: Node): String =
+    extractDescription(extractText(node))
   
   private def extractDescription(text: String): String = {
     var result = text.replaceAll("""\(\s*\d+.*\)""", "") // Things in brackets
@@ -97,5 +98,16 @@ object MmParser {
     result = result.replaceAll("""\s+$""", "")
     result = result.replaceAll("""\s+""", " ")
     result    
+  }
+
+  private def extractText(node: Node): String =
+    if ((node\"@TEXT").size > 0) (node\"@TEXT").head.text
+    else if ((node\"richcontent").size > 0) extractFromHtml((node\"richcontent").head.text)
+    else ""
+
+
+  private def extractFromHtml(html: String): String = {
+    val source = new Source(html)
+    source.getTextExtractor().toString()
   }
 }

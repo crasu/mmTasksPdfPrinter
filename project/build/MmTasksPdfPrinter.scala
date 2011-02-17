@@ -29,6 +29,7 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
   val xmlrpcClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default" intransitive
   val xmlrpcCommon = "org.apache.xmlrpc" % "xmlrpc-common" % "3.1.3" % "compile->default" intransitive
   val wsCommons = "org.apache.ws.commons" % "ws-commons-util" % "1.0.1" % "compile->default" intransitive
+  val jerichoHtmlParser = "net.htmlparser.jericho" % "jericho-html" % "3.1" % "compile->default"
   val jettyDep =  "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default"
   val junit = "junit" % "junit" % "4.5" % "test->default"
   val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test->default"
