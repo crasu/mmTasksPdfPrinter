@@ -8,8 +8,11 @@ import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 import com.tngtech.mmtaskspdfprinter.scrum._
 
 private object TaskPrinter {
-  private val columnSize = 3
-  private val rowSize = 4
+}
+
+private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
+
+  private val (columnSize, rowSize) = if (config.largeSize) (2,3) else (3, 4)
   private val noOfElementsPerPage = columnSize * rowSize
   private val maxNoOfSubtasks = 5
   private val square = {
@@ -20,9 +23,6 @@ private object TaskPrinter {
     val symbolFont = new Font(baseFontSymbol, 10)
     new Chunk("\u2752", symbolFont)
   }
-}
-
-private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
 
   def create(stories: List[Story]): Seq[PdfPTable] = {
     val pages = ListBuffer[PdfPTable]()
@@ -36,7 +36,7 @@ private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
 
   private def addTask(pages: ListBuffer[PdfPTable], count: Int,
                       story: Story, task: Task) {
-    if (count % TaskPrinter.noOfElementsPerPage == 0) {
+    if (count % noOfElementsPerPage == 0) {
       addNewPage(pages)
     }
 
@@ -45,7 +45,7 @@ private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
   }
 
   private def addNewPage(pages: ListBuffer[PdfPTable]) {
-    val page = new PdfPTable(TaskPrinter.columnSize)
+    val page = new PdfPTable(columnSize)
     page.setWidthPercentage(100)
     pages.append(page)
   }
@@ -61,25 +61,25 @@ private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
     val cell = new PdfPCell()
     cell.setPadding(0)
     cell.setIndent(0)
-    cell.setFixedHeight(contentSize.getHeight() / TaskPrinter.rowSize)
+    cell.setFixedHeight(contentSize.getHeight() / rowSize - 1)
     cell
   }
 
   private def taskToPhrase(story: Story, task: Task): Phrase = {
-    val phrase = new Phrase()
+    val phrase = if (config.largeSize) new Phrase(24) else new Phrase()
     phrase.add(new Chunk(story.name + "\n", config.normalFont))
     phrase.add(new Chunk(task.category + "\n", config.smallFont))
     phrase.add(new Chunk(task.description + "\n", config.bigFont))
 
-    task.subtasks.take(TaskPrinter.maxNoOfSubtasks - 1).foreach {subtask =>
-      phrase.add(TaskPrinter.square)
+    task.subtasks.take(maxNoOfSubtasks - 1).foreach {subtask =>
+      phrase.add(square)
       phrase.add(new Chunk(" " + subtask.description + "\n", config.normalFont))
     }
-    val remainingTasks = task.subtasks.drop(TaskPrinter.maxNoOfSubtasks - 1)
+    val remainingTasks = task.subtasks.drop(maxNoOfSubtasks - 1)
     if (!remainingTasks.isEmpty) {
       val descriptions = remainingTasks.map(_.description)
       val concated = descriptions.mkString(", ")
-      phrase.add(TaskPrinter.square)
+      phrase.add(square)
       phrase.add(new Chunk(" " + concated + "\n", config.normalFont))
     }
     phrase
@@ -90,17 +90,17 @@ private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
     table.setWidthPercentage(100.0f)
     var cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
-    cell.setPadding(5.0f)
+    cell.setPadding(if(config.largeSize) 5.0f else 16.0f)
     cell.setIndent(0)
     cell.addElement(phrase)
-    cell.setFixedHeight(outerCell.getFixedHeight() - 3)
+    //cell.setFixedHeight(outerCell.getFixedHeight() - 3)
     cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - 3)
     table.addCell(cell)
 
     cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(0)
-    cell.setPaddingLeft(5.0f)
+    cell.setPaddingLeft(if(config.largeSize) 5.0f else 12.0f)
     cell.setIndent(0)
     cell.addElement(config.companyLogo)
     cell.setFixedHeight(config.companyLogo.getScaledHeight)
@@ -113,7 +113,7 @@ private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
     val emptyTask = Task("", "")
     val emptyStory = Story("", None, None)
     val tasksForFullPage = (
-        (noOfTasksAdded.toDouble / TaskPrinter.noOfElementsPerPage).ceil * TaskPrinter.noOfElementsPerPage
+        (noOfTasksAdded.toDouble / noOfElementsPerPage).ceil * noOfElementsPerPage
       ).toInt
     (noOfTasksAdded until tasksForFullPage) foreach { index =>
       addTask(pages, index, emptyStory, emptyTask)

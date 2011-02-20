@@ -17,7 +17,7 @@ object Configuration {
 
 class Configuration {
 
-  val (hidePriority, colour, pageSize) = {
+  val (hidePriority, colour, largeSize, pageSize) = {
     val file = new File(Configuration.CONFIG_FILE_NAME)
     val lines =
       if (file.exists) Source.fromFile(file).getLines.toList
@@ -32,10 +32,12 @@ class Configuration {
       case empty(comment) => List()
       case invalid => throw new ConfigException("Invalid config line: " + invalid)
     }
-
+println(properties)
+    println(new File(".").getAbsoluteFile)
     (
       properties.getOrElse("hidePriority", "0") == "0",
       properties.getOrElse("colour", "44 106 168").split(" ").map(c => c.toInt),
+      properties.getOrElse("largeLayout", "false").toBoolean,
       PageSize.A4
     )
   }
@@ -45,10 +47,16 @@ class Configuration {
     * Vera.ttf is provided by http://www.gnome.org/fonts/
     */
     val baseFontNormal = BaseFont.createFont("/Vera.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
-    (new Font(baseFontNormal, 9, Font.ITALIC),
-     new Font(baseFontNormal, 10),
-     new Font(baseFontNormal, 12, Font.BOLD),
-     new Font(baseFontNormal, 16, Font.BOLD))
+    if (largeSize)
+      (new Font(baseFontNormal, 12, Font.ITALIC),
+       new Font(baseFontNormal, 18),
+       new Font(baseFontNormal, 24, Font.BOLD),
+       new Font(baseFontNormal, 32, Font.BOLD))
+    else
+      (new Font(baseFontNormal, 9, Font.ITALIC),
+       new Font(baseFontNormal, 10),
+       new Font(baseFontNormal, 12, Font.BOLD),
+       new Font(baseFontNormal, 16, Font.BOLD))
   }
 
   val companyLogo =  {
