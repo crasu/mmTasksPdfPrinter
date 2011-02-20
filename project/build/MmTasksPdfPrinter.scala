@@ -2,7 +2,7 @@ import sbt._
 
 import java.io.File
 
-class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) {
+class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with IdeaProject {
 
   val suffix = ".war"
   override lazy val jarPath: Path = outputPath / (defaultJarBaseName + suffix)
