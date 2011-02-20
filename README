@@ -22,7 +22,7 @@ Hint: Per default Alt+i is the hotkey for attaching icons to a node in Freemind
 
 = Configuration =
 The configuration is completely optional. The files are searched in the
-currend working directory during startup.
+current working directory during startup.
 
 == design.conf ==
 Here is an example for a configuration file:
