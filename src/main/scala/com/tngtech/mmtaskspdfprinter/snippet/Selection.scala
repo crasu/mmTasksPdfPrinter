@@ -47,6 +47,6 @@ trait Selection {
             case None => selectedBacklog(Empty)
           }
           JsFunc("""document.forms["select"].submit""").cmd
-       })
+       }, "id" -> "sprintSelect")
   }
 }

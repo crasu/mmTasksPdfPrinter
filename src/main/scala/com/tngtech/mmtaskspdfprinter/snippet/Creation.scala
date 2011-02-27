@@ -26,10 +26,10 @@ trait Creation {
 
     if (selectedBacklog.set_? && !selectedBacklog.is.isEmpty) {
       val template = bind("jira", chooseTemplate("choose", "create", xhtml),
-          "url" -> SHtml.text(jiraUrl.is.getOrElse(""), url => jiraUrl(Full(url))),
-          "user" -> SHtml.text(jiraUser.is.getOrElse(""), user => jiraUser(Full(user))),
-          "password" -> SHtml.password("", jiraPassword = _),
-          "project" -> SHtml.text(jiraProject.is.getOrElse(""), proj => jiraProject(Full(proj))),
+          "url" -> SHtml.text(jiraUrl.is.getOrElse(""), url => jiraUrl(Full(url)), "id" -> "jiraUrl"),
+          "user" -> SHtml.text(jiraUser.is.getOrElse(""), user => jiraUser(Full(user)), "id" -> "jiraUser"),
+          "password" -> SHtml.password("", jiraPassword = _, "id" -> "jiraPass"),
+          "project" -> SHtml.text(jiraProject.is.getOrElse(""), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
           "submit" -> SHtml.submit("Send to JIRA",
             () => sendToJira(selectedBacklog.is.get, 
                              jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)))

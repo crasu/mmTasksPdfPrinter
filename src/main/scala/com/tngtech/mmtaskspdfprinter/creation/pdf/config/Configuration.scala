@@ -1,11 +1,9 @@
 package com.tngtech.mmtaskspdfprinter.creation.pdf.config
 
-import scala.io.Source
+import java.util.Properties
+import java.io.{File, FileInputStream, BufferedInputStream}
 import com.itextpdf.text.pdf._
-import com.itextpdf.text._
-import scala.List
-
-import java.io.File
+import com.itextpdf.text.{List => _, _}
 
 object Configuration {
   private val CONFIG_FILE_NAME = "layout.conf"
@@ -19,25 +17,14 @@ class Configuration {
 
   val (hidePriority, colour, largeSize, pageSize) = {
     val file = new File(Configuration.CONFIG_FILE_NAME)
-    val lines =
-      if (file.exists) Source.fromFile(file).getLines.toList
-      else List[String]()
-
-    val keyValuePair = """^\s*([^=]+)\s*=\s*([^=]+)\s*(#.*)?$""".r
-    val empty = """^\s*(#.*)?$""".r
-    val properties = Map() ++ lines.flatMap {
-      case keyValuePair(key, value, null) => List((key.trim -> value.trim))
-      case keyValuePair(key, value, comment) => List((key.trim -> value.trim))
-      case empty(null) => List()
-      case empty(comment) => List()
-      case invalid => throw new ConfigException("Invalid config line: " + invalid)
+    val properties = new Properties()
+    if (file.exists) {
+      properties.load(new BufferedInputStream(new FileInputStream(file)))
     }
-println(properties)
-    println(new File(".").getAbsoluteFile)
     (
-      properties.getOrElse("hidePriority", "0") == "0",
-      properties.getOrElse("colour", "44 106 168").split(" ").map(c => c.toInt),
-      properties.getOrElse("largeLayout", "false").toBoolean,
+      properties.getProperty("hidePriority", "0") == "0",
+      properties.getProperty("colour", "44 106 168").split(" ").map(c => c.toInt),
+      properties.getProperty("largeLayout", "false").toBoolean,
       PageSize.A4
     )
   }
