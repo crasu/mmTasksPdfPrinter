@@ -4,30 +4,22 @@ import java.util.Properties
 import java.io.{File, FileInputStream, BufferedInputStream}
 import com.itextpdf.text.pdf._
 import com.itextpdf.text.{List => _, _}
+import com.tngtech.mmtaskspdfprinter.model.CentralConfiguration
 
-object Configuration {
-  private val CONFIG_FILE_NAME = "layout.conf"
+object PdfConfiguration {
   private val LOGO_BASE_NAME = "logo"
   private val IMAGE_SUFFIXES = List(".png", ".gif", ".jpg", ".PNG", ".GIF", ".JPG")
 
-  val defaultConfig = new Configuration()
+  val defaultConfig: PdfConfiguration = new CentralConfiguration with PdfConfiguration
 }
 
-class Configuration {
+trait PdfConfiguration {
+  self: {def properties: Properties} =>
 
-  val (hidePriority, colour, largeSize, pageSize) = {
-    val file = new File(Configuration.CONFIG_FILE_NAME)
-    val properties = new Properties()
-    if (file.exists) {
-      properties.load(new BufferedInputStream(new FileInputStream(file)))
-    }
-    (
-      properties.getProperty("hidePriority", "0") == "0",
-      properties.getProperty("colour", "44 106 168").split(" ").map(c => c.toInt),
-      properties.getProperty("largeLayout", "false").toBoolean,
-      PageSize.A4
-    )
-  }
+  val hidePriority = properties.getProperty("pdf.hidePriority", "false").toBoolean
+  val colour = properties.getProperty("pdf.colour", "44 106 168").split(" ").map(c => c.toInt)
+  val largeSize = properties.getProperty("pdf.largeLayout", "false").toBoolean
+  val pageSize = PageSize.A4
 
   val (smallFont, normalFont, bigFont, hugeFont) = {
     /*
@@ -58,8 +50,8 @@ class Configuration {
   }
 
   private def fetch_logo() = {
-    val existingSuffix = Configuration.IMAGE_SUFFIXES.find(suffix => {
-        val file = new File(Configuration.LOGO_BASE_NAME + suffix)
+    val existingSuffix = PdfConfiguration.IMAGE_SUFFIXES.find(suffix => {
+        val file = new File(PdfConfiguration.LOGO_BASE_NAME + suffix)
         file.exists
       })
     if (existingSuffix.isEmpty) {
@@ -68,7 +60,7 @@ class Configuration {
     else {
       val awtImg =
         java.awt.Toolkit.getDefaultToolkit()
-          .createImage(Configuration.LOGO_BASE_NAME + existingSuffix.get)
+          .createImage(PdfConfiguration.LOGO_BASE_NAME + existingSuffix.get)
       Image.getInstance(awtImg, null)
     }
   }

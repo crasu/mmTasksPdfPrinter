@@ -11,6 +11,8 @@ import net.liftweb.http.RequestVar
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf._
 import com.tngtech.mmtaskspdfprinter.creation.jira._
+import com.tngtech.mmtaskspdfprinter.model._
+import com.tngtech.mmtaskspdfprinter.creation.jira.config._
 
 /**
  * Step 3: Task creation
@@ -25,11 +27,12 @@ trait Creation {
     var jiraPassword = ""
 
     if (selectedBacklog.set_? && !selectedBacklog.is.isEmpty) {
+      val config = new CentralConfiguration with JiraConfiguration
       val template = bind("jira", chooseTemplate("choose", "create", xhtml),
-          "url" -> SHtml.text(jiraUrl.is.getOrElse(""), url => jiraUrl(Full(url)), "id" -> "jiraUrl"),
+          "url" -> SHtml.text(jiraUrl.is.getOrElse(config.hostname), url => jiraUrl(Full(url)), "id" -> "jiraUrl"),
           "user" -> SHtml.text(jiraUser.is.getOrElse(""), user => jiraUser(Full(user)), "id" -> "jiraUser"),
           "password" -> SHtml.password("", jiraPassword = _, "id" -> "jiraPass"),
-          "project" -> SHtml.text(jiraProject.is.getOrElse(""), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
+          "project" -> SHtml.text(jiraProject.is.getOrElse(config.project), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
           "submit" -> SHtml.submit("Send to JIRA",
             () => sendToJira(selectedBacklog.is.get, 
                              jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)))

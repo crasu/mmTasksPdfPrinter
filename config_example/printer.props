@@ -1,0 +1,5 @@
+pdf.hidePriority=true
+pdf.colour=191 137 73
+pdf.largeLayout=true
+jira.hostname=http://localhost:8090
+jira.project=MMTEST

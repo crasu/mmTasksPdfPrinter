@@ -8,7 +8,7 @@ import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 
 class PdfPrinter[T <: OutputStream] (outputStreamConstructor: () => T,
-                 val config: Configuration = Configuration.defaultConfig) {
+                 val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
 
   def create(backlogs: List[SprintBacklog]): T = {
     val (doc, outputStream) = setupDocumentAndStream()

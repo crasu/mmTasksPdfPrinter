@@ -10,7 +10,7 @@ import com.tngtech.mmtaskspdfprinter.scrum._
 private object TaskPrinter {
 }
 
-private class TaskPrinter(contentSize: Rectangle, config: Configuration) {
+private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
 
   private val (columnSize, rowSize) = if (config.largeSize) (2,3) else (3, 4)
   private val noOfElementsPerPage = columnSize * rowSize

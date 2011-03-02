@@ -11,7 +11,7 @@ private object StoryPrinter {
   private val rowSize = 4
 }
 
-private class StoryPrinter(val contentSize: Rectangle, val config: Configuration) {
+private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
 
   def create(stories: List[Story]): Seq[PdfPTable] = {
     val pages = ListBuffer[PdfPTable]()
