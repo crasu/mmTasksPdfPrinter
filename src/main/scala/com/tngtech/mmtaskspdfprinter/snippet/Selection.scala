@@ -1,6 +1,7 @@
 package com.tngtech.mmtaskspdfprinter.snippet
 
 import scala.xml.{NodeSeq, Group, XML}
+import net.liftweb.http.S
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
 import net.liftweb.common.{Box, Full, Empty}
@@ -23,12 +24,15 @@ trait Selection {
       NodeSeq.Empty
     }
 
-  private def askForSprint(xhtml: Group) = {
+  private def askForSprint(xhtml: Group): NodeSeq = try {
     val file = uploadContainer.is.open_!.file
     val xml = XML.loadString(new String(file, "UTF-8"))
-    var backlogs = MmParser.parse(xml).toList
+    val backlogs = MmParser.parse(xml).toList
     bind("storySelection", chooseTemplate("choose", "selection", xhtml),
       "story" -> createStorySelectBox(backlogs))
+  } catch {
+    case ex: org.xml.sax.SAXParseException => S.error("Invalid XML file: " + ex.getMessage); NodeSeq.Empty
+    case ex: ParsingException => S.error("Invalid mindmap: " + ex.getMessage); NodeSeq.Empty
   }
 
   private def createStorySelectBox(allBacklogs: List[SprintBacklog]): NodeSeq = {

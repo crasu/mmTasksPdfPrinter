@@ -7,48 +7,62 @@ import org.apache.commons.httpclient.methods.multipart._
 import org.apache.commons.httpclient.methods._
 import java.net.URL
 import scala.collection.JavaConversions._
+import config._
 
 import com.tngtech.mmtaskspdfprinter.scrum._
+
+class JiraException(msg: String, cause: Exception) extends Exception(msg, cause)
 
 object JiraTaskCreator {
   val rpcPath = "/rpc/xmlrpc"
 }
 
-class JiraTaskCreator(rawUrl: String, val user: String,
+class JiraTaskCreator(val config: JiraConfiguration,
+                      rawUrl: String, val user: String,
                       val pass: String, val projectName: String) {
 
   private val url = """\/$""".r.replaceAllIn(rawUrl, "")
 
-  private val rpcClient = {
+  private val rpcClient = try {
     val rpcClient = new XmlRpcClient()
     val config = new XmlRpcClientConfigImpl()
     config.setServerURL(new URL(url+JiraTaskCreator.rpcPath))
     rpcClient.setConfig(config)
     rpcClient
+  } catch {
+    case ex: org.apache.xmlrpc.XmlRpcException => throw new JiraException("Failed to setup connection to JIRA", ex)
   }
 
-  private val loginToken = rpcClient.execute("jira1.login", List(user, pass)).toString
+  private val loginToken = try {
+    rpcClient.execute("jira1.login", List(user, pass)).toString
+  } catch {
+    case ex: org.apache.xmlrpc.XmlRpcException => throw new JiraException("Failed to login to JIRA", ex)
+  }
 
-  def create(backlogs: List[SprintBacklog]) {  
-    val projects = rpcClient.execute("jira1.getProjectsNoSchemes", List(loginToken)).
-                    asInstanceOf[Array[AnyRef]].
-                      map(_.asInstanceOf[java.util.HashMap[String, String]])
-    val project = projects.find(projectName == _.get("key"))
-    if (project.isEmpty) {
-      rpcClient.execute("jira1.logout", List(loginToken))
-      throw new Exception("JIRA project "+projectName+" doesn't exist!\n" +
-                          "Please create it or choose one of these projects: "+
-                           projects.map(_.get("key")).toList)
-    }
-
-    val projectId = project.get.get("id")
-    for (b <- backlogs; s <- b.stories) {
-      val parentId = createIssue(s)
-      for (t <- s.tasks) {
-        createSubissue(projectId, parentId, s, t)
+  def create(backlogs: List[SprintBacklog]) {
+    try {
+      val projects = rpcClient.execute("jira1.getProjectsNoSchemes", List(loginToken)).
+                      asInstanceOf[Array[AnyRef]].
+                        map(_.asInstanceOf[java.util.HashMap[String, String]])
+      val project = projects.find(projectName == _.get("key"))
+      if (project.isEmpty) {
+        rpcClient.execute("jira1.logout", List(loginToken))
+        throw new Exception("JIRA project "+projectName+" doesn't exist!\n" +
+                            "Please create it or choose one of these projects: "+
+                             projects.map(_.get("key")).toList)
       }
+
+      val projectId = project.get.get("id")
+      for (b <- backlogs; s <- b.stories) {
+        val parentId = createIssue(s)
+        for (t <- s.tasks) {
+          createSubissue(projectId, parentId, s, t)
+        }
+      }
+      rpcClient.execute("jira1.logout", List(loginToken))
+    } catch {
+      case ex: Exception => throw new JiraException("An error occured while sending Data to JIRA", ex)
     }
-    rpcClient.execute("jira1.logout", List(loginToken))
   }
 
   def createIssue(story: Story): String = {
@@ -85,7 +99,7 @@ class JiraTaskCreator(rawUrl: String, val user: String,
          "timetracking_remainingestimate" -> "",
          "isCreateIssue" -> "true",
          "hasWorkStarted" -> "",
-         "issuetype" -> "5",
+         "issuetype" -> config.subissueid,
          "viewIssueKey" -> "",
          "pid" -> projectId,
          "parentIssueId" -> parentId,

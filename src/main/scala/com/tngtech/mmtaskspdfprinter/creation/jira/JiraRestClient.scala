@@ -30,7 +30,7 @@ class JiraRestClient(val url: String) {
     val status = client.executeMethod(postMethod)
     val response = postMethod.getResponseBodyAsString()
     if (response.contains("form-message error") || (status != 200 && status != 302)) {
-      throw new JiraRestException("Jira Responeded with an error. Status: "+status+"------------------------\n"+bout+"------------------------\n"+response)
+      throw new JiraRestException(response)
     }
   }
 }

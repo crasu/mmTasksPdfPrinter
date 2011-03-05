@@ -34,7 +34,7 @@ trait Creation {
           "password" -> SHtml.password("", jiraPassword = _, "id" -> "jiraPass"),
           "project" -> SHtml.text(jiraProject.is.getOrElse(config.project), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
           "submit" -> SHtml.submit("Send to JIRA",
-            () => sendToJira(selectedBacklog.is.get, 
+            () => sendToJira(config, selectedBacklog.is.get,
                              jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)))
       bind("pdf", template, "submit" -> SHtml.submit("Create PDF",
             () => createPdf(selectedBacklog.is.get)))
@@ -48,10 +48,9 @@ trait Creation {
                  () => PdfCreator.selectedBacklogs.set(List(selectedBacklog)))
   }
 
-  private def sendToJira(selectedBacklog: SprintBacklog, url: String,
+  private def sendToJira(config: JiraConfiguration,
+                         selectedBacklog: SprintBacklog, url: String,
                          user: String, password: String, project: String) {
-    val creator = new JiraTaskCreator(url, user, password, project)
-
     val validationErrors = (
       validateUrl(url).toList :::
       validateText("User", user).toList :::
@@ -61,9 +60,13 @@ trait Creation {
 
     if (validationErrors.isEmpty) {
      try {
+       val creator = new JiraTaskCreator(config, url, user, password, project)
        creator.create(List(selectedBacklog))
      } catch {
-       case e: Exception => S.error(e.getMessage)
+       case e: JiraException => {
+           LastError(Full(e))
+           S.error(<li> {e.getMessage+" "} <a href="error">more</a></li>)
+       }
      }
     }
     else {
@@ -72,11 +75,14 @@ trait Creation {
   }
 
   private def validateUrl(url: String): Option[String] =
-    try {
-      new URL(url)
-      None
-    } catch {
-      case e: MalformedURLException => Some("Invalid URL. A valid example is: http://localhost:8080")
+    if (url.isEmpty) Some("URL may not be empty")
+    else {
+      try {
+        new URL(url)
+        None
+      } catch {
+        case e: MalformedURLException => Some("Invalid URL. A valid example is: http://localhost:8080")
+      }
     }
 
   private def validateText(field: String, text: String): Option[String] =

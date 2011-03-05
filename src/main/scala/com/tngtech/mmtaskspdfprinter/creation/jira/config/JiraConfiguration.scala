@@ -7,4 +7,5 @@ trait JiraConfiguration {
   
   val hostname = properties.getProperty("jira.hostname", "")
   val project = properties.getProperty("jira.project", "")
+  val subissueid = properties.getProperty("jira.subissueid", "5")
 }

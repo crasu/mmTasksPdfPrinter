@@ -26,6 +26,8 @@ class Boot {
     LiftRules.dispatch.append {
       case Req(List("your_tasks"), _, _)  =>
         () => PdfCreator.create()
+      case Req(List("error"), _, _) =>
+        () => LastError.showError()
     }
 
   }
