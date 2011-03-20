@@ -1,8 +1,9 @@
 import sbt._
 
 import java.io.File
+import de.element34.sbteclipsify._
 
-class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with IdeaProject {
+class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with IdeaProject with Eclipsify {
 
   val suffix = ".war"
   override lazy val jarPath: Path = outputPath / (defaultJarBaseName + suffix)
