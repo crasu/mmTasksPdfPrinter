@@ -92,7 +92,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     val undefined =  "________"
     val priority = story.priority.getOrElse(undefined).toString
     val points = story.scrumPoints.getOrElse(undefined).toString
-    if (config.hidePriority) {
+    if (!config.hidePriority) {
       metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
                                 config.bigFont))
     } else {
