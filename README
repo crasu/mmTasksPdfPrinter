@@ -24,10 +24,9 @@ Hint: Per default Alt+i is the hotkey for attaching icons to a node in Freemind
 The configuration is completely optional. The files are searched in the
 current working directory during startup.
 
-== design.conf ==
-Here is an example for a configuration file:
-hide_priority=1 # If this parameter is set the priority will not be printed.
-colour=123 234 012 # Colour used to the stories in RGB.
+== printer.props ==
+
+An example of the configuration is located in config_example.
 
 == logo.png, logo.gif or logo.jpg ==
  This image will be used instead of the TNG Logo.
