@@ -14,7 +14,7 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with 
   val iTextUrl = new java.net.URL("http://maven.itextpdf.com/")
   val iTextRepo = Resolver.url("com.itextpdf", iTextUrl)
 
-  val lift = "net.liftweb" %% "lift-mapper" % "2.1" % "compile->default"
+  val lift = "net.liftweb" %% "lift-mapper" % "2.4-M2" % "compile->default"
   val commons = "commons-lang" % "commons-lang" % "2.4" % "compile->default"
   val itext = "com.itextpdf" % "itextpdf" % "5.0.2" % "compile->default"
   val xmlrpcClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default"
@@ -22,7 +22,7 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with 
   val httpClient = "commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default"
   val jettyDep =  "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default"
   val junit = "junit" % "junit" % "4.5" % "test->default"
-  val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test->default"
+  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test->default"
   val container = "org.jvnet.hudson.winstone" % "winstone" % "0.9.10-hudson-24" % "tools->default"
 
   lazy val fetchContainer = fetchContainerTask dependsOn() describedAs("Adds a servlet container to target dir")
@@ -49,4 +49,6 @@ private def writeLauncherScriptTask(scriptName: String, warName: String, contain
     val containerPath = managedDependencyPath / toolsConfig.toString / (container.name+"-"+container.revision+".jar")
     FileUtilities.copyFlat(containerPath.get, outputPath, log).left.toOption
   }
+	
+	override val jettyPort = 8081
 }

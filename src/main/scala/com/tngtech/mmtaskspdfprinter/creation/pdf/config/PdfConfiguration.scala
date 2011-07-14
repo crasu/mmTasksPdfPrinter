@@ -16,6 +16,7 @@ object PdfConfiguration {
 trait PdfConfiguration {
   self: {def properties: Properties} =>
 
+    
   val hidePriority = properties.getProperty("pdf.hidePriority", "false").toBoolean
   val colour = properties.getProperty("pdf.colour", "44 106 168").split(" ").map(c => c.toInt)
   val largeSize = properties.getProperty("pdf.largeLayout", "false").toBoolean
