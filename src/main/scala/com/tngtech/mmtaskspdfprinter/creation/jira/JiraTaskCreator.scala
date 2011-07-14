@@ -51,12 +51,14 @@ class JiraTaskCreator(val config: JiraConfiguration,
                             "Please create it or choose one of these projects: "+
                              projects.map(_.get("key")).toList)
       }
-
+      
       val projectId = project.get.get("id")
       for (b <- backlogs; s <- b.stories) {
-        val parentId = createIssue(s)
+        val (parentId,parentKey) = createIssue(s)
+        s.jiraKey = parentKey
         for (t <- s.tasks) {
-          createSubissue(projectId, parentId, s, t)
+          val subissueKey = createSubissue(projectId, parentId, s, t)
+          t.jiraKey = subissueKey
         }
       }
       rpcClient.execute("jira1.logout", List(loginToken))
@@ -65,7 +67,7 @@ class JiraTaskCreator(val config: JiraConfiguration,
     }
   }
 
-  def createIssue(story: Story): String = {
+  def createIssue(story: Story): (String,String) = {
       val args: java.util.Map[String, String] =
         Map(
           "project" -> projectName,
@@ -74,10 +76,10 @@ class JiraTaskCreator(val config: JiraConfiguration,
           "description" -> story.name
         )
       val issue = rpcClient.execute("jira1.createIssue", List(loginToken, args)).asInstanceOf[java.util.HashMap[String, Object]]
-      issue.get("id").toString
+      return (issue.get("id").toString, issue.get("key").toString)
   }
 
-  def createSubissue(projectId: String, parentId: String, story: Story, task: Task) {
+  def createSubissue(projectId: String, parentId: String, story: Story, task: Task): String = {
     val token = "os_username=" + user + "&os_password=" + pass
     val restClient = new JiraRestClient(url+"/secure/CreateSubTaskIssueDetails.jspa?"+token)
     val category =

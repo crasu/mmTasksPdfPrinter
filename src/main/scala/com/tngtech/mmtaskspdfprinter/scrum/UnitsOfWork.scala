@@ -12,13 +12,17 @@ object Story {
     Story(name, Some(scrumPoints), priority, tasks: _*)
 }
 
+trait JiraUnitOfWork {
+  var jiraKey: String = ""
+}
+
 case class Story(val name: String, 
                  val scrumPoints: Option[Int], 
                  val priority: Option[Int],
-                 val tasks: Task*)
+                 val tasks: Task*) extends JiraUnitOfWork
 
 case class Task(val description: String, 
                 val category: String,
-                val subtasks: Subtask*)
+                val subtasks: Subtask*) extends JiraUnitOfWork
 
-case class Subtask(val description: String)
+case class Subtask(val description: String) extends JiraUnitOfWork
