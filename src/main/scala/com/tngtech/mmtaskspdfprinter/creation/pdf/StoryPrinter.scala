@@ -91,7 +91,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     val metaPhrase = new Phrase()
     val undefined =  "________"
     val priority = story.priority.getOrElse(undefined).toString
-    val points = story.scrumPoints.getOrElse(undefined).toString
+    val points = story.scrumPoints.toString(undefined)
     if (!config.hidePriority) {
       metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
                                 config.bigFont))
@@ -114,7 +114,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   }
 
   private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfStoriesAdded: Int) {
-    val emptyStory = Story("", None, None)
+    val emptyStory = Story("", UndefScrumPoints, None)
     val storiesForFullPage = (
         (noOfStoriesAdded.toDouble / rowSize).ceil * rowSize
       ).toInt

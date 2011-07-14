@@ -1,6 +1,7 @@
 package com.tngtech.mmtaskspdfprinter.parsing
 
 import com.tngtech.mmtaskspdfprinter.scrum._
+
 import org.apache.commons.lang.StringEscapeUtils
 import scala.xml._
 import net.htmlparser.jericho._
@@ -10,6 +11,7 @@ object MmParser {
   private val taskAnnotation = "attach"
   private val backlogPattern = """(?i)\s*(.*Sprint.*|.*Backlog.*)\s*""".r
   private val pointsExtractor = """.*[\(\{](.*=)?\s*(\d+).*[\)\}].*""".r
+  private val halfPointsExtractor = """.*[\(\{](.*=)?\s*(0[\.,]5).*[\)\}].*""".r
 
   def parse(root: Elem): Seq[SprintBacklog] =
     if (sanityCheck(root))
@@ -81,10 +83,11 @@ object MmParser {
     else
       (path.head\"node") flatMap {child => findLeaves(child +: path)}
 
-  private def extractScrumPoints(node: Node): Option[Int] =
+  private def extractScrumPoints(node: Node): ScrumPoints =
     extractText(node) match {
-      case pointsExtractor(_, points) => Some(Integer.parseInt(points))
-      case _ => None
+      case halfPointsExtractor(_, _) => HalfScrumPoint
+      case pointsExtractor(_, points) => IntScrumPoints(Integer.parseInt(points))
+      case _ => UndefScrumPoints
     }
 
   private def extractDescription(node: Node): String =

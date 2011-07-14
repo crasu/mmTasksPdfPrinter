@@ -38,24 +38,36 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   }
 
   describe("MmParser scrum points extractor") {
-    val extractScrumPoints = PrivateMethod[Option[Int]]('extractScrumPoints)
+    val extractScrumPoints = PrivateMethod[ScrumPoints]('extractScrumPoints)
 
     val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
-    val expBrackets = Some(123)
+    val expBrackets = IntScrumPoints(123)
     it("must parse points in brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descBrackets)
       act must be (expBrackets)
     }
 
     val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
-    val expCurely = Some(7)
+    val expCurely = IntScrumPoints(7)
     it("must parse points in curely brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descCurely)
       act must be (expCurely)
     }
+    
+    val descCurely05 = <node TEXT="   Sprint 2010-20 { 0.5 pts} SomeMoreText   " />
+    it("must parse 0.5 points in curely brackets") {
+      val act = MmParser invokePrivate extractScrumPoints(descCurely05)
+      act must be (HalfScrumPoint)
+    }
+    
+    val descCurely05Comma = <node TEXT="   Sprint 2010-20 { 0,5 pts} SomeMoreText   " />
+    it("must parse 0,5 points in curely brackets") {
+      val act = MmParser invokePrivate extractScrumPoints(descCurely05Comma)
+      act must be (HalfScrumPoint)
+    }
 
     val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
-    val expCombined = Some(5)
+    val expCombined = IntScrumPoints(5)
     it("must parse points even if it is ambiguous") {
       val act = MmParser invokePrivate extractScrumPoints(descCombined)
       act must be (expCombined)
@@ -96,8 +108,8 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         </node>
       </node>""")
     val traverseStories = PrivateMethod[List[Story]]('traverseStories)
-    val exp = List(Story("foo", None, 1),
-                   Story("bar \"foobar\"", None, 2))
+    val exp = List(Story("foo", UndefScrumPoints, 1),
+                   Story("bar \"foobar\"", UndefScrumPoints, 2))
     it("must be able to parse stories") {
       val act = MmParser invokePrivate traverseStories(storyTree)
       act must be (exp)
@@ -154,7 +166,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 </map>""")
 
     val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
-    val exp = List(SprintBacklog("Sprint 2010-20", Story("csasd 2412432", None, Some(1))))
+    val exp = List(SprintBacklog("Sprint 2010-20", Story("csasd 2412432", UndefScrumPoints, Some(1))))
     it("must be able to handle HTML nodes") {
       val act = MmParser.parse(root)
       act.toList must be (exp)
@@ -164,7 +176,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   describe("MmParser") {
     val exp = List(
       SprintBacklog("Sprint 2010-20", 
-        Story("asdf", None, 1, 
+        Story("asdf", UndefScrumPoints, 1, 
           Task("foo", ""), Task("bar \"foobar\"", "")
         )
       ),
@@ -195,14 +207,14 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         )
       ),
       SprintBacklog("Sprint 2010-22",
-        Story("Story leaf 1-1", None, 1), 
-        Story("Story leaf 1-2", None, 2),
-        Story("Story leaf 2-1", None, 3), 
-        Story("Story leaf 2-2", None, 4),
-        Story("Story leaf 3-1", None, 5), 
-        Story("Story leaf 3-2", None, 6),
-        Story("Yet another leaf 4-1", None, 7), 
-        Story("Yet another leaf 4-2", None, 8)
+        Story("Story leaf 1-1", UndefScrumPoints, 1), 
+        Story("Story leaf 1-2", UndefScrumPoints, 2),
+        Story("Story leaf 2-1", UndefScrumPoints, 3), 
+        Story("Story leaf 2-2", UndefScrumPoints, 4),
+        Story("Story leaf 3-1", UndefScrumPoints, 5), 
+        Story("Story leaf 3-2", UndefScrumPoints, 6),
+        Story("Yet another leaf 4-1", UndefScrumPoints, 7), 
+        Story("Yet another leaf 4-2", UndefScrumPoints, 8)
       )
     )
     it("must parse a xml file to an internal data structure") {

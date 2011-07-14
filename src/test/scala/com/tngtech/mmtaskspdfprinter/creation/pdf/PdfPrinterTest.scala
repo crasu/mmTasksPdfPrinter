@@ -15,7 +15,7 @@ class PdfPrinterTest extends Spec with MustMatchers {
     describe("PdfPrinter") {
       val printer = new PdfPrinter(() => new ByteArrayOutputStream())
       val backlog = SprintBacklog("2010-21",
-        Story("Some Story: A tale about...", None, None,
+        Story("Some Story: A tale about...", UndefScrumPoints, None,
           Task("buy Mindstorms set", "Dev"),
           Task("write remote control perl script", "Dev",
             Subtask("write module mod1"),

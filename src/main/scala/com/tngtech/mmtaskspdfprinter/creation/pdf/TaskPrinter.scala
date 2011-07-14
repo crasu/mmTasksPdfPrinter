@@ -113,7 +113,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
 
   private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfTasksAdded: Int) {
     val emptyTask = Task("", "")
-    val emptyStory = Story("", None, None)
+    val emptyStory = Story("", UndefScrumPoints, None)
     val tasksForFullPage = (
         (noOfTasksAdded.toDouble / noOfElementsPerPage).ceil * noOfElementsPerPage
       ).toInt

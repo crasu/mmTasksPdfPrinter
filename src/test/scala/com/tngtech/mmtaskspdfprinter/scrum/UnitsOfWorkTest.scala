@@ -25,7 +25,7 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
 
   describe("A story") {
      val s = 
-       Story("A story", None, None,
+       Story("A story", UndefScrumPoints, None,
          Task("First task", "Dev"),
          Task("Second task", "CT")
        )
@@ -40,12 +40,12 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
 
   describe("A story") {
     it("must recognize equal stories") {
-      Story("One", None, None) must be (Story("One", None, None))
+      Story("One", UndefScrumPoints, None) must be (Story("One", UndefScrumPoints, None))
       Story("One", 16, None) must be (Story("One", 16, None))
       Story("One", 16, 1) must be (Story("One", 16, 1))
     }
     it("must recognize different stories") {
-      Story("One", None, None) must not be (Story("One", 1, None))
+      Story("One", UndefScrumPoints, None) must not be (Story("One", 1, None))
       Story("One", 2, None) must not be (Story("One", 1, None))
       Story("One", 16, None) must not be (Story("Two", 16, None))
       Story("One", 16, 2) must not be (Story("Two", 16, 1))
@@ -55,15 +55,22 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
   describe("A sprint backlog") {
      val s = 
        SprintBacklog("A sprint backlog", 
-         Story("First story", None, None),
-         Story("Second story", None, None)
+         Story("First story", UndefScrumPoints, None),
+         Story("Second story", UndefScrumPoints, None)
        )
 
-     val exp = List(Story("First story", None, None),
-                    Story("Second story", None, None))
+     val exp = List(Story("First story", UndefScrumPoints, None),
+                    Story("Second story", UndefScrumPoints, None))
 
     it("must keep the order of its stories") {
       s.stories must be (exp)
+    }
+  }
+  
+  describe("ScrumPoints") {
+     
+    it("must print to String correctly") {
+      IntScrumPoints(10).toString("def") must be("10")
     }
   }
 }
