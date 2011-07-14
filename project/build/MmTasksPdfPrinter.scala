@@ -57,5 +57,5 @@ private def writeLauncherScriptTask(scriptName: String, warName: String, contain
     FileUtilities.copyFlat(containerPath.get, outputPath, log).left.toOption
   }
 	
-	override val jettyPort = 8081
+	//override val jettyPort = 8081
 }
