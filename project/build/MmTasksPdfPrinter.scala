@@ -9,6 +9,8 @@ class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with 
   def junitXmlListener: TestReportListener = new JUnitXmlTestsListener(outputPath.toString)
   override def testListeners: Seq[TestReportListener] = super.testListeners ++ Seq(junitXmlListener)
 
+  override def compileOptions = super.compileOptions ++ Seq(Unchecked)
+
   val suffix = ".war"
   override lazy val jarPath: Path = outputPath / (defaultJarBaseName + suffix)
   val jarName = defaultJarBaseName + suffix
