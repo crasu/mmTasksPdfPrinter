@@ -2,8 +2,12 @@ import sbt._
 
 import java.io.File
 import de.element34.sbteclipsify._
+import eu.henkelmann.sbt.JUnitXmlTestsListener
 
 class MmTasksPdfPrinter(info: ProjectInfo) extends DefaultWebProject(info) with IdeaProject with Eclipsify {
+
+  def junitXmlListener: TestReportListener = new JUnitXmlTestsListener(outputPath.toString)
+  override def testListeners: Seq[TestReportListener] = super.testListeners ++ Seq(junitXmlListener)
 
   val suffix = ".war"
   override lazy val jarPath: Path = outputPath / (defaultJarBaseName + suffix)
