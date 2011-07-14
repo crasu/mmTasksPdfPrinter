@@ -42,7 +42,7 @@ class RestClient(val veryRawUrl: String, val user: String, val password: String)
     val stringParts = parts map {
       case (k, v) =>
         val part = new StringPart(k, v)
-        /* Unfortunatly JIRA doesn't parse transfer encodings correctly */
+        /* Unfortunately JIRA doesn't parse transfer encodings correctly */
         part.setTransferEncoding(null)
         part.setContentType(null)
         part

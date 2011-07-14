@@ -10,5 +10,7 @@ trait JiraConfiguration extends CentralConfiguration {
   val subissueid = properties.getProperty("jira.subissueid", "5")
   val user = properties.getProperty("jira.user", "")
   val password = properties.getProperty("jira.password", "")
+  val issuetypename = properties.getProperty("jira.issuetypename","Task")
+  val subissuetypename = properties.getProperty("jira.subissuetypename","Sub-task")
   
 }

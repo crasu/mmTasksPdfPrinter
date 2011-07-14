@@ -37,15 +37,37 @@ class RpcClient(rawUrl: String, val user: String, val pass: String) {
         throw new Exception("JIRA project " + projectName + " doesn't exist!\n" +
           "Please create it or choose one of these projects: " +
           projects.map(_.get("key")).toList)
-      case (project: java.util.HashMap[String, String]) => project.get("id")
+      case Some(project: java.util.HashMap[String, String]) => project.get("id")
+    }
+  }
+  
+  def findIssuetype(issuetypeName: String) = {
+    val issuetypes = castResponse(rpcClient.execute("jira1.getIssueTypes", List(loginToken)))
+    issuetypes.find(issuetypeName == _.get("name")) match {
+      case None =>
+        close()
+        throw new Exception("No JIRA issue type named " + issuetypeName + ". Check the JIRA dashboard and set " +
+            "jira.issuetypename to one of " + issuetypes.map(_.get("name")).toList)
+      case Some(issuetype: java.util.HashMap[String, String]) => issuetype.get("id")
+    }
+  }
+  
+  def findSubissuetype(subissuetypeName: String) = {
+    val subissuetypes = castResponse(rpcClient.execute("jira1.getSubTaskIssueTypes", List(loginToken)))
+    subissuetypes.find(subissuetypeName == _.get("name")) match {
+      case None =>
+        close()
+        throw new Exception("No JIRA subissue type named " + subissuetypeName + ". Check the JIRA dashboard and set " +
+            "jira.subissuetypename to one of " + subissuetypes.map(_.get("name")).toList)
+      case Some(subissuetype: java.util.HashMap[String, String]) => subissuetype.get("id")
     }
   }
 
-  def createIssue(project: String, summary: String) = {
+  def createIssue(project: String, summary: String, issuetype: String) = {
     val args: java.util.Map[String, String] =
       Map(
         "project" -> project,
-        "type" -> "3",
+        "type" -> issuetype,
         "summary" -> summary,
         "description" -> summary)
     val issue = rpcClient.execute("jira1.createIssue", List(loginToken, args)).asInstanceOf[java.util.HashMap[String, Object]]

@@ -21,7 +21,7 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	    val rest = mock[RestClient]
 	    val conf = mock[JiraConfiguration]
 	    rpc.findProjectId("pid") returns "pid123"
-	    rpc.createIssue(anyString(), anyString()) returns RpcResponse("", "") 
+	    rpc.createIssue(anyString(), anyString(), anyString()) returns RpcResponse("", "") 
 	    
 	    val jc = new JiraTaskCreator(conf, rpc, rest, "pid")
 	    
@@ -30,7 +30,7 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	    val s2 = Story("1", IntScrumPoints(1), Some(2), Task("t1", "cat"), t2)
 	    jc.create(List(SprintBacklog("backlog", s1, s2)))
 	    
-	    there were two(rpc).createIssue(anyString(), anyString()) 
+	    there were two(rpc).createIssue(anyString(), anyString(), anyString()) 
 	    there were three(rest).createSubissue(anyString(), anyString(), anyString(), anyString(), anyString())
 	  }
 	}

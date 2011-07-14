@@ -24,11 +24,11 @@ class JiraTaskCreator(val config: JiraConfiguration,
   def create(backlogs: List[SprintBacklog]) {
     try {
       val projectId = rpcClient.findProjectId(projectName)
-      for (b <- backlogs; s <- b.stories) {
-        val parentId = createIssue(s)
-        for (t <- s.tasks) {
-          val subissueKey = createSubissue(projectId, parentId, s, t)
-          t.jiraKey = subissueKey
+      for (backlog <- backlogs; story <- backlog.stories) {
+        val parentId = createIssue(story)
+        for (task <- story.tasks) {
+          val subissueKey = createSubissue(projectId, parentId, story, task)
+          task.jiraKey = subissueKey
         }
       }
       rpcClient.close()
@@ -40,7 +40,8 @@ class JiraTaskCreator(val config: JiraConfiguration,
   }
 
   def createIssue(story: Story) = {
-    val issue = rpcClient.createIssue(projectName, story.name)
+    val issuetype = rpcClient.findIssuetype(config.issuetypename)
+    val issue = rpcClient.createIssue(projectName, story.name, issuetype)
     story.jiraKey = issue.key
     issue.id
   }
@@ -49,12 +50,14 @@ class JiraTaskCreator(val config: JiraConfiguration,
 
     val category =
       if (task.category.isEmpty) ""
-      else "Category: " + task.category + "\n"
+      else "Category: " + task.category
+      
+    val issuetype = rpcClient.findSubissuetype(config.subissuetypename) 
 
     restClient.createSubissue(projectId, parentId,
       summary = task.description,
       description = task.description + " (" + category + ")\n" +
         task.subtasks.map("- " + _.description).mkString("\n"),
-      issuetype = config.subissueid)
+        issuetype)
   }
 }
