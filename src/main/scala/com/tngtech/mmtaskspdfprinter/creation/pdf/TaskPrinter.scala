@@ -12,9 +12,9 @@ private object TaskPrinter {
 
 private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
 
-  private val (columnSize, rowSize) = if (config.largeSize) (2,3) else (3, 4)
+  private val (columnSize, rowSize) = if (config.largeSize) (2,2) else (3, 4)
   private val noOfElementsPerPage = columnSize * rowSize
-  private val maxNoOfSubtasks = 5
+  private val maxNoOfSubtasks = if (config.largeSize) 6 else 4
   private val square = {
     /*
     * FreeSerif.ttf is provided by http://savannah.gnu.org/projects/freefont/
@@ -69,8 +69,10 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     val phrase = if (config.largeSize) new Phrase(24) else new Phrase()
     phrase.add(new Chunk(story.name + "\n", config.normalFont))
     phrase.add(new Chunk(task.category + "\n", config.smallFont))
+    phrase.add(new Chunk(task.jiraKey, config.normalFont))
+    if (config.largeSize) phrase.add(new Chunk("\n", config.normalFont))
     phrase.add(new Chunk(task.description + "\n", config.bigFont))
-
+    if (config.largeSize) phrase.add(new Chunk("\n", config.normalFont))
     task.subtasks.take(maxNoOfSubtasks - 1).foreach {subtask =>
       phrase.add(square)
       phrase.add(new Chunk(" " + subtask.description + "\n", config.normalFont))

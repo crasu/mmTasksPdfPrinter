@@ -7,11 +7,10 @@ import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 
-private object StoryPrinter {
-  private val rowSize = 4
-}
 
 private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
+  
+  private val rowSize = if (config.largeSize) 2 else 4
 
   def create(stories: List[Story]): Seq[PdfPTable] = {
     val pages = ListBuffer[PdfPTable]()
@@ -21,7 +20,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   }
   
   private def addStory(pages: ListBuffer[PdfPTable], count: Int, story: Story) {
-    if (count % StoryPrinter.rowSize == 0) {
+    if (count % rowSize == 0) {
       addNewPage(pages)
     }
 
@@ -42,7 +41,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     val sepHeight = 5
     val footer = createFooter()
     innerTable.addCell(createSeparator(sepHeight))
-    val contentHeight = contentSize.getHeight() / StoryPrinter.rowSize -
+    val contentHeight = contentSize.getHeight() / rowSize -
                         footer.getFixedHeight - sepHeight * 2
     innerTable.addCell(createStoryCell(contentHeight, story))
     innerTable.addCell(createMetaCell(contentHeight, story))
@@ -78,6 +77,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   private def createStoryCell(height: Float, story: Story): PdfPCell = {
     val storyPhrase = new Phrase()
     storyPhrase.add(new Chunk("\n" + story.name, config.hugeFont))
+    storyPhrase.add(new Chunk("\n\n" + story.jiraKey, config.normalFont))
     val storyCell = new PdfPCell(storyPhrase)
     storyCell.setBorder(Rectangle.NO_BORDER)
     storyCell.setPadding(5)
@@ -116,7 +116,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfStoriesAdded: Int) {
     val emptyStory = Story("", None, None)
     val storiesForFullPage = (
-        (noOfStoriesAdded.toDouble / StoryPrinter.rowSize).ceil * StoryPrinter.rowSize
+        (noOfStoriesAdded.toDouble / rowSize).ceil * rowSize
       ).toInt
    (noOfStoriesAdded until storiesForFullPage) foreach { index =>
      addStory(pages, index, emptyStory)
