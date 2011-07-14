@@ -30,8 +30,8 @@ trait Creation {
       val config = new CentralConfiguration with JiraConfiguration
       val template = bind("jira", chooseTemplate("choose", "create", xhtml),
           "url" -> SHtml.text(jiraUrl.is.getOrElse(config.hostname), url => jiraUrl(Full(url)), "id" -> "jiraUrl"),
-          "user" -> SHtml.text(jiraUser.is.getOrElse(""), user => jiraUser(Full(user)), "id" -> "jiraUser"),
-          "password" -> SHtml.password("", jiraPassword = _, "id" -> "jiraPass"),
+          "user" -> SHtml.text(jiraUser.is.getOrElse(config.user), user => jiraUser(Full(user)), "id" -> "jiraUser"),
+          "password" -> SHtml.password(config.password, jiraPassword = _, "id" -> "jiraPass"),
           "project" -> SHtml.text(jiraProject.is.getOrElse(config.project), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
           "submit" -> SHtml.submit("Send to JIRA",
             () => sendToJira(config, selectedBacklog.is.get,

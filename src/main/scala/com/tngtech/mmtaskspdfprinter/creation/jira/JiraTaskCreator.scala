@@ -33,7 +33,9 @@ class JiraTaskCreator(val config: JiraConfiguration,
       }
       rpcClient.close()
     } catch {
-      case ex: Exception => throw new JiraException("An error occured while sending Data to JIRA", ex)
+      case ex: Exception => 
+      ex.printStackTrace()
+      throw new JiraException("An error occured while sending Data to JIRA", ex)
     }
   }
 

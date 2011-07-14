@@ -4,3 +4,6 @@ pdf.largeLayout=true
 jira.hostname=http://localhost:8090
 jira.project=MMTEST
 jira.subissueid=5
+jira.user=himmelma
+# Only use for testing
+jira.password=robert

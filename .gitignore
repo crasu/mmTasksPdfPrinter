@@ -13,3 +13,4 @@ project/plugins/target/
 project/project.iml
 target/
 .scala_dependencies
+printer.props

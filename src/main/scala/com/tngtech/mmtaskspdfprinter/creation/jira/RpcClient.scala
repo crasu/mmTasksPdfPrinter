@@ -24,11 +24,13 @@ class RpcClient(rawUrl: String, val user: String, val pass: String) {
   } catch {
     case ex: org.apache.xmlrpc.XmlRpcException => throw new JiraException("Failed to login to JIRA", ex)
   }
+  
+  def castResponse(resp:Object):Array[java.util.HashMap[String, String]] =
+      resp.asInstanceOf[Array[AnyRef]].
+      map(_.asInstanceOf[java.util.HashMap[String, String]])
 
   def findProjectId(projectName: String) = {
-    val projects = rpcClient.execute("jira1.getProjectsNoSchemes", List(loginToken)).
-      asInstanceOf[Array[AnyRef]].
-      map(_.asInstanceOf[java.util.HashMap[String, String]])
+    val projects = castResponse(rpcClient.execute("jira1.getProjectsNoSchemes", List(loginToken)))
     projects.find(projectName == _.get("key")) match {
       case None =>
         close()
@@ -38,8 +40,6 @@ class RpcClient(rawUrl: String, val user: String, val pass: String) {
       case (project: java.util.HashMap[String, String]) => project.get("id")
     }
   }
-
-  case class RpcResponse(id: String, key: String)
 
   def createIssue(project: String, summary: String) = {
     val args: java.util.Map[String, String] =
@@ -56,3 +56,5 @@ class RpcClient(rawUrl: String, val user: String, val pass: String) {
     rpcClient.execute("jira1.logout", List(loginToken))
   }
 }
+
+  case class RpcResponse(id: String, key: String)
