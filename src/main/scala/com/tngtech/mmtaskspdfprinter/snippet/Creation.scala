@@ -60,7 +60,9 @@ trait Creation {
 
     if (validationErrors.isEmpty) {
      try {
-       val creator = new JiraTaskCreator(config, url, user, password, project)
+       val restClient = new RestClient(url, user, password)
+       val rpcClient = new RpcClient(url, user, password)
+       val creator = new JiraTaskCreator(config, rpcClient, restClient, project)
        creator.create(List(selectedBacklog))
      } catch {
        case e: JiraException => {
