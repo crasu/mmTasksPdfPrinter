@@ -33,6 +33,7 @@ An example of the configuration is located in config_example.
 
 = Running it locally =
 I recommend using Winstone to run it locally (http://winstone.sourceforge.net/).
+While developing you might also want to use jetty (jetty-run in sbt).
 
 = Credits =
 The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis.
