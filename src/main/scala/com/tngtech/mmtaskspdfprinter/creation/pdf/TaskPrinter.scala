@@ -2,7 +2,7 @@ package com.tngtech.mmtaskspdfprinter.creation.pdf
 
 import scala.collection.mutable.ListBuffer
 
-import com.itextpdf.text.{List => _, _}
+import com.itextpdf.text.{List => ITextList, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 import com.tngtech.mmtaskspdfprinter.scrum._
@@ -12,9 +12,9 @@ private object TaskPrinter {
 
 private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
 
-  private val (columnSize, rowSize) = if (config.largeSize) (2,2) else (3, 4)
-  private val noOfElementsPerPage = columnSize * rowSize
-  private val maxNoOfSubtasks = if (config.largeSize) 6 else 4
+  import config.size._
+  private val noOfElementsPerPage = taskColumnNumber * taskRowNumber
+  
   private val square = {
     /*
     * FreeSerif.ttf is provided by http://savannah.gnu.org/projects/freefont/
@@ -45,15 +45,15 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
   }
 
   private def addNewPage(pages: ListBuffer[PdfPTable]) {
-    val page = new PdfPTable(columnSize)
+    val page = new PdfPTable(config.size.taskColumnNumber)
     page.setWidthPercentage(100)
     pages.append(page)
   }
 
   private def createCell(story: Story, task: Task): PdfPCell = {
     val cell = createFramingCell()
-    var content = taskToPhrase(story, task)
-    createInnerTable(cell, content)
+    var (titles, subtasklist) = taskToItext(story, task)
+    createInnerTable(cell, titles, subtasklist)
     cell
   }
 
@@ -61,56 +61,59 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     val cell = new PdfPCell()
     cell.setPadding(0)
     cell.setIndent(0)
-    cell.setFixedHeight(contentSize.getHeight() / rowSize - 1)
+    cell.setFixedHeight(contentSize.getHeight() / taskRowNumber - 1)
     cell
   }
 
-  private def taskToPhrase(story: Story, task: Task): Phrase = {
-    val phrase = if (config.largeSize) new Phrase(24) else new Phrase()
-    phrase.add(new Chunk(story.name + "\n", config.normalFont))
-    phrase.add(new Chunk(task.category + "\n", config.smallFont))
-    phrase.add(new Chunk(task.jiraKey, config.normalFont))
-    if (config.largeSize) phrase.add(new Chunk("\n", config.normalFont))
-    phrase.add(new Chunk(task.description + "\n", config.bigFont))
-    if (config.largeSize) phrase.add(new Chunk("\n", config.normalFont))
+  private def taskToItext(story: Story, task: Task): (Phrase, ITextList) = {
+    val titles = new Phrase(config.size.leading)
+    titles.add(new Chunk(story.name + "\n", config.size.normalFont))
+    titles.add(new Chunk(task.category + "\n", config.size.smallFont))
+    titles.add(new Chunk(task.jiraKey, config.size.normalFont))
+    titles.add(new Chunk(task.description + "\n", config.size.bigFont))
+    val subtasklist = new ITextList(ITextList.UNORDERED)
     task.subtasks.take(maxNoOfSubtasks - 1).foreach {subtask =>
-      phrase.add(square)
-      phrase.add(new Chunk(" " + subtask.description + "\n", config.normalFont))
+      subtasklist.add(new ListItem(subtask.description, config.size.normalFont))
     }
     val remainingTasks = task.subtasks.drop(maxNoOfSubtasks - 1)
     if (!remainingTasks.isEmpty) {
       val descriptions = remainingTasks.map(_.description)
       val concated = descriptions.mkString(", ")
-      phrase.add(square)
-      phrase.add(new Chunk(" " + concated + "\n", config.normalFont))
+      subtasklist.add(new ListItem(concated, config.size.normalFont))
     }
-    phrase
+    (titles, subtasklist)
   }
+  
 
-  private def createInnerTable(outerCell: PdfPCell, phrase: Phrase) {
-    var table = new PdfPTable(1)
-    table.setWidthPercentage(100.0f)
+  private def createInnerTable(outerCell: PdfPCell, titles: Phrase, subtasklist: ITextList) {
+    var table = new PdfPTable(config.size.innerTableCols)
+    table.setWidthPercentage(100f)
+    if (config.size.innerTableCols == 2) table.setWidths(
+        Array( (contentSize.getWidth() / taskColumnNumber - 1) -  config.companyLogo.getScaledHeight,
+            config.companyLogo.getScaledHeight + 15))
     var cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
-    cell.setPadding(if(config.largeSize) 5.0f else 16.0f)
+    cell.setPadding(config.size.paddingContent)
     cell.setIndent(0)
-    cell.addElement(phrase)
-    //cell.setFixedHeight(outerCell.getFixedHeight() - 3)
+    cell.addElement(titles)
+    cell.addElement(subtasklist)
+    cell.setRotation(config.size.cellRotation)
     cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - 3)
     table.addCell(cell)
 
     cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
     cell.setPadding(0)
-    cell.setPaddingLeft(if(config.largeSize) 5.0f else 12.0f)
+    cell.setPaddingLeft(config.size.paddingLeft)
     cell.setIndent(0)
     cell.addElement(config.companyLogo)
+    cell.setRotation(config.size.cellRotation)
     cell.setFixedHeight(config.companyLogo.getScaledHeight)
     table.addCell(cell)
 
     outerCell.addElement(table)
   }
-
+  
   private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfTasksAdded: Int) {
     val emptyTask = Task("", "")
     val emptyStory = Story("", UndefScrumPoints, None)

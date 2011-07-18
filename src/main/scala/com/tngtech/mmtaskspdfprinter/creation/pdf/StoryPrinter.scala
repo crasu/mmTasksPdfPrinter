@@ -10,7 +10,7 @@ import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 
 private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
   
-  private val rowSize = if (config.largeSize) 2 else 4
+  private val rowSize = config.size.rowNumber
 
   def create(stories: List[Story]): Seq[PdfPTable] = {
     val pages = ListBuffer[PdfPTable]()
@@ -37,7 +37,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   private def createStoryRow(story: Story): PdfPCell = {
     val innerTable = new PdfPTable(2)
     innerTable.setWidthPercentage(100.0f)
-    innerTable.setWidths(Array(75, 25))
+    innerTable.setWidths(Array(70, 30))
     val sepHeight = 5
     val footer = createFooter()
     innerTable.addCell(createSeparator(sepHeight))
@@ -76,8 +76,8 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
 
   private def createStoryCell(height: Float, story: Story): PdfPCell = {
     val storyPhrase = new Phrase()
-    storyPhrase.add(new Chunk("\n" + story.name, config.hugeFont))
-    storyPhrase.add(new Chunk("\n\n" + story.jiraKey, config.normalFont))
+    storyPhrase.add(new Chunk("\n" + story.name, config.size.hugeFont))
+    storyPhrase.add(new Chunk("\n\n" + story.jiraKey, config.size.normalFont))
     val storyCell = new PdfPCell(storyPhrase)
     storyCell.setBorder(Rectangle.NO_BORDER)
     storyCell.setPadding(5)
@@ -94,16 +94,16 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     val points = story.scrumPoints.toString(undefined)
     if (!config.hidePriority) {
       metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
-                                config.bigFont))
+                                config.size.bigFont))
     } else {
-      metaPhrase.add(new Chunk("\n\n\n", config.bigFont))
+      metaPhrase.add(new Chunk("\n\n\n", config.size.bigFont))
     }
     metaPhrase.add(new Chunk("\nPoints:    " + points + "\n\n",
-                              config.bigFont))
+                              config.size.bigFont))
     metaPhrase.add(new Chunk("\nOpened:  "+undefined+"\n\n",
-                              config.bigFont))
+                              config.size.bigFont))
     metaPhrase.add(new Chunk("\nFinished: "+undefined,
-                              config.bigFont))
+                              config.size.bigFont))
     val metaCell = new PdfPCell(metaPhrase)
     metaCell.setBorder(Rectangle.NO_BORDER)
     metaCell.setPadding(0)
