@@ -1,9 +1,24 @@
+# hides 'priority' field on story cards
 pdf.hidePriority=true
+
 pdf.colour=191 137 73
-pdf.largeLayout=true
+
+# task card layout:
+# small = 3x4 portrait
+# medium = 2x3 portrait
+# large = 2x2 landscape (A6)
+pdf.layout=large
+
+# jira defaults for web form
 jira.hostname=http://localhost:8090
 jira.project=MMTEST
 jira.subissueid=5
 jira.user=himmelma
 # Only use for testing
 jira.password=robert
+
+# jira identifiers for the different issue classes
+# hopefully constant, but can be seen in the
+# admin interface ('Issue Types') should they change
+jira.issuetypename=Task
+jira.subissuetypename=Sub-task
