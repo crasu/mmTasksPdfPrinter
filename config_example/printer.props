@@ -11,11 +11,10 @@ pdf.layout=large
 
 # jira defaults for web form
 jira.hostname=http://localhost:8090
-jira.project=MMTEST
-jira.subissueid=5
-jira.user=himmelma
+jira.project=TEST
+jira.user=testuser
 # Only use for testing
-jira.password=robert
+jira.password=testpasswd
 
 # jira identifiers for the different issue classes
 # hopefully constant, but can be seen in the
