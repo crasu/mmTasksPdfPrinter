@@ -13,14 +13,6 @@ scalaVersion := "2.9.1"
 // set the Scala test source directory to be <base>/test
 //scalaSource in Test <<= baseDirectory(_ / "test")
 
-// add a test dependency on ScalaCheck
-libraryDependencies += "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test->default"
-
-libraryDependencies += "org.scala-tools.testing" %% "specs" % "1.6.9" //% "test"
-
-libraryDependencies += "org.mockito" % "mockito-core" % "1.8.4"
-
-// add compile dependencies on some dispatch modules
 libraryDependencies ++= Seq(
     "net.liftweb" %% "lift-mapper" % "2.4-M4" % "compile->default",
 	"commons-lang" % "commons-lang" % "2.4" % "compile->default",
@@ -30,10 +22,22 @@ libraryDependencies ++= Seq(
 	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default",
 	"org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
 	"junit" % "junit" % "4.5" % "test->default",
-	"org.jvnet.hudson.winstone" % "winstone" % "0.9.10-hudson-24"
+    //
+    "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources
 )
 
-resolvers += "Web plugin repo" at "http://siasia.github.com/maven2"
+libraryDependencies ++= Seq(
+    //ScalaTest
+    "org.scalatest" %% "scalatest" % "1.6.1" % "test->default",
+    // Specs 2
+    "org.specs2" %% "specs2" % "1.6.1",
+    "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
+    // Specs 1
+    "org.scala-tools.testing" %% "specs" % "1.6.9" % "test",
+    //
+    "org.mockito" % "mockito-core" % "1.8.4",
+    "com.novocode" % "junit-interface" % "0.7" % "test->default"
+)
 
 // reduce the maximum number of errors shown by the Scala compiler
 maxErrors := 20
@@ -68,15 +72,6 @@ initialCommands := """
 // add <base>/input to the files that '~' triggers on
 // watchSources <+= baseDirectory map { _ / "input" }
 
-// add a maven-style repository
-// resolvers += "name" at "url"
-
-// add a sequence of maven-style repositories
-// resolvers ++= Seq("name" at "url")
-
-// define the repository to publish to
-// publishTo := Some("name" at "url")
-
 // set Ivy logging to be at the highest level
 // ivyLoggingLevel := UpdateLogging.Full
 
@@ -92,9 +87,6 @@ shellPrompt := { state => System.getProperty("user.name") + "> " }
 // disable printing timing information, but still print [success]
 //showTiming := false
 
-// disable printing a message indicating the success or failure of running a task
-//showSuccess := false
-
 // change the format used for printing task completion time
 timingFormat := {
 	import java.text.DateFormat
@@ -104,21 +96,15 @@ timingFormat := {
 // disable using the Scala version in output paths and artifacts
 crossPaths := false
 
-// fork a new JVM for 'run' and 'test:run'
-fork := true
-
-// fork a new JVM for 'test:run', but not 'run'
-fork in Test := true
-
 // add a JVM option to use when forking a JVM for 'run'
 javaOptions += "-Xmx2G"
 
 // only use a single thread for building
-parallelExecution := false
+//parallelExecution := false
 
 // Execute tests in the current project serially
 //   Tests from other projects may still run concurrently.
-parallelExecution in Test := false
+//parallelExecution in Test := false
 
 // set the location of the JDK to use for compiling Java code.
 // if 'fork' is true, this is used for 'run' as well
@@ -132,30 +118,24 @@ parallelExecution in Test := false
 
 // only show warnings and errors on the screen for compilations.
 //  this applies to both test:compile and compile and is Info by default
-logLevel in compile := Level.Warn
+//logLevel in compile := Level.Warn
 
 // only show warnings and errors on the screen for all tasks (the default is Info)
 //  individual tasks can then be more verbose using the previous setting
-logLevel := Level.Warn
+//logLevel := Level.Warn
 
 // only store messages at info and above (the default is Debug)
 //   this is the logging level for replaying logging with 'last'
 persistLogLevel := Level.Debug
 
 // only show 10 lines of stack traces
-traceLevel := 10
+//traceLevel := 10
 
 // only show stack traces up to the first sbt stack frame
-traceLevel := 0
+//traceLevel := 0
 
 // add SWT to the unmanaged classpath
 //unmanagedJars in Compile += Attributed.blank(file("/usr/share/java/swt.jar"))
-
-// publish test jar, sources, and docs
-publishArtifact in Test := true
-
-// disable publishing of main docs
-publishArtifact in (Compile, packageDoc) := false
 
 // Copy all managed dependencies to <build-root>/lib_managed/
 //   This is essentially a project-local cache and is different
