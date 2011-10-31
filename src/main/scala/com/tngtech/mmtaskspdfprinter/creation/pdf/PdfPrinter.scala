@@ -6,12 +6,19 @@ import com.itextpdf.text.{List => _, _}
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
+import java.io.ByteArrayOutputStream
 
-class PdfPrinter[T <: OutputStream] (outputStreamConstructor: () => T,
-                 val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
+class PdfPrinter (
+    val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
 
-  def create(backlogs: List[SprintBacklog]): T = {
-    val (doc, outputStream) = setupDocumentAndStream()
+  def create(backlogs: List[SprintBacklog], out:OutputStream):Unit = {
+    val doc = {
+    val doc = new Document(config.pageSize)
+    doc.setMargins(8.0f, 8.0f, 8.0f, 8.0f)
+    PdfWriter.getInstance(doc, out)
+    doc.open()
+    doc
+  }
     val contentSize = calcContentSize(doc)
     val storyPrinter = new StoryPrinter(contentSize, config)
     val taskPrinter = new TaskPrinter(contentSize, config)
@@ -23,16 +30,12 @@ class PdfPrinter[T <: OutputStream] (outputStreamConstructor: () => T,
       doc.add(page)
     }
     doc.close()
-    outputStream
   }
-
-  private def setupDocumentAndStream() = {
-    val doc = new Document(config.pageSize)
-    val outputStream = outputStreamConstructor()
-    doc.setMargins(8.0f, 8.0f, 8.0f, 8.0f)
-    PdfWriter.getInstance(doc, outputStream)
-    doc.open()
-    (doc, outputStream)
+  
+  def create(backlogs: List[SprintBacklog]):Array[Byte] = {
+    val stream = new ByteArrayOutputStream();
+    create(backlogs, stream)
+    stream.toByteArray();
   }
 
   private def calcContentSize(doc: Document) =

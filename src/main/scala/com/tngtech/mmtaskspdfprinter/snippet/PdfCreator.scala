@@ -23,10 +23,10 @@ object PdfCreator {
   val HTML_OK = 200
 
   def create() = {
-    val printer = new PdfPrinter(() => new ByteArrayOutputStream())
+    val printer = new PdfPrinter()
     val backlogs = selectedBacklogs.is.toList
-    val pdfBytes = printer.create(backlogs)
-    Full(InMemoryResponse(pdfBytes.toByteArray(),
+    val pdf = printer.create(backlogs)
+    Full(InMemoryResponse(pdf,
                           List("Content-Type" -> "application/pdf"),
                           Nil,
                           HTML_OK))

@@ -13,7 +13,7 @@ import com.tngtech.mmtaskspdfprinter.scrum._
 @RunWith(classOf[JUnitRunner])
 class PdfPrinterTest extends Spec with MustMatchers {
     describe("PdfPrinter") {
-      val printer = new PdfPrinter(() => new ByteArrayOutputStream())
+      val printer = new PdfPrinter()
       val backlog = SprintBacklog("2010-21",
         Story("Some Story: A tale about...", UndefScrumPoints, None, List(
           Task("buy Mindstorms set", "Dev"),

@@ -57,10 +57,8 @@ object Main {
           fail("There are multiple sprints with name \"" + name + "\"")
         sprints2.head
       }
-      val printer = new PdfPrinter(
-          () => new FileOutputStream(pdfOpt.value(options)),
-          PdfConfiguration.defaultConfig)
-      printer.create(List(sprint))
+      val printer = new PdfPrinter()
+      printer.create(List(sprint), new FileOutputStream(pdfOpt.value(options)))
     }
   }
 }
