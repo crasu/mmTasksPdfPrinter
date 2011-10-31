@@ -2,52 +2,79 @@ package com.tngtech.mmtaskspdfprinter.creation.pdf
 
 import scala.collection.mutable.ListBuffer
 
-import com.itextpdf.text.{List => _, _}
+import com.itextpdf.text.{ List => ITextList, _ }
 import com.itextpdf.text.pdf._
 import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 
+class StoryPrinter2(val contentSize: Rectangle, val config: PdfConfiguration) {
 
-private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
-  
-  private val rowSize = config.size.rowNumber
+  import config.size.{ rowNumber => rowSize }
 
-  def create(stories: List[Story]): Seq[PdfPTable] = {
-    val pages = ListBuffer[PdfPTable]()
-    stories.zipWithIndex foreach {case (story, index) => addStory(pages, index, story)}
-    fillWithEmptyCells(pages, stories.size)
-    pages.toList
-  }
-  
-  private def addStory(pages: ListBuffer[PdfPTable], count: Int, story: Story) {
-    if (count % rowSize == 0) {
-      addNewPage(pages)
+  def create(stories: Seq[Story]): Seq[PdfPTable] = {
+    val (withoutAcceptance, withAcceptance) = stories span (_.acceptanceCriteria.isEmpty)
+
+    val l1 = withAcceptance flatMap { s => Vector(createStoryRow(s), createAcceptanceRow(s)) }
+    val l2 = withoutAcceptance map createStoryRow
+
+    val emptyCell = createStoryRow(Story("", UndefScrumPoints, None, Seq()))
+
+    val pages = (l1 ++ l2) grouped 2 map { cells =>
+      val page = new PdfPTable(1)
+      page.setWidthPercentage(100.0f)
+      for (c <- cells)
+        page addCell c
+      for (_ <- cells.size until rowSize)
+        page addCell emptyCell
+      page
     }
 
-    val storyRow = createStoryRow(story)
-    pages.last.addCell(storyRow)
+    pages.toList
   }
 
-  private def addNewPage(pages: ListBuffer[PdfPTable]) {
-    val page = new PdfPTable(1)
-    page.setWidthPercentage(100.0f)
-    pages.append(page)
+  val sepHeight = 5
+  val contentHeight = contentSize.getHeight() / rowSize -
+      createFooter().getFixedHeight - sepHeight * 2
+
+  def createAcceptanceRow(story: Story): PdfPCell = {
+    val innerTable = new PdfPTable(1)
+    innerTable.setWidthPercentage(100.0f)
+    innerTable.setWidths(Array(100))
+
+    val list = new ITextList(ITextList.UNORDERED)
+    for (s <- story.acceptanceCriteria)
+      list.add(new ListItem(s, config.size.normalFont))
+
+    var headerCell = {
+      val headerCell = new PdfPCell()
+      headerCell.setBorder(Rectangle.NO_BORDER)
+      headerCell.setPadding(config.size.paddingContent)
+      val headerPhrase = new Phrase()
+      headerPhrase.add(new Chunk("\n" + "Acceptance Criteria:", config.size.bigFont))
+      headerPhrase.add(new Chunk("\n\n\n" + story.name + "\n\n", config.size.hugeFont))
+      headerCell.addElement(headerPhrase)
+      headerCell.addElement(list)
+      headerCell.setFixedHeight(contentHeight)
+      headerCell
+    }
+
+    innerTable.addCell(createSeparator(sepHeight))
+    innerTable.addCell(headerCell)
+    innerTable.addCell(createFooter())
+    innerTable.addCell(createSeparator(sepHeight))
+
+    new PdfPCell(innerTable)
   }
 
-  private def createStoryRow(story: Story): PdfPCell = {
+  def createStoryRow(story: Story): PdfPCell = {
     val innerTable = new PdfPTable(2)
     innerTable.setWidthPercentage(100.0f)
     innerTable.setWidths(Array(70, 30))
-    val sepHeight = 5
-    val footer = createFooter()
     innerTable.addCell(createSeparator(sepHeight))
-    val contentHeight = contentSize.getHeight() / rowSize -
-                        footer.getFixedHeight - sepHeight * 2
     innerTable.addCell(createStoryCell(contentHeight, story))
     innerTable.addCell(createMetaCell(contentHeight, story))
-    innerTable.addCell(footer)
+    innerTable.addCell(createFooter())
     innerTable.addCell(createSeparator(sepHeight))
-
     new PdfPCell(innerTable)
   }
 
@@ -69,7 +96,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     cell.setPaddingLeft(5)
     cell.setIndent(0)
     cell.setFixedHeight(config.companyBanner.getScaledHeight +
-                        cell.getPaddingTop + cell.getPaddingBottom)
+      cell.getPaddingTop + cell.getPaddingBottom)
     cell.setColspan(2)
     cell
   }
@@ -89,21 +116,21 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
 
   private def createMetaCell(height: Float, story: Story): PdfPCell = {
     val metaPhrase = new Phrase()
-    val undefined =  "________"
+    val undefined = "________"
     val priority = story.priority.getOrElse(undefined).toString
     val points = story.scrumPoints.toString(undefined)
     if (!config.hidePriority) {
-      metaPhrase.add(new Chunk("\nPriority:  "+priority+"\n\n",
-                                config.size.bigFont))
+      metaPhrase.add(new Chunk("\nPriority:  " + priority + "\n\n",
+        config.size.bigFont))
     } else {
       metaPhrase.add(new Chunk("\n\n\n", config.size.bigFont))
     }
     metaPhrase.add(new Chunk("\nPoints:    " + points + "\n\n",
-                              config.size.bigFont))
-    metaPhrase.add(new Chunk("\nOpened:  "+undefined+"\n\n",
-                              config.size.bigFont))
-    metaPhrase.add(new Chunk("\nFinished: "+undefined,
-                              config.size.bigFont))
+      config.size.bigFont))
+    metaPhrase.add(new Chunk("\nOpened:  " + undefined + "\n\n",
+      config.size.bigFont))
+    metaPhrase.add(new Chunk("\nFinished: " + undefined,
+      config.size.bigFont))
     val metaCell = new PdfPCell(metaPhrase)
     metaCell.setBorder(Rectangle.NO_BORDER)
     metaCell.setPadding(0)
@@ -111,15 +138,5 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
     metaCell.setIndent(0)
     metaCell.setBorder(Rectangle.NO_BORDER)
     metaCell
-  }
-
-  private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfStoriesAdded: Int) {
-    val emptyStory = Story("", UndefScrumPoints, None, Seq())
-    val storiesForFullPage = (
-        (noOfStoriesAdded.toDouble / rowSize).ceil * rowSize
-      ).toInt
-   (noOfStoriesAdded until storiesForFullPage) foreach { index =>
-     addStory(pages, index, emptyStory)
-   }
   }
 }

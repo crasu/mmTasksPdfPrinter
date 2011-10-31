@@ -10,12 +10,10 @@ object PdfConfiguration {
   private val LOGO_BASE_NAME = "logo"
   private val IMAGE_SUFFIXES = List(".png", ".gif", ".jpg", ".PNG", ".GIF", ".JPG")
 
-  val defaultConfig: PdfConfiguration = new CentralConfiguration with PdfConfiguration
+  val defaultConfig = new PdfConfiguration
 }
 
-trait PdfConfiguration {
-  self: {def properties: Properties} =>
-
+class PdfConfiguration extends CentralConfiguration {
     
   val hidePriority = properties.getProperty("pdf.hidePriority", "false").toBoolean
   val colour = properties.getProperty("pdf.colour", "44 106 168").split(" ").map(c => c.toInt)

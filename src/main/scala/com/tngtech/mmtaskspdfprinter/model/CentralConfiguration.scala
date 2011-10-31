@@ -6,6 +6,7 @@ import java.io.BufferedInputStream
 import java.io.File
 
 class CentralConfiguration {
+  
   protected val properties: Properties = {
     val file = new File("printer.props")
     val prop = new Properties

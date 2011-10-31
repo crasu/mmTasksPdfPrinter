@@ -19,9 +19,9 @@ object MmParser {
     else
       throw new ParsingException("Provided XML data is not a valid mm-file.")
 
-  private def sanityCheck(root: Elem) = root.label == "map" && root.size == 1
+  def sanityCheck(root:  Elem) = root.label == "map" && root.size == 1
 
-  def traverseBacklogs(root: Node) = 
+  def traverseBacklogs(root: Node) =    
     (root\"node") flatMap {possibleBacklogNode =>
       extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
