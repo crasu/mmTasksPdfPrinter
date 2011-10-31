@@ -10,9 +10,10 @@ class CentralConfiguration {
   protected val properties: Properties = {
     val file = new File("printer.props")
     val prop = new Properties
-    if (file.exists) {
+    if (file.exists)
       prop.load(new BufferedInputStream(new FileInputStream(file)))
-    }
+    else 
+      println("Warning: There is no file 'printer.props'. Using defaults")
     prop
   }
 }
