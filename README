@@ -32,8 +32,7 @@ An example of the configuration is located in config_example.
  This image will be used instead of the TNG Logo.
 
 = Running it locally =
-I recommend using Winstone to run it locally (http://winstone.sourceforge.net/).
-While developing you might also want to use jetty (jetty-run in sbt).
+Use 'sbt container:start' to start Jetty.
 
 = Credits =
 The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis.
