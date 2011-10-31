@@ -36,16 +36,18 @@ object MmParser {
     node \ "icon" exists (icon => (icon\"@BUILTIN").head.text == iconName)
     
   def extractStoriesFromSprint(backlogNode: Node): Seq[Story] = {
-    val storyNodes = backlogNode \\ "node" filter (story => hasIcon(story, storyAnnotation))  
-
+    val storyNodes = backlogNode \\ "node" filter (story => hasIcon(story, storyAnnotation))
     storyNodes.zipWithIndex map {case (story, prio) =>
       val desc = extractDescription(story)
-      val points = extractScrumPoints(story)
+      val points = extractScrumPoints(story) 
       val tasks = extractTasksFromStory(story)
-      val acceptance = Nil
+      val acceptance = extractAcceptanceCriteria(story)
       Story(desc, points, Some(prio + 1), tasks, acceptance)
    }
   }
+  
+  def extractAcceptanceCriteria(story:Node) =
+    story \\ "node" filter (hasIcon(_, "list")) flatMap (_ \ "node" map extractDescription)
 
   def extractTasksFromStory(sprintNode: Node): Seq[Task] = {
     def loop(node: Node, categories: List[String]):Seq[Task] =

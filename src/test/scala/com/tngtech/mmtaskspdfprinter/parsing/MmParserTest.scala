@@ -150,7 +150,6 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
     }
 
     it("must be able to detect every sprint") {
-
       val root =
         <map version="0.9.0">
           <node TEXT="Sprint 2010-20"/>
@@ -216,13 +215,41 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           </node>
           <node TEXT="c">
             <icon BUILTIN="bookmark"/>
+            <node TEXT="accept">
+              <icon BUILTIN="list"/>
+              <node TEXT="abc"/>
+            </node>
           </node>
         </node>
         val exp = List(
             Story("a",IntScrumPoints(5),Some(1)),
             Story("b",IntScrumPoints(3),Some(2)),
-            Story("c",UndefScrumPoints,Some(3)))
+            Story("c",UndefScrumPoints,Some(3),List(),List("abc")))
         MmParser.extractStoriesFromSprint(xml) must be (exp)
+    }
+    
+    it("must find acceptance criteria") {
+      val xml =
+        <node TEXT="story">
+          <icon BUILTIN="bookmark"/>
+          <node TEXT="foo">
+            <icon BUILTIN="attach"/>
+          </node>
+          <node TEXT="accept1">
+            <icon BUILTIN="list"/>
+            <node TEXT="a1a"/>
+            <node TEXT="a1b"/>
+          </node>
+          <node TEXT="accept2">
+            <icon BUILTIN="list"/>
+            <node TEXT="a2"/>
+          </node>
+          <node TEXT="accept3">
+            <icon BUILTIN="list"/>
+          </node>
+        </node>
+        val exp = List("a1a", "a1b", "a2")
+        MmParser.extractAcceptanceCriteria(xml) must be (exp)
     }
   }
 
@@ -231,7 +258,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       SprintBacklog("Sprint 2010-20", List( 
         Story("asdf", UndefScrumPoints, 1, 
           List(Task("foo", ""), Task("bar \"foobar\"", ""))
-        )):_*
+        ))
       ),
       SprintBacklog("Sprint 2010-21", List(
         Story("Some Story: A tale about...", 29, 1, 
@@ -246,7 +273,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 	          Task("regression", "CT"),
 	          Task("deploy to production", "Deployment"))
         ),
-        Story("Another Story", 30, 2, List(
+        Story("Another Story", IntScrumPoints(30), Some(2), List(
           Task("Do one thing", ""),
           Task("do another thing", ""),
           Task("task1", "cat subcat1", List(
@@ -256,8 +283,9 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           ),
           Task("task2", "cat subcat1"),
           Task("taskX", "cat subcat2"),
-          Task("\"taskX\"Hallo&<NANA>", "cat subcat2"))
-        )):_*
+          Task("\"taskX\"Hallo&<NANA>", "cat subcat2")),
+          List("a", "b", "c", "d")
+        ))
       ),
       SprintBacklog("Sprint 2010-22", List(
         Story("Story leaf 1-1", UndefScrumPoints, 1), 
@@ -268,7 +296,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         Story("Story leaf 3-2", UndefScrumPoints, 6),
         Story("Yet another leaf 4-1", UndefScrumPoints, 7), 
         Story("Yet another leaf 4-2", UndefScrumPoints, 8)
-      ):_*)
+      ))
     )
     it("must parse a xml file to an internal data structure") {
       val act = MmParser.parse(validData)
