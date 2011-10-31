@@ -54,7 +54,7 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
 
   describe("A sprint backlog") {
      val s = 
-       SprintBacklog("A sprint backlog", 
+       Sprint("A sprint backlog", 
          Story("First story", UndefScrumPoints, None),
          Story("Second story", UndefScrumPoints, None)
        )

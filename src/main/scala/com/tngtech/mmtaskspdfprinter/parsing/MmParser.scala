@@ -13,7 +13,7 @@ object MmParser {
   private val pointsExtractor = """.*[\(\{](.*=)?\s*(\d+).*[\)\}].*""".r
   private val halfPointsExtractor = """.*[\(\{](.*=)?\s*(0[\.,]5).*[\)\}].*""".r
 
-  def parse(root: Elem): Seq[SprintBacklog] =
+  def parse(root: Elem): Seq[Sprint] =
     if (sanityCheck(root))
       traverseBacklogs(root\"node" head)
     else
@@ -21,12 +21,12 @@ object MmParser {
 
   def sanityCheck(root:  Elem) = root.label == "map" && root.size == 1
 
-  def traverseBacklogs(root: Node) =    
+  def traverseBacklogs(root: Node):Seq[Sprint] =    
     (root\"node") flatMap {possibleBacklogNode =>
       extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
           val stories = extractStoriesFromSprint(possibleBacklogNode)
-          val backlog = SprintBacklog(extractDescription(name), stories: _*)
+          val backlog = Sprint(extractDescription(name), stories: _*)
           Seq(backlog)
         case _ =>  Nil
       }

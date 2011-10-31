@@ -2,7 +2,7 @@ package com.tngtech.mmtaskspdfprinter.snippet;
 
 import net.liftweb.http.{SessionVar, FileParamHolder, InMemoryResponse}
 import net.liftweb.common.{Box, Full, Empty}
-import com.tngtech.mmtaskspdfprinter.scrum.SprintBacklog
+import com.tngtech.mmtaskspdfprinter.scrum.Sprint
 
 object LastError extends SessionVar[Box[Exception]](Empty) {
   def showError() = if (this.isEmpty || is.isEmpty) {
@@ -24,6 +24,6 @@ object LastError extends SessionVar[Box[Exception]](Empty) {
 }
 
 class BacklogUpload extends Upload with Selection with Creation {
-  protected object selectedBacklog extends SessionVar[Box[SprintBacklog]](Empty)
+  protected object selectedBacklog extends SessionVar[Box[Sprint]](Empty)
   protected object uploadContainer extends SessionVar[Box[FileParamHolder]](Empty)
 }

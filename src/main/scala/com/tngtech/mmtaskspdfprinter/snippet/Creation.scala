@@ -43,13 +43,13 @@ trait Creation {
     }
   }
 
-  private def createPdf(selectedBacklog: SprintBacklog) {
+  private def createPdf(selectedBacklog: Sprint) {
     S.redirectTo("your_tasks.pdf",
                  () => PdfCreator.selectedBacklogs.set(List(selectedBacklog)))
   }
 
   private def sendToJira(config: JiraConfiguration,
-                         selectedBacklog: SprintBacklog, url: String,
+                         selectedBacklog: Sprint, url: String,
                          user: String, password: String, project: String) {
     val validationErrors = (
       validateUrl(url).toList :::

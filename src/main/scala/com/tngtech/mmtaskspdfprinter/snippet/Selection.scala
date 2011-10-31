@@ -35,7 +35,7 @@ trait Selection {
     case ex: ParsingException => S.error("Invalid mindmap: " + ex.getMessage); NodeSeq.Empty
   }
 
-  private def createStorySelectBox(allBacklogs: List[SprintBacklog]): NodeSeq = {
+  private def createStorySelectBox(allBacklogs: List[Sprint]): NodeSeq = {
     val nonEmptyBacklogs = allBacklogs filter {b => !b.stories.isEmpty}
     val options = nonEmptyBacklogs map {backlog => (backlog.name, backlog.name)}
     val default = if (selectedBacklog.set_? && !selectedBacklog.is.isEmpty) {

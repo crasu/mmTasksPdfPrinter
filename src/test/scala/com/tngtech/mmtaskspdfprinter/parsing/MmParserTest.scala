@@ -161,12 +161,12 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           <node TEXT=" backlog"/>
         </map>
 
-      val exp = List(SprintBacklog("Sprint 2010-20"),
-        SprintBacklog("Sprint 2010-21"),
-        SprintBacklog("Sprint 43"),
-        SprintBacklog("Product Backlog"),
-        SprintBacklog("Backlog"),
-        SprintBacklog("backlog"))
+      val exp = List(Sprint("Sprint 2010-20"),
+        Sprint("Sprint 2010-21"),
+        Sprint("Sprint 43"),
+        Sprint("Product Backlog"),
+        Sprint("Backlog"),
+        Sprint("backlog"))
       val act = MmParser.traverseBacklogs(root)
       act.toList must be(exp)
     }
@@ -196,7 +196,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           </node>
         </map>
 
-      val exp = List(SprintBacklog("Sprint 2010-20",
+      val exp = List(Sprint("Sprint 2010-20",
         List(Story("csasd 2412432", UndefScrumPoints, Some(1))): _*))
       val act = MmParser.parse(root)
       act.toList must equal(exp)
@@ -255,12 +255,12 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
   describe("MmParser") {
     val exp = List(
-      SprintBacklog("Sprint 2010-20", List( 
+      Sprint("Sprint 2010-20", List( 
         Story("asdf", UndefScrumPoints, 1, 
           List(Task("foo", ""), Task("bar \"foobar\"", ""))
         ))
       ),
-      SprintBacklog("Sprint 2010-21", List(
+      Sprint("Sprint 2010-21", List(
         Story("Some Story: A tale about...", 29, 1, 
           List(Task("buy Mindstorms set", "Dev"),
 	          Task("write remote control perl script", "Dev",  List(
@@ -287,7 +287,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           List("a", "b", "c", "d")
         ))
       ),
-      SprintBacklog("Sprint 2010-22", List(
+      Sprint("Sprint 2010-22", List(
         Story("Story leaf 1-1", UndefScrumPoints, 1), 
         Story("Story leaf 1-2", UndefScrumPoints, 2),
         Story("Story leaf 2-1", UndefScrumPoints, 3), 

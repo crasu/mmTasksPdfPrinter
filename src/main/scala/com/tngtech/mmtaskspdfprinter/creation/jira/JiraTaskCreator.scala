@@ -21,7 +21,7 @@ class JiraTaskCreator(val config: JiraConfiguration,
   val rpcClient: RpcClient, val restClient: RestClient,
   val projectName: String) {
 
-  def create(backlogs: List[SprintBacklog]) {
+  def create(backlogs: List[Sprint]) {
     try {
       val projectId = rpcClient.findProjectId(projectName)
       for (backlog <- backlogs; story <- backlog.stories) {

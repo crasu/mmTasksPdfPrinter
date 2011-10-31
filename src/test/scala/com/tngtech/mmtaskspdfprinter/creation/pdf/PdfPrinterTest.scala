@@ -14,7 +14,7 @@ import com.tngtech.mmtaskspdfprinter.scrum._
 class PdfPrinterTest extends Spec with MustMatchers {
     describe("PdfPrinter") {
       val printer = new PdfPrinter()
-      val backlog = SprintBacklog("2010-21",
+      val backlog = Sprint("2010-21",
         Story("Some Story: A tale about...", UndefScrumPoints, None, List(
           Task("buy Mindstorms set", "Dev"),
           Task("write remote control perl script", "Dev",  List(

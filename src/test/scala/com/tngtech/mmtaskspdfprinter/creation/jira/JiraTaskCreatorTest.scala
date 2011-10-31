@@ -8,7 +8,7 @@ import org.specs.mock.Mockito
 import config.JiraConfiguration
 import com.tngtech.mmtaskspdfprinter.scrum.Story
 import com.tngtech.mmtaskspdfprinter.scrum.Task
-import com.tngtech.mmtaskspdfprinter.scrum.SprintBacklog
+import com.tngtech.mmtaskspdfprinter.scrum.Sprint
 import com.tngtech.mmtaskspdfprinter.scrum.Subtask
 import org.mockito.Matchers._
 import com.tngtech.mmtaskspdfprinter.scrum.IntScrumPoints
@@ -29,7 +29,7 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	         List(Subtask("123"), Subtask("124"), Subtask("125"), Subtask("126")))
 	    val s1 = Story("1", IntScrumPoints(1), Some(2), List(Task("t1", "cat")))
 	    val s2 = Story("1", IntScrumPoints(1), Some(2), List(Task("t1", "cat"), t2))
-	    jc.create(List(SprintBacklog("backlog", s1, s2)))
+	    jc.create(List(Sprint("backlog", s1, s2)))
 	    
 	    there were two(rpc).createIssue(anyString(), anyString(), anyString()) 
 	    there were three(rest).createSubissue(anyString(), anyString(), anyString(), anyString(), anyString())

@@ -18,7 +18,7 @@ import java.io.ByteArrayOutputStream
 import java.io._
 
 object PdfCreator {
-  object selectedBacklogs extends RequestVar[Seq[SprintBacklog]](List())
+  object selectedBacklogs extends RequestVar[Seq[Sprint]](List())
 
   val HTML_OK = 200
 
