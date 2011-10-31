@@ -41,7 +41,8 @@ object MmParser {
       val desc = extractDescription(path.head)
       val points = extractScrumPoints(path.head)
       val tasks = traverseTasks(path.head)
-      Story(desc, points, prio + 1, tasks: _*)
+      val acceptance = Nil
+      Story(desc, points, Some(prio + 1), tasks, acceptance)
    }
   }
 
@@ -51,7 +52,7 @@ object MmParser {
     else
       (path.head)\"node" flatMap {child => findIcon(child :: path, lookedFor)}
 
-  private def traverseTasks(sprintNode: Node): Seq[Task] = {
+  def traverseTasks(sprintNode: Node): Seq[Task] = {
     val pathsToTasks = sprintNode\"node" flatMap {taskNode => 
       findIcon(List(taskNode), taskAnnotation)
     }
@@ -62,10 +63,10 @@ object MmParser {
       }.reverse.mkString(" ")
       val desc = extractDescription(path.head)
       val subtasks = traverseSubtasks(path.head)
-      Task(desc, cat, subtasks: _*)
+      Task(desc, cat, subtasks)
     }
   }
-
+  
   private def traverseSubtasks(taskNode: Node): List[Subtask] = {
     val pathsToLeaves = (taskNode\"node").flatMap {subtaskRoot =>
       findLeaves(List(subtaskRoot))

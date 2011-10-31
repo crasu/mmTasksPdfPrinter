@@ -10,9 +10,9 @@ import org.scalatest.PrivateMethodTester
 class UnitsOfWorkTest extends Spec with MustMatchers {
   describe("A task") {
     val t = 
-      Task("A task", "Dev", 
+      Task("A task", "Dev",  List(
         Subtask("First subtask"),
-        Subtask("Second subtask")
+        Subtask("Second subtask"))
       )
 
     val exp = List(Subtask("First subtask"),
@@ -26,8 +26,8 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
   describe("A story") {
      val s = 
        Story("A story", UndefScrumPoints, None,
-         Task("First task", "Dev"),
-         Task("Second task", "CT")
+         List(Task("First task", "Dev"),
+         Task("Second task", "CT"))
        )
 
      val exp = List(Task("First task", "Dev"),

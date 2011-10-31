@@ -25,9 +25,10 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	    
 	    val jc = new JiraTaskCreator(conf, rpc, rest, "pid")
 	    
-	    val t2 = Task("t1", "cat", Subtask("123"), Subtask("124"), Subtask("125"), Subtask("126"))
-	    val s1 = Story("1", IntScrumPoints(1), Some(2), Task("t1", "cat"))
-	    val s2 = Story("1", IntScrumPoints(1), Some(2), Task("t1", "cat"), t2)
+	    val t2 = Task("t1", "cat", 
+	         List(Subtask("123"), Subtask("124"), Subtask("125"), Subtask("126")))
+	    val s1 = Story("1", IntScrumPoints(1), Some(2), List(Task("t1", "cat")))
+	    val s2 = Story("1", IntScrumPoints(1), Some(2), List(Task("t1", "cat"), t2))
 	    jc.create(List(SprintBacklog("backlog", s1, s2)))
 	    
 	    there were two(rpc).createIssue(anyString(), anyString(), anyString()) 

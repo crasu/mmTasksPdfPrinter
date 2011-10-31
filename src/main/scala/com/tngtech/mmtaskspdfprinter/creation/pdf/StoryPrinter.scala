@@ -114,7 +114,7 @@ private class StoryPrinter(val contentSize: Rectangle, val config: PdfConfigurat
   }
 
   private def fillWithEmptyCells(pages: ListBuffer[PdfPTable], noOfStoriesAdded: Int) {
-    val emptyStory = Story("", UndefScrumPoints, None)
+    val emptyStory = Story("", UndefScrumPoints, None, Seq())
     val storiesForFullPage = (
         (noOfStoriesAdded.toDouble / rowSize).ceil * rowSize
       ).toInt
