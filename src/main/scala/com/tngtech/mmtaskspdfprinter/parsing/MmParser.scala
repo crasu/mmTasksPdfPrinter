@@ -25,7 +25,7 @@ object MmParser {
     (root\"node") flatMap {possibleBacklogNode =>
       extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
-          val stories = traverseStories(possibleBacklogNode)
+          val stories = extractStoriesFromSprint(possibleBacklogNode)
           val backlog = SprintBacklog(extractDescription(name), stories: _*)
           Seq(backlog)
         case _ =>  Nil
@@ -35,23 +35,23 @@ object MmParser {
   def hasIcon(node:Node, iconName:String) = 
     node \ "icon" exists (icon => (icon\"@BUILTIN").head.text == iconName)
     
-  def traverseStories(backlogNode: Node): Seq[Story] = {
+  def extractStoriesFromSprint(backlogNode: Node): Seq[Story] = {
     val storyNodes = backlogNode \\ "node" filter (story => hasIcon(story, storyAnnotation))  
 
     storyNodes.zipWithIndex map {case (story, prio) =>
       val desc = extractDescription(story)
       val points = extractScrumPoints(story)
-      val tasks = traverseTasks(story)
+      val tasks = extractTasksFromStory(story)
       val acceptance = Nil
       Story(desc, points, Some(prio + 1), tasks, acceptance)
    }
   }
 
-  def traverseTasks(sprintNode: Node): Seq[Task] = {
+  def extractTasksFromStory(sprintNode: Node): Seq[Task] = {
     def loop(node: Node, categories: List[String]):Seq[Task] =
       if (hasIcon(node, taskAnnotation)) {
         val desc = extractDescription(node)
-        val subtasks = traverseSubtasks(node)
+        val subtasks = extractSubtasks(node)
         val cat = categories.reverse mkString " "
         Seq(Task(desc, cat, subtasks))
       } else {
@@ -60,10 +60,9 @@ object MmParser {
       }
     
     sprintNode \ "node" flatMap (loop(_, Nil))
-    
   }
   
-  def traverseSubtasks(taskNode: Node): List[Subtask] = {
+  def extractSubtasks(taskNode: Node): List[Subtask] = {
     def findLeaves(path: Seq[Node]): Seq[Seq[Node]] =
       if ((path.head \ "node").isEmpty)
         Seq(path)
@@ -102,11 +101,11 @@ object MmParser {
 
   private def extractText(node: Node): String =
     if ((node\"@TEXT").size > 0) (node\"@TEXT").head.text
-    else if ((node\"richcontent").size > 0) extractFromHtml((node\"richcontent").head.text)
+    else if ((node\"richcontent").size > 0) extractTextFromHtml((node\"richcontent").head.text)
     else ""
 
 
-  private def extractFromHtml(html: String): String = {
+  private def extractTextFromHtml(html: String): String = {
     val source = new Source(html)
     source.getTextExtractor().toString()
   }

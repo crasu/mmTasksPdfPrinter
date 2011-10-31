@@ -91,8 +91,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       val exp = List(Subtask("write module mod1"),
         Subtask("write module mod2 part a"),
         Subtask("write module mod2 part b"))
-      val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
-      val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
+      val subtasks = MmParser.extractSubtasks(subtaskTree)
       subtasks.toList must be(exp)
     }
     it("must parse all tasks of a story") {
@@ -112,9 +111,10 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       val exp = List(Subtask("write module mod1"),
         Subtask("write module mod2 part a"),
         Subtask("write module mod2 part b"))
-      val subtasks = MmParser.traverseSubtasks(subtaskTree)
+      val subtasks = MmParser.extractSubtasks(subtaskTree)
       subtasks.toList must be(exp)
     }
+    
     it("must be able to parse stories") {
       val story =
         <node TEXT="asdf">
@@ -145,7 +145,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         Task("bar \"foobar\"", ""),
         Task("foo2", "cat"),
         Task("foo3", "cat1 cat2"))
-      val act = MmParser.traverseTasks(story)
+      val act = MmParser.extractTasksFromStory(story)
       act must be(exp)
     }
 
@@ -222,7 +222,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
             Story("a",IntScrumPoints(5),Some(1)),
             Story("b",IntScrumPoints(3),Some(2)),
             Story("c",UndefScrumPoints,Some(3)))
-        MmParser.traverseStories(xml) must be (exp)
+        MmParser.extractStoriesFromSprint(xml) must be (exp)
     }
   }
 
