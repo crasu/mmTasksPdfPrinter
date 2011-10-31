@@ -1,7 +1,12 @@
 package com.tngtech.mmtaskspdfprinter.scrum
 import java.io._
 
-case class SprintBacklog(name: String, stories: Story*)
+case class SprintBacklog(name: String, stories: List[Story])
+
+object SprintBacklog {
+  def apply(name: String, stories: Story*):SprintBacklog = 
+    SprintBacklog(name,stories.toList)
+}
 
 object Story {
   def apply(name: String, scrumPoints: Int, priority: Int, tasks: Seq[Task]): Story =

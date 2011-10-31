@@ -21,7 +21,7 @@ object MmParser {
 
   private def sanityCheck(root: Elem) = root.label == "map" && root.size == 1
 
-  private def traverseBacklogs(root: Node) = 
+  def traverseBacklogs(root: Node) = 
     (root\"node") flatMap {possibleBacklogNode =>
       extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
@@ -32,42 +32,44 @@ object MmParser {
       }
     }
 
-  private def traverseStories(backlogNode: Node): Seq[Story] = {
-    val pathsToStories = (backlogNode\"node") flatMap {sprintNode => 
-      findIcon(List(sprintNode), storyAnnotation)
-    }
+  def hasIcon(node:Node, iconName:String) = 
+    node \ "icon" exists (icon => (icon\"@BUILTIN").head.text == iconName)
+    
+  def traverseStories(backlogNode: Node): Seq[Story] = {
+    val storyNodes = backlogNode \\ "node" filter (story => hasIcon(story, storyAnnotation))  
 
-    pathsToStories.zipWithIndex map {case (path, prio) =>
-      val desc = extractDescription(path.head)
-      val points = extractScrumPoints(path.head)
-      val tasks = traverseTasks(path.head)
+    storyNodes.zipWithIndex map {case (story, prio) =>
+      val desc = extractDescription(story)
+      val points = extractScrumPoints(story)
+      val tasks = traverseTasks(story)
       val acceptance = Nil
       Story(desc, points, Some(prio + 1), tasks, acceptance)
    }
   }
 
-  private def findIcon(path: List[Node], lookedFor: String): Seq[Seq[Node]] =
-    if ( path.head\"icon" exists {icon => (icon\"@BUILTIN").head.text == lookedFor} )
-      Seq(path)
-    else
-      (path.head)\"node" flatMap {child => findIcon(child :: path, lookedFor)}
-
   def traverseTasks(sprintNode: Node): Seq[Task] = {
-    val pathsToTasks = sprintNode\"node" flatMap {taskNode => 
-      findIcon(List(taskNode), taskAnnotation)
-    }
-
-    pathsToTasks map {path => 
-      val cat = path.tail.map {node => 
-        extractDescription(node)
-      }.reverse.mkString(" ")
-      val desc = extractDescription(path.head)
-      val subtasks = traverseSubtasks(path.head)
-      Task(desc, cat, subtasks)
-    }
+    def loop(node: Node, categories: List[String]):Seq[Task] =
+      if (hasIcon(node, taskAnnotation)) {
+        val desc = extractDescription(node)
+        val subtasks = traverseSubtasks(node)
+        val cat = categories.reverse mkString " "
+        Seq(Task(desc, cat, subtasks))
+      } else {
+        val cat = extractDescription(node) :: categories
+        node \ "node" flatMap (loop(_, cat))
+      }
+    
+    sprintNode \ "node" flatMap (loop(_, Nil))
+    
   }
   
-  private def traverseSubtasks(taskNode: Node): List[Subtask] = {
+  def traverseSubtasks(taskNode: Node): List[Subtask] = {
+    def findLeaves(path: Seq[Node]): Seq[Seq[Node]] =
+      if ((path.head \ "node").isEmpty)
+        Seq(path)
+      else
+        (path.head \ "node") flatMap { child => findLeaves(child +: path) }
+    
     val pathsToLeaves = (taskNode\"node").flatMap {subtaskRoot =>
       findLeaves(List(subtaskRoot))
     }.toList
@@ -77,12 +79,6 @@ object MmParser {
       Subtask(desc)
     }
   }
-
-  private def findLeaves(path: Seq[Node]): Seq[Seq[Node]] =
-    if ( (path.head\"node").isEmpty )
-      Seq(path)
-    else
-      (path.head\"node") flatMap {child => findLeaves(child +: path)}
 
   private def extractScrumPoints(node: Node): ScrumPoints =
     extractText(node) match {

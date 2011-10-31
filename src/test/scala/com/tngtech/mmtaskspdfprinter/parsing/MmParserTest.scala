@@ -73,126 +73,156 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       act must be (expCombined)
     }
   }
-  
+
   describe("MmParser") {
-    val subtaskTree = 
-      <node CREATED="1265988639753" ID="ID_713677348" MODIFIED="1265988645059" TEXT="My Task">
-      <icon BUILTIN="bookmark"/>
-        <node CREATED="1265988639762" ID="ID_713677349" MODIFIED="1265988645059" TEXT="write module">
-          <node CREATED="1269529671283" ID="Freemind_Link_662706228" MODIFIED="1269529673077" TEXT="mod1"/>
-          <node CREATED="1269529673537" ID="Freemind_Link_775829959" MODIFIED="1269529675471" TEXT="mod2">
-            <node CREATED="1269529676056" ID="Freemind_Link_841377711" MODIFIED="1269529680690" TEXT="part a"/>
-            <node CREATED="1269529680994" ID="Freemind_Link_437477332" MODIFIED="1269529682616" TEXT="part b"/>\n\
-          </node>
-        </node>
-      </node>
-    val exp = List(Subtask("write module mod1"),
-                   Subtask("write module mod2 part a"),
-                   Subtask("write module mod2 part b"))
-    val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
     it("must parse all subtasks of a task") {
-      val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
-      subtasks.toList must be (exp)
-    }
-  }
-  
-  describe("MmParser") {
-    val subtaskTree = 
-      <node CREATED="1265988639753" ID="ID_713677348" MODIFIED="1265988645059" TEXT="My Task">
-      <icon BUILTIN="bookmark"/>
-        <node CREATED="1265988639762" ID="ID_713677349" MODIFIED="1265988645059" TEXT="write module">
-          <node CREATED="1269529671283" ID="Freemind_Link_662706228" MODIFIED="1269529673077" TEXT="mod1"/>
-          <node CREATED="1269529673537" ID="Freemind_Link_775829959" MODIFIED="1269529675471" TEXT="mod2">
-            <node CREATED="1269529676056" ID="Freemind_Link_841377711" MODIFIED="1269529680690" TEXT="part a"/>
-            <node CREATED="1269529680994" ID="Freemind_Link_437477332" MODIFIED="1269529682616" TEXT="part b"/>\n\
+      val subtaskTree =
+        <node TEXT="My Task">
+          <icon BUILTIN="bookmark"/>
+          <node TEXT="write module">
+            <node TEXT="mod1"/>
+            <node TEXT="mod2">
+              <node TEXT="part a"/>
+              <node TEXT="part b"/>
+              \n\
+            </node>
           </node>
         </node>
-      </node>
-    val exp = List(Subtask("write module mod1"),
-                   Subtask("write module mod2 part a"),
-                   Subtask("write module mod2 part b"))
-    val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
-    it("must parse all tasks of a story") {
+      val exp = List(Subtask("write module mod1"),
+        Subtask("write module mod2 part a"),
+        Subtask("write module mod2 part b"))
+      val traverseSubtasks = PrivateMethod[Seq[Subtask]]('traverseSubtasks)
       val subtasks = MmParser invokePrivate traverseSubtasks(subtaskTree)
-      subtasks.toList must be (exp)
+      subtasks.toList must be(exp)
     }
-  }
+    it("must parse all tasks of a story") {
 
-  describe("MmParser") {
-    val story = <node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1287734314282" TEXT="asdf">
-                      <icon BUILTIN="full-1"/>
-                      <icon BUILTIN="bookmark"/>
-                      <node CREATED="1269526448681" ID="Freemind_Link_1892252504" MODIFIED="1269526465865" TEXT="foo">
-                        <icon BUILTIN="attach"/>
-                      </node>
-                      <node CREATED="1269526450124" ID="Freemind_Link_1309764532" MODIFIED="1269529996041" TEXT="bar &quot;foobar&quot;">
-                        <icon BUILTIN="attach"/>
-                      </node>
-                      <node CREATED="1269526453385" ID="Freemind_Link_866813631" MODIFIED="1269526457534" TEXT="not in the output"/>
-                    </node>
-    val exp = List(
-        Task("foo", ""),
-        Task("bar \"foobar\"", ""))
+      val subtaskTree =
+        <node TEXT="My Task">
+          <icon BUILTIN="bookmark"/>
+          <node TEXT="write module">
+            <node TEXT="mod1"/>
+            <node TEXT="mod2">
+              <node TEXT="part a"/>
+              <node TEXT="part b"/>
+              \n\
+            </node>
+          </node>
+        </node>
+      val exp = List(Subtask("write module mod1"),
+        Subtask("write module mod2 part a"),
+        Subtask("write module mod2 part b"))
+      val subtasks = MmParser.traverseSubtasks(subtaskTree)
+      subtasks.toList must be(exp)
+    }
     it("must be able to parse stories") {
+      val story =
+        <node TEXT="asdf">
+          <icon BUILTIN="full-1"/>
+          <icon BUILTIN="bookmark"/>
+          <node TEXT="foo">
+            <icon BUILTIN="attach"/>
+          </node>
+          <node TEXT="bar &quot;foobar&quot;">
+            <icon BUILTIN="attach"/>
+          </node>
+          <node TEXT="not in the output"/>
+          <node TEXT="cat">
+            <node TEXT="foo2">
+              <icon BUILTIN="attach"/>
+            </node>
+          </node>
+          <node TEXT="cat1">
+            <node TEXT="cat2">
+              <node TEXT="foo3">
+                <icon BUILTIN="attach"/>
+              </node>
+            </node>
+          </node>
+        </node>
+      val exp = List(
+        Task("foo", ""),
+        Task("bar \"foobar\"", ""),
+        Task("foo2", "cat"),
+        Task("foo3", "cat1 cat2"))
       val act = MmParser.traverseTasks(story)
-      act must be (exp)
+      act must be(exp)
     }
-  }
 
-  describe("MmParser") {
-    val root = 
-      <map version="0.9.0">
-        <node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1272014962570" TEXT="Sprint 2010-20"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Sprint 2010-21"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="Sprint 43"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT="something else"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" Product Backlog "/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" Backlog"/>
-        <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1269597503934" TEXT=" backlog"/>
-      </map>
-
-    val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
-    val exp = List(SprintBacklog("Sprint 2010-20"),
-                   SprintBacklog("Sprint 2010-21"),
-                   SprintBacklog("Sprint 43"),
-                   SprintBacklog("Product Backlog"),
-                   SprintBacklog("Backlog"),
-                   SprintBacklog("backlog"))
     it("must be able to detect every sprint") {
-      val act = MmParser invokePrivate traverseBacklogs(root)
-      act.toList must be (exp)
+
+      val root =
+        <map version="0.9.0">
+          <node TEXT="Sprint 2010-20"/>
+          <node TEXT="Sprint 2010-21"/>
+          <node TEXT="Sprint 43"/>
+          <node TEXT="something else"/>
+          <node TEXT=" Product Backlog "/>
+          <node TEXT=" Backlog"/>
+          <node TEXT=" backlog"/>
+        </map>
+
+      val exp = List(SprintBacklog("Sprint 2010-20"),
+        SprintBacklog("Sprint 2010-21"),
+        SprintBacklog("Sprint 43"),
+        SprintBacklog("Product Backlog"),
+        SprintBacklog("Backlog"),
+        SprintBacklog("backlog"))
+      val act = MmParser.traverseBacklogs(root)
+      act.toList must be(exp)
     }
-  }
-
-  describe("MmParser") {
-    val root = <map version="0.9.0">
-<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1265988225850" ID="ID_204900544" MODIFIED="1269505504609" TEXT="Product Backlog">
-<node CREATED="1269526293331" ID="Freemind_Link_879171622" MODIFIED="1272014836816" POSITION="right" TEXT="Sprint 2010-20 (123 pts)">
-<node CREATED="1269526444157" ID="Freemind_Link_203734451" MODIFIED="1297930433713">
-<richcontent TYPE="NODE"><html>
-  <head>
-
-  </head>
-  <body>
-    <p>
-      csasd <b>2412432</b>
-    </p>
-  </body>
-</html></richcontent>
-<icon BUILTIN="full-2"/>
-<icon BUILTIN="bookmark"/>
-<node CREATED="1269526453385" ID="Freemind_Link_1753761911" MODIFIED="1297932020174" TEXT="no task"/>
-</node>
-</node>
-</node>
-</map>
-
-    val traverseBacklogs = PrivateMethod[Seq[SprintBacklog]]('traverseBacklogs)
-    val exp = List(SprintBacklog("Sprint 2010-20", Story("csasd 2412432", UndefScrumPoints, Some(1))))
+    
     it("must be able to handle HTML nodes") {
+      val root =
+        <map version="0.9.0">
+          <node TEXT="Product Backlog">
+            <node POSITION="right" TEXT="Sprint 2010-20 (123 pts)">
+              <node>
+                <richcontent TYPE="NODE">
+                  <html>
+                    <head>
+                    </head>
+                    <body>
+                      <p>
+                        csasd <b>2412432</b>
+                      </p>
+                    </body>
+                  </html>
+                </richcontent>
+                <icon BUILTIN="full-2"/>
+                <icon BUILTIN="bookmark"/>
+                <node TEXT="no task"/>
+              </node>
+            </node>
+          </node>
+        </map>
+
+      val exp = List(SprintBacklog("Sprint 2010-20",
+        List(Story("csasd 2412432", UndefScrumPoints, Some(1))): _*))
       val act = MmParser.parse(root)
-      act.toList must be (exp)
+      act.toList must equal(exp)
+    }
+    
+    it("must traverse stories") {
+      val xml =
+        <node TEXT="Sprint (123)">
+          <node TEXT="Dev {16}">
+            <node TEXT="a (5)">
+              <icon BUILTIN="bookmark"/>
+            </node>
+            <node TEXT="b (3)">
+              <icon BUILTIN="bookmark"/>
+            </node>
+          </node>
+          <node TEXT="c">
+            <icon BUILTIN="bookmark"/>
+          </node>
+        </node>
+        val exp = List(
+            Story("a",IntScrumPoints(5),Some(1)),
+            Story("b",IntScrumPoints(3),Some(2)),
+            Story("c",UndefScrumPoints,Some(3)))
+        MmParser.traverseStories(xml) must be (exp)
     }
   }
 
