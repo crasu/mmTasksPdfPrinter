@@ -26,7 +26,7 @@ object MmParser {
       extractText(possibleBacklogNode) match {
         case backlogPattern(name) =>
           val stories = extractStoriesFromSprint(possibleBacklogNode)
-          val backlog = Sprint(extractDescription(name), stories: _*)
+          val backlog = Sprint(extractDescription(name), stories)
           Seq(backlog)
         case _ =>  Nil
       }
@@ -35,9 +35,9 @@ object MmParser {
   def hasIcon(node:Node, iconName:String) = 
     node \ "icon" exists (icon => (icon\"@BUILTIN").head.text == iconName)
     
-  def extractStoriesFromSprint(backlogNode: Node): Seq[Story] = {
+  def extractStoriesFromSprint(backlogNode: Node): List[Story] = {
     val storyNodes = backlogNode \\ "node" filter (story => hasIcon(story, storyAnnotation))
-    storyNodes.zipWithIndex map {case (story, prio) =>
+    storyNodes.toList.zipWithIndex map {case (story, prio) =>
       val desc = extractDescription(story)
       val points = extractScrumPoints(story) 
       val tasks = extractTasksFromStory(story)
@@ -49,7 +49,7 @@ object MmParser {
   def extractAcceptanceCriteria(story:Node) =
     story \\ "node" filter (hasIcon(_, "list")) flatMap (_ \ "node" map extractDescription)
 
-  def extractTasksFromStory(sprintNode: Node): Seq[Task] = {
+  def extractTasksFromStory(sprintNode: Node): List[Task] = {
     def loop(node: Node, categories: List[String]):Seq[Task] =
       if (hasIcon(node, taskAnnotation)) {
         val desc = extractDescription(node)
@@ -61,7 +61,8 @@ object MmParser {
         node \ "node" flatMap (loop(_, cat))
       }
     
-    sprintNode \ "node" flatMap (loop(_, Nil))
+    val tasks = sprintNode \ "node" flatMap (loop(_, Nil))
+    tasks.toList
   }
   
   def extractSubtasks(taskNode: Node): List[Subtask] = {

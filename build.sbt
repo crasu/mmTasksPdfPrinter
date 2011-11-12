@@ -13,30 +13,28 @@ scalaVersion := "2.9.1"
 // set the Scala test source directory to be <base>/test
 //scalaSource in Test <<= baseDirectory(_ / "test")
 
+resolvers += "Web plugin repo" at "http://siasia.github.com/maven2"
+
 libraryDependencies ++= Seq(
-    "net.liftweb" %% "lift-mapper" % "2.4-M4" % "compile->default",
+  "net.liftweb" %% "lift-mapper" % "2.4-M4" % "compile->default",
 	"commons-lang" % "commons-lang" % "2.4" % "compile->default",
 	"com.itextpdf" % "itextpdf" % "5.1.2" % "compile->default",
 	"org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default",
 	"net.htmlparser.jericho" % "jericho-html" % "3.1" % "compile->default",
 	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default",
 	"org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
-	"junit" % "junit" % "4.5" % "test->default",
-    //
-    "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources
+  "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources
 )
 
 libraryDependencies ++= Seq(
-    //ScalaTest
-    "org.scalatest" %% "scalatest" % "1.6.1" % "test->default",
-    // Specs 2
-    "org.specs2" %% "specs2" % "1.6.1",
-    "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
-    // Specs 1
-    "org.scala-tools.testing" %% "specs" % "1.6.9" % "test",
-    //
-    "org.mockito" % "mockito-core" % "1.8.4",
-    "com.novocode" % "junit-interface" % "0.7" % "test->default"
+	"junit" % "junit" % "4.5" % "test->default",
+  "org.scalatest" %% "scalatest" % "1.6.1" % "test->default",
+  "org.specs2" %% "specs2" % "1.6.1" % "test->default",
+  "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test->default",
+  "org.scala-tools.testing" %% "specs" % "1.6.9" % "test->default",
+  "org.mockito" % "mockito-core" % "1.8.4" % "test->default",
+  "org.hamcrest" % "hamcrest-library" % "1.2.1" % "test->default",
+  "com.novocode" % "junit-interface" % "0.7" % "test->default"
 )
 
 // reduce the maximum number of errors shown by the Scala compiler

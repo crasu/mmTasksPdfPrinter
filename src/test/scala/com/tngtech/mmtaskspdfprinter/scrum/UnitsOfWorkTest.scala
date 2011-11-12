@@ -5,6 +5,7 @@ import org.junit.runner.RunWith
 import org.scalatest.Spec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.PrivateMethodTester
+import Dsl._
 
 @RunWith(classOf[JUnitRunner])
 class UnitsOfWorkTest extends Spec with MustMatchers {
@@ -41,26 +42,26 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
   describe("A story") {
     it("must recognize equal stories") {
       Story("One", UndefScrumPoints, None) must be (Story("One", UndefScrumPoints, None))
-      Story("One", 16, None) must be (Story("One", 16, None))
-      Story("One", 16, 1) must be (Story("One", 16, 1))
+      Story("One", 16 pts, NoPrio) must be (Story("One", 16 pts, NoPrio))
+      Story("One", 16 pts, 1 prio) must be (Story("One", 16 pts, 1 prio))
     }
     it("must recognize different stories") {
-      Story("One", UndefScrumPoints, None) must not be (Story("One", 1, None))
-      Story("One", 2, None) must not be (Story("One", 1, None))
-      Story("One", 16, None) must not be (Story("Two", 16, None))
-      Story("One", 16, 2) must not be (Story("Two", 16, 1))
+      Story("One", UndefScrumPoints, NoPrio) must not be (Story("One", 1.point, NoPrio))
+      Story("One", 2 pts, NoPrio) must not be (Story("One", 1 pt, NoPrio))
+      Story("One", 16 pts, NoPrio) must not be (Story("Two", 16 pts, NoPrio))
+      Story("One", 16 pts, 2 prio) must not be (Story("Two", 16 pts, 1 prio))
     }
   }
 
   describe("A sprint backlog") {
      val s = 
        Sprint("A sprint backlog", 
-         Story("First story", UndefScrumPoints, None),
-         Story("Second story", UndefScrumPoints, None)
+         Story("First story"),
+         Story("Second story")
        )
 
-     val exp = List(Story("First story", UndefScrumPoints, None),
-                    Story("Second story", UndefScrumPoints, None))
+     val exp = List(Story("First story"),
+                    Story("Second story"))
 
     it("must keep the order of its stories") {
       s.stories must be (exp)

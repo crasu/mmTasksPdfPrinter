@@ -8,6 +8,7 @@ import org.scalatest.PrivateMethodTester
 import scala.xml._
 
 import com.tngtech.mmtaskspdfprinter.scrum._
+import Dsl._
 
 @RunWith(classOf[JUnitRunner])
 class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
@@ -41,17 +42,16 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
     val extractScrumPoints = PrivateMethod[ScrumPoints]('extractScrumPoints)
 
     val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
-    val expBrackets = IntScrumPoints(123)
     it("must parse points in brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descBrackets)
-      act must be (expBrackets)
+      act must be (123 pts)
     }
 
     val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
-    val expCurely = IntScrumPoints(7)
+
     it("must parse points in curely brackets") {
       val act = MmParser invokePrivate extractScrumPoints(descCurely)
-      act must be (expCurely)
+      act must be (7 pts)
     }
     
     val descCurely05 = <node TEXT="   Sprint 2010-20 { 0.5 pts} SomeMoreText   " />
@@ -67,10 +67,9 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
     }
 
     val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
-    val expCombined = IntScrumPoints(5)
     it("must parse points even if it is ambiguous") {
       val act = MmParser invokePrivate extractScrumPoints(descCombined)
-      act must be (expCombined)
+      act must be (5 pts)
     }
   }
 
@@ -197,7 +196,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         </map>
 
       val exp = List(Sprint("Sprint 2010-20",
-        List(Story("csasd 2412432", UndefScrumPoints, Some(1))): _*))
+        Story("csasd 2412432", priority = 1 st)))
       val act = MmParser.parse(root)
       act.toList must equal(exp)
     }
@@ -222,9 +221,9 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           </node>
         </node>
         val exp = List(
-            Story("a",IntScrumPoints(5),Some(1)),
-            Story("b",IntScrumPoints(3),Some(2)),
-            Story("c",UndefScrumPoints,Some(3),List(),List("abc")))
+            Story("a", 5 pts, priority = 1 st),
+            Story("b", 3 pts, priority = 2 nd),
+            Story("c", priority = 3 th, acceptanceCriteria = List("abc")))
         MmParser.extractStoriesFromSprint(xml) must be (exp)
     }
     
@@ -256,12 +255,12 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
   describe("MmParser") {
     val exp = List(
       Sprint("Sprint 2010-20", List( 
-        Story("asdf", UndefScrumPoints, 1, 
-          List(Task("foo", ""), Task("bar \"foobar\"", ""))
+        Story("asdf", priority = 1 st, 
+          tasks = List(Task("foo", ""), Task("bar \"foobar\"", ""))
         ))
       ),
       Sprint("Sprint 2010-21", List(
-        Story("Some Story: A tale about...", 29, 1, 
+        Story("Some Story: A tale about...", 29 points, 1 prio, 
           List(Task("buy Mindstorms set", "Dev"),
 	          Task("write remote control perl script", "Dev",  List(
 	            Subtask("write unit tests"),
@@ -273,7 +272,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 	          Task("regression", "CT"),
 	          Task("deploy to production", "Deployment"))
         ),
-        Story("Another Story", IntScrumPoints(30), Some(2), List(
+        Story("Another Story", 30 pts, 2 prio, List(
           Task("Do one thing", ""),
           Task("do another thing", ""),
           Task("task1", "cat subcat1", List(
@@ -288,14 +287,14 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         ))
       ),
       Sprint("Sprint 2010-22", List(
-        Story("Story leaf 1-1", UndefScrumPoints, 1), 
-        Story("Story leaf 1-2", UndefScrumPoints, 2),
-        Story("Story leaf 2-1", UndefScrumPoints, 3), 
-        Story("Story leaf 2-2", UndefScrumPoints, 4),
-        Story("Story leaf 3-1", UndefScrumPoints, 5), 
-        Story("Story leaf 3-2", UndefScrumPoints, 6),
-        Story("Yet another leaf 4-1", UndefScrumPoints, 7), 
-        Story("Yet another leaf 4-2", UndefScrumPoints, 8)
+        Story("Story leaf 1-1", priority = 1 st), 
+        Story("Story leaf 1-2", priority = 2 nd),
+        Story("Story leaf 2-1", priority = 3 rd), 
+        Story("Story leaf 2-2", priority = 4 th),
+        Story("Story leaf 3-1", priority = 5 th), 
+        Story("Story leaf 3-2", priority = 6 th),
+        Story("Yet another leaf 4-1", priority = 7 th), 
+        Story("Yet another leaf 4-2", priority = 8 th)
       ))
     )
     it("must parse a xml file to an internal data structure") {

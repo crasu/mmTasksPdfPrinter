@@ -21,33 +21,44 @@ class JiraTaskCreator(val config: JiraConfiguration,
   val rpcClient: RpcClient, val restClient: RestClient,
   val projectName: String) {
 
-  def create(backlogs: List[Sprint]) {
+  def create(backlogs: List[Sprint]): List[Sprint] = {
     try {
-      val projectId = rpcClient.findProjectId(projectName)
-      for (backlog <- backlogs; story <- backlog.stories) {
-        val parentId = createIssue(story)
-        for (task <- story.tasks) {
-          val subissueKey = createSubissue(projectId, parentId, story, task)
-          task.jiraKey = subissueKey
-        }
-      }
-      rpcClient.close()
+      createBacklog(backlogs)
     } catch {
       case ex: Exception => 
       ex.printStackTrace()
       throw new JiraException("An error occured while sending Data to JIRA", ex)
     }
   }
-
-  def createIssue(story: Story) = {
-    val issuetype = rpcClient.findIssuetype(config.issuetypename)
-    val issue = rpcClient.createIssue(projectName, story.name, issuetype)
-    story.jiraKey = issue.key
-    issue.id
+  
+  private def createBacklog(backlogs: List[Sprint]) = {
+    val projectId = rpcClient.findProjectId(projectName)
+    val backlogsWithKeys = for (backlog <- backlogs) yield {
+      val storiesWithKeys = for (story <- backlog.stories) yield {
+      	createStory(projectId, story)
+      }
+      backlog.copy(stories = storiesWithKeys)
+    }
+    backlogsWithKeys          
+  }
+  
+  private def createStory(projectId: String, story: Story): Story = {
+    val (parentId, issueKey) = createIssue(story)
+    val tasksWithKeys = for (task <- story.tasks) yield {
+      val subissueKey = createSubissue(projectId, parentId, story, task)
+      task.copy(jiraKey = subissueKey) 
+    }
+    story.copy(jiraKey = issueKey, tasks = tasksWithKeys)
   }
 
-  def createSubissue(projectId:String, parentId: String, story: Story, task: Task): String = {
+  private def createIssue(story: Story) = {
+    val issuetype = rpcClient.findIssuetype(config.issuetypename)
+    val issue = rpcClient.createIssue(projectName, story.name, issuetype)
+    story.copy(jiraKey = issue.key)
+    (issue.id, issue.key)
+  }
 
+  private def createSubissue(projectId:String, parentId: String, story: Story, task: Task): String = {
     val category =
       if (task.category.isEmpty) ""
       else "Category: " + task.category

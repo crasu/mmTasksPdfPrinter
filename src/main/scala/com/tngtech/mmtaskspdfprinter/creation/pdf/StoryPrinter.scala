@@ -17,7 +17,7 @@ class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
     val l1 = withAcceptance flatMap { s => Vector(createStoryCard(s), createAcceptanceCard(s)) }
     val l2 = withoutAcceptance map createStoryCard
 
-    val emptyCell = createStoryCard(Story("", UndefScrumPoints, None, Seq()))
+    val emptyCell = createStoryCard(Story("", UndefScrumPoints, None, List()))
 
     val pages = (l1 ++ l2) grouped 2 map { cells =>
       val page = new PdfPTable(1)

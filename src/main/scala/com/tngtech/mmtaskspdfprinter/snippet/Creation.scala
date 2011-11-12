@@ -34,8 +34,11 @@ trait Creation {
           "password" -> SHtml.password(config.password, jiraPassword = _, "id" -> "jiraPass"),
           "project" -> SHtml.text(jiraProject.is.getOrElse(config.project), proj => jiraProject(Full(proj)), "id" -> "jiraProject"),
           "submit" -> SHtml.submit("Send to JIRA",
-            () => sendToJira(config, selectedBacklog.is.get,
-                             jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)))
+            () => {
+              val updatedBacklog = sendToJira(config, selectedBacklog.is.get,
+                             jiraUrl.is.get, jiraUser.is.get, jiraPassword, jiraProject.is.get)
+              if (updatedBacklog.isDefined) selectedBacklog.set(Full(updatedBacklog.get))
+            }))
       bind("pdf", template, "submit" -> SHtml.submit("Create PDF",
             () => createPdf(selectedBacklog.is.get)))
     } else {
@@ -50,7 +53,7 @@ trait Creation {
 
   private def sendToJira(config: JiraConfiguration,
                          selectedBacklog: Sprint, url: String,
-                         user: String, password: String, project: String) {
+                         user: String, password: String, project: String): Option[Sprint] = {
     val validationErrors = (
       validateUrl(url).toList :::
       validateText("User", user).toList :::
@@ -60,22 +63,36 @@ trait Creation {
 
     if (validationErrors.isEmpty) {
      try {
-       val restClient = new RestClient(url, user, password)
-       val rpcClient = new RpcClient(url, user, password)
-       val creator = new JiraTaskCreator(config, rpcClient, restClient, project)
-       creator.create(List(selectedBacklog))
+       connectAndSendToJira(config, selectedBacklog,
+           url, user, password, project)
      } catch {
        case e: JiraException => {
            LastError(Full(e))
            S.error(<li> {e.getMessage+" "} <a href="error">more</a></li>)
        }
+       None
      }
     }
     else {
       S.error(validationErrors.map {msg => <li>{msg}</li>})
+      None
     }
   }
 
+private def connectAndSendToJira(config: JiraConfiguration,
+                         selectedBacklog: Sprint, url: String,
+                         user: String, password: String, project: String): Option[Sprint] = {
+   val restClient = new RestClient(url, user, password)
+   val rpcClient = new RpcClient(url, user, password)
+   try {
+  	 val creator = new JiraTaskCreator(config, rpcClient, restClient, project)
+  	 val updatedList = creator.create(List(selectedBacklog))
+     updatedList.headOption
+   } finally {
+     rpcClient.close
+   }      
+}
+  
   private def validateUrl(url: String): Option[String] =
     if (url.isEmpty) Some("URL may not be empty")
     else {
