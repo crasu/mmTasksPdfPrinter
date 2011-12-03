@@ -65,18 +65,18 @@ trait Creation {
      try {
        val sprint = connectAndSendToJira(config, selectedBacklog,
            url, user, password, project)
-       S.notice("Done")
+       S.notice(<li style="color:black">Done</li>)
        sprint
      } catch {
-       case e: JiraException => {
+       case e: Exception => {
            LastError(Full(e))
-           S.error(<li> {e.getCause.getMessage+" "} <a href="error">more</a></li>)
+           S.error(<li style="color:crimson"> {e.getMessage.split("\n").head + " "} <a href="error">more ...</a></li>)
        }
        None
      }
     }
     else {
-      S.error(validationErrors.map {msg => <li>{msg}</li>})
+      S.error(validationErrors.map {msg => <li style="color:crimson">{msg}</li>})
       None
     }
   }

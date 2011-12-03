@@ -8,19 +8,23 @@ object LastError extends SessionVar[Box[Exception]](Empty) {
   def showError() = if (this.isEmpty || is.isEmpty) {
     Empty
   } else {
-    Full(InMemoryResponse((is.get.getCause.getMessage() + "\n" +
-        									 is.get.getCause.getStackTraceString).getBytes,
+    val msg = buildErrorMessage(is.get)
+    Full(InMemoryResponse((<html><head></head><body>{escapeErrorMessage(msg)}</body></html>).toString.getBytes,
                           List("Content-Type" -> "text/html"),
                           Nil,
                           200))
   }
 
-  private def buildErrorMessage(error: Throwable): String =
-    if (error.getCause == null) {
-      error.getMessage
-    } else {
-      error.getMessage + "\n" + buildErrorMessage(error.getCause)
-    }
+  private def buildErrorMessage(error: Throwable): String = {
+    val message = error.getMessage+"\n"+error.getStackTraceString+"\n"
+    val rest = if (error.getCause == null) ""
+    	else buildErrorMessage(error.getCause)
+    message + rest
+  }
+  
+  private def escapeErrorMessage(msg: String) = {
+    msg.split("\n").map { line => <p> {line} <br /></p> }
+  }
 }
 
 class BacklogUpload extends Upload with Selection with Creation {

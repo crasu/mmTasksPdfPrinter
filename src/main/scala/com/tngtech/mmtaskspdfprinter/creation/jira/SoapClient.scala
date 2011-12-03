@@ -6,30 +6,52 @@ import java.io.ByteArrayOutputStream
 import scala.io.Source
 import scala.xml.PrettyPrinter
 
+class SoapException(msg: String, e: Exception = null) extends Exception(msg, e)
+
 object SoapClient {
     
   val jiraEndpoint = "/rpc/soap/jirasoapservice-v2"
+    
+  val htmlOk = 200
   
   import scala.xml.{ Elem, XML }
 
-  private def sendMessage(host: String, action: String, req: Elem) = {
-  	val response = post(host+jiraEndpoint, action, req)
-  	XML.loadString(response)
-  }
+  private def sendMessage(host: String, action: String, req: Elem) = 
+  	post(host+jiraEndpoint, action, req)
   
-  private def post(url: String, action: String, req: Elem): String = {
+  private def post(url: String, action: String, req: Elem): Elem = {
     val postMethod = new PostMethod(url)
     try {
 	    postMethod.setRequestEntity(new StringRequestEntity(wrap(req), "text/xml", "utf-8"))
 	    postMethod.setRequestHeader("SOAPAction", action)    
 	    val client = new HttpClient()
+	    client.getParams().setSoTimeout(10000)
+	    client.setConnectionTimeout(10000)
 	    val status = client.executeMethod(postMethod)
-	    val response = 
+	    val responseAsSource =
 	      Source.fromInputStream(postMethod.getResponseBodyAsStream())
-      response.getLines.mkString
+	    val responseAsString = responseAsSource.getLines.mkString
+	    val response = XML.loadString(responseAsString)
+	    if (status != htmlOk) {
+	    	handleError(req, response)
+	    }
+      response
     } finally {
       if (postMethod != null) postMethod.releaseConnection()
     }
+  }
+  
+  private def handleError(req: Elem, res: Elem) = {
+	  val printer = new PrettyPrinter(1000, 2)
+	  val delimiter = "-" * 200
+	  val error = (res \\ "faultstring").text 
+	  throw new SoapException("JIRA error: " + error + "\n" +
+	      "Send:\n" + 
+	      printer.format(req) + "\n" +
+	      delimiter + "\n" +
+	      "Received:\n" +
+	      printer.format(res)
+	  )
   }
   
   private def wrap(xml: Elem): String = {
@@ -62,12 +84,14 @@ class SoapClient(host: String, user: String, password: String) {
   }
   
   def logout() {
-    val req = 
-          <soap:logout soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    if (token.isDefined) {
+	    val req = 
+	          <soap:logout soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
       			<in0 xsi:type="xsd:string">{token.get}</in0>
     			</soap:logout>  
-    SoapClient.sendMessage(host, "logout", req)    
-    token = None
+	    SoapClient.sendMessage(host, "logout", req)    
+	    token = None
+    }
   }
   
   def createIssue(project: String, summary: String, issuetype: String): String = {

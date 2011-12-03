@@ -5,23 +5,13 @@ import config._
 
 import com.tngtech.mmtaskspdfprinter.scrum._
 
-class JiraException(msg: String, cause: Exception) extends Exception(msg, cause)
-
 class JiraTaskCreator(val config: JiraConfiguration,
   val soapClient: SoapClient,  val projectName: String) {
 
-  def create(backlogs: List[Sprint]): List[Sprint] = {
-    try {
-      createBacklog(backlogs)
-    } catch {
-      case ex: Exception => 
-      ex.printStackTrace()
-      throw new JiraException("An error occured while sending Data to JIRA", ex)
-    }
-  }
+  def create(backlogs: List[Sprint]): List[Sprint] =
+    createBacklog(backlogs)
   
   private def createBacklog(backlogs: List[Sprint]) = {
-    //val projectId = soapClient.getProjectByKey(projectName)
     val backlogsWithKeys = for (backlog <- backlogs) yield {
       val storiesWithKeys = for (story <- backlog.stories) yield {
       	createStory(projectName, story)
