@@ -43,7 +43,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
       val titles = new Phrase(config.size.leading)
       titles.add(new Chunk(story.name + "\n", config.size.normalFont))
       titles.add(new Chunk(task.category + "\n", config.size.smallFont))
-      titles.add(new Chunk(task.jiraKey, config.size.normalFont))
+      titles.add(new Chunk(task.jiraKey + "\n", config.size.normalFont))
       titles.add(new Chunk(task.description + "\n", config.size.bigFont))
       titles
     }

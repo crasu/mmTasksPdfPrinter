@@ -1,4 +1,4 @@
-name := "My Project"
+name := "mmTasksPdfPrinter"
 
 version := "1.3"
 
@@ -19,11 +19,10 @@ libraryDependencies ++= Seq(
   "net.liftweb" %% "lift-mapper" % "2.4-M4" % "compile->default",
 	"commons-lang" % "commons-lang" % "2.4" % "compile->default",
 	"com.itextpdf" % "itextpdf" % "5.1.2" % "compile->default",
-	"org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3" % "compile->default",
-	"net.htmlparser.jericho" % "jericho-html" % "3.1" % "compile->default",
-	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default",
 	"org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
-  "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources
+  "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources,
+  "net.htmlparser.jericho" % "jericho-html" % "3.1" % "compile->default",
+	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default"
 )
 
 libraryDependencies ++= Seq(

@@ -63,12 +63,14 @@ trait Creation {
 
     if (validationErrors.isEmpty) {
      try {
-       connectAndSendToJira(config, selectedBacklog,
+       val sprint = connectAndSendToJira(config, selectedBacklog,
            url, user, password, project)
+       S.notice("Done")
+       sprint
      } catch {
        case e: JiraException => {
            LastError(Full(e))
-           S.error(<li> {e.getMessage+" "} <a href="error">more</a></li>)
+           S.error(<li> {e.getCause.getMessage+" "} <a href="error">more</a></li>)
        }
        None
      }
@@ -82,14 +84,14 @@ trait Creation {
 private def connectAndSendToJira(config: JiraConfiguration,
                          selectedBacklog: Sprint, url: String,
                          user: String, password: String, project: String): Option[Sprint] = {
-   val restClient = new RestClient(url, user, password)
-   val rpcClient = new RpcClient(url, user, password)
+   val soapClient = new SoapClient(url, user, password)
    try {
-  	 val creator = new JiraTaskCreator(config, rpcClient, restClient, project)
+     soapClient.login
+  	 val creator = new JiraTaskCreator(config, soapClient, project)
   	 val updatedList = creator.create(List(selectedBacklog))
      updatedList.headOption
    } finally {
-     rpcClient.close
+     soapClient.logout
    }      
 }
   

@@ -12,22 +12,21 @@ import com.tngtech.mmtaskspdfprinter.scrum.Sprint
 import com.tngtech.mmtaskspdfprinter.scrum.Subtask
 import org.mockito.Matchers._
 import com.tngtech.mmtaskspdfprinter.scrum.Dsl._
+import com.sun.xml.internal.ws.fault.SOAP11Fault
 
 @RunWith(classOf[JUnitSuiteRunner])
 class JiraTaskCreatorTest extends Specification with Mockito {
   "Creation of issues and subissues in JIRA" should {
     "call the right functions from the JIRA API and retrieve the JIRA keys" in {
-      val rpc = mock[RpcClient]
-      val rest = mock[RestClient]
+      val soap = mock[SoapClient]
       val conf = mock[JiraConfiguration]
-      rpc.findProjectId("pid") returns "pid123"
-      rpc.createIssue(anyString(), ==("Story1"), anyString()) returns RpcResponse("", "jiraStory1")
-      rpc.createIssue(anyString(), ==("Story2"), anyString()) returns RpcResponse("", "jiraStory2")
-      rest.createSubissue(anyString(), anyString(), ==("Task1-1"), anyString(), anyString()) returns "jiraTask1-1"
-      rest.createSubissue(anyString(), anyString(), ==("Task2-1"), anyString(), anyString()) returns "jiraTask2-1"
-      rest.createSubissue(anyString(), anyString(), ==("Task2-2"), anyString(), anyString()) returns "jiraTask2-2"
+      soap.createIssue(anyString(), ==("Story1"), anyString()) returns "jiraStory1"
+      soap.createIssue(anyString(), ==("Story2"), anyString()) returns "jiraStory2"
+      soap.createSubissue(anyString(), anyString(), ==("Task1-1"), anyString(), anyString()) returns "jiraTask1-1"
+      soap.createSubissue(anyString(), anyString(), ==("Task2-1"), anyString(), anyString()) returns "jiraTask2-1"
+      soap.createSubissue(anyString(), anyString(), ==("Task2-2"), anyString(), anyString()) returns "jiraTask2-2"
 
-      val jc = new JiraTaskCreator(conf, rpc, rest, "pid")
+      val jc = new JiraTaskCreator(conf, soap, "pid")
 
       val sprint = 
         Sprint("TheBacklog", 
@@ -42,8 +41,8 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	            Subtask("Subtask2-2-4"))))))
       val updatedSprint = jc.create(List(sprint))
 
-      there were two(rpc).createIssue(anyString(), anyString(), anyString())
-      there were three(rest).createSubissue(anyString(), anyString(), anyString(), anyString(), anyString())
+      there were two(soap).createIssue(anyString(), anyString(), anyString())
+      there were three(soap).createSubissue(anyString(), anyString(), anyString(), anyString(), anyString())
       
       updatedSprint.head.stories.map(_.jiraKey) must_== List("jiraStory1", "jiraStory2")
       val updatedTasks = for(sprint <- updatedSprint; story <- sprint.stories; task <- story.tasks) yield task

@@ -8,8 +8,8 @@ object LastError extends SessionVar[Box[Exception]](Empty) {
   def showError() = if (this.isEmpty || is.isEmpty) {
     Empty
   } else {
-      is.get.getCause.printStackTrace()
-    Full(InMemoryResponse(is.get.getCause.getMessage.getBytes,
+    Full(InMemoryResponse((is.get.getCause.getMessage() + "\n" +
+        									 is.get.getCause.getStackTraceString).getBytes,
                           List("Content-Type" -> "text/html"),
                           Nil,
                           200))
