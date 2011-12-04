@@ -84,16 +84,10 @@ trait Creation {
 private def connectAndSendToJira(config: JiraConfiguration,
                          selectedBacklog: Sprint, url: String,
                          user: String, password: String, project: String): Option[Sprint] = {
-   val soapClient = new SoapClient(url, user, password)
-   try {
-     soapClient.login
-  	 val creator = new JiraTaskCreator(config, soapClient, project)
-  	 val updatedList = creator.create(List(selectedBacklog))
-     updatedList.headOption
-   } finally {
-     soapClient.logout
-   }      
-}
+    val creator = new JiraTaskCreator(config, project, url, user, password)
+    val updatedList = creator.create(List(selectedBacklog))
+    updatedList.headOption
+  }
   
   private def validateUrl(url: String): Option[String] =
     if (url.isEmpty) Some("URL may not be empty")

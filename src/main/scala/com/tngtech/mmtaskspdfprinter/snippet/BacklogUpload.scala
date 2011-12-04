@@ -9,7 +9,7 @@ object LastError extends SessionVar[Box[Exception]](Empty) {
     Empty
   } else {
     val msg = buildErrorMessage(is.get)
-    Full(InMemoryResponse((<html><head></head><body>{escapeErrorMessage(msg)}</body></html>).toString.getBytes,
+    Full(InMemoryResponse((<html><head></head><body><pre>{msg}</pre></body></html>).toString.getBytes,
                           List("Content-Type" -> "text/html"),
                           Nil,
                           200))
@@ -20,10 +20,6 @@ object LastError extends SessionVar[Box[Exception]](Empty) {
     val rest = if (error.getCause == null) ""
     	else buildErrorMessage(error.getCause)
     message + rest
-  }
-  
-  private def escapeErrorMessage(msg: String) = {
-    msg.split("\n").map { line => <p> {line} <br /></p> }
   }
 }
 

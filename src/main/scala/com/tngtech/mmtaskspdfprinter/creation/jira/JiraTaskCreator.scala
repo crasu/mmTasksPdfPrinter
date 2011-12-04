@@ -5,43 +5,53 @@ import config._
 
 import com.tngtech.mmtaskspdfprinter.scrum._
 
-class JiraTaskCreator(val config: JiraConfiguration,
-  val soapClient: SoapClient,  val projectName: String) {
+class JiraTaskCreator(val config: JiraConfiguration, val projectName: String,
+    val soapClient: JiraSoapMessages) {
+  
+  def this (config: JiraConfiguration, projectName: String,
+        url: String, user: String, password: String) = 
+        	this(config, projectName,
+        	    new JiraSoapMessages(url, user, password))
 
-  def create(backlogs: List[Sprint]): List[Sprint] =
+  def create(backlogs: List[Sprint]): List[Sprint] = 
+  try {
+    soapClient.loginToProject(projectName, config.issuetypename, config.subissuetypename)
     createBacklog(backlogs)
+  }
+  finally {
+    soapClient.logout
+  }
   
   private def createBacklog(backlogs: List[Sprint]) = {
     val backlogsWithKeys = for (backlog <- backlogs) yield {
       val storiesWithKeys = for (story <- backlog.stories) yield {
-      	createStory(projectName, story)
+      	createStory(story)
       }
       backlog.copy(stories = storiesWithKeys)
     }
     backlogsWithKeys          
   }
   
-  private def createStory(projectId: String, story: Story): Story = {
+  private def createStory(story: Story): Story = {
     val issueKey = createIssue(story)
     val tasksWithKeys = for (task <- story.tasks) yield {
-      val subissueKey = createSubissue(projectId, issueKey, story, task)
+      val subissueKey = createSubissue(issueKey, story, task)
       task.copy(jiraKey = subissueKey) 
     }
     story.copy(jiraKey = issueKey, tasks = tasksWithKeys)
   }
 
   private def createIssue(story: Story) = 
-    soapClient.createIssue(projectName, story.name, config.issuetypename)
+    soapClient.createIssue(story.name)
 
-  private def createSubissue(projectId:String, parentId: String, story: Story, task: Task): String = {
+  private def createSubissue(parentId: String, story: Story, task: Task): String = {
     val category =
       if (task.category.isEmpty) ""
       else "Category: " + task.category
       
-    soapClient.createSubissue(projectId, parentId,
+    soapClient.createSubissue(parentId,
       summary = task.description,
       description = task.description + " (" + category + ")\n" +
-        task.subtasks.map("- " + _.description).mkString("\n"),
-        config.subissuetypename)
+        task.subtasks.map("- " + _.description).mkString("\n"))
   }
 }
