@@ -32,7 +32,9 @@ An example of the configuration is located in config_example.
  This image will be used instead of the TNG Logo.
 
 = Running it locally =
-Use 'sbt container:start' to start Jetty.
+Use 'sbt' and then 'container:start' to start Jetty.
+Use 'container:reload /' to load changes.
+Jetty should be reachable on Port 8080.
 
 = Credits =
 The idea behind this tool is based on the MM2CSV script created by Martin Kreidenweis.
