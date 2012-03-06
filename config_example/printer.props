@@ -9,12 +9,20 @@ pdf.colour=191 137 73
 # large = 2x2 landscape (A6)
 pdf.layout=large
 
+# JiraCtl Settings:
+# jiraCtlUrl: Url to encode in the QR Codes
+# default: https://jiractl.herokuapp.com/update/
+# HINT: leave this blank if you don't want to use JiraCtl and QR Codes
+pdf.jiraControlUrl=
+# The ProjectId you generated in the JiraCtl Project Management Interface
+pdf.jiraControlProjectId=
+
 # jira defaults for web form
 jira.hostname=http://localhost:8090
 jira.project=TEST
 jira.user=testuser
 # Only use for testing
-jira.password=testpasswd
+#jira.password=testpasswd
 
 # jira identifiers for the different issue classes
 # hopefully constant, but can be seen in the

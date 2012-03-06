@@ -43,7 +43,6 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
       val titles = new Phrase(config.size.leading)
       titles.add(new Chunk(story.name + "\n", config.size.normalFont))
       titles.add(new Chunk(task.category + "\n", config.size.smallFont))
-      titles.add(new Chunk(task.jiraKey + "\n", config.size.normalFont))
       titles.add(new Chunk(task.description + "\n", config.size.bigFont))
       titles
     }
@@ -60,7 +59,31 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
       }
       subtasklist
     }
-    createInnerTable(cell, titles, subtasklist)
+    val logoAndQrCodePhrase = {
+      val logoAndQrCodePhrase = new Phrase(config.size.leading)
+      logoAndQrCodePhrase.add(new Chunk(config.companyLogo, 0, 0))
+      if (!task.jiraKey.equals("")) {
+        var taskKey = ""
+        if(!config.jiraControlUrl.equals("") && (config.jiraControlProjectId != 0)) {
+          logoAndQrCodePhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, task.jiraKey), config.size.tasksQrCodeRenderingInfo))
+        } else {
+          taskKey += "  "
+        }
+        if(config.size.hideTasksProjectKey) {
+          val taskId = JiraControlQrLinkEncoder.extractJiraTaskId(task.jiraKey)
+          if(taskId.length < 5) {
+            taskKey += "#" + taskId
+          } else {
+            taskKey += taskId
+          }
+        } else {
+          taskKey += task.jiraKey
+        }
+        logoAndQrCodePhrase.add(new Chunk(taskKey, config.size.bigFont))
+      }
+      logoAndQrCodePhrase
+    }
+    createInnerTable(cell, titles, subtasklist, logoAndQrCodePhrase)
     cell
   }
 
@@ -72,7 +95,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     cell
   }
 
-  private def createInnerTable(outerCell: PdfPCell, titles: Phrase, subtasklist: ITextList) {
+  private def createInnerTable(outerCell: PdfPCell, titles: Phrase, subtasklist: ITextList, logoAndQrCodePhrase: Phrase) {
     var table = new PdfPTable(config.size.innerTableCols)
     table.setWidthPercentage(100f)
     if (config.size.innerTableCols == 2) table.setWidths(
@@ -85,7 +108,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     cell.addElement(titles)
     cell.addElement(subtasklist)
     cell.setRotation(config.size.cellRotation)
-    cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - 3)
+    cell.setFixedHeight(outerCell.getFixedHeight() - config.companyLogo.getScaledHeight - config.size.tasksQrCodeHeightOffset - 5)
     table.addCell(cell)
 
     cell = new PdfPCell()
@@ -93,9 +116,9 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     cell.setPadding(0)
     cell.setPaddingLeft(config.size.paddingLeft)
     cell.setIndent(0)
-    cell.addElement(config.companyLogo)
+    cell.addElement(logoAndQrCodePhrase)
     cell.setRotation(config.size.cellRotation)
-    cell.setFixedHeight(config.companyLogo.getScaledHeight)
+    cell.setFixedHeight(config.companyLogo.getScaledHeight + config.size.tasksQrCodeHeightOffset)
     table.addCell(cell)
 
     outerCell.addElement(table)

@@ -19,7 +19,10 @@ class PdfConfiguration extends CentralConfiguration {
   val colour = properties.getProperty("pdf.colour", "44 106 168").split(" ").map(c => c.toInt)
   val size = SizeType.parse(properties.getProperty("pdf.layout", "medium"))
   val pageSize = PageSize.A4
-  
+  val jiraControlUrl = properties.getProperty("pdf.jiraControlUrl")
+  val jiraControlProjectId : Int = properties.getProperty("pdf.jiraControlProjectId", "0").toInt
+
+  def generateQrCodes() = (!jiraControlUrl.equals("") && (jiraControlProjectId != 0))
 
   val companyLogo =  {
     val img = fetch_logo()
