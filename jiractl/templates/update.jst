@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>update.html</title>
+    <link rel="stylesheet" href="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/stylesheets/style_handheld.css" type="text/css" />
+  </head>
+  <body>
+    UpdateTaskStatus:<br />
+    {% if(it.taskUpdateList) { %}
+      {{ taskUpdateList }}
+    {% } else { %}
+      There were no Workflow-Steps found. Please run your local Jiracontrol-Process first to complete the Setup for this Project.
+    {% } %}
+  </body>
+</html>

@@ -1,0 +1,21 @@
+##################################################
+########### Jiractl Configuration File ###########
+##################################################
+
+# General Application Config
+# useInternalHTTPS: [yes|no], empty is no
+useInternalHTTPS=
+hostname=
+port=
+uriPrefix=
+
+# MongoDB Config
+mongoUser=
+mongoPass=
+mongoHost=
+mongoPort=
+mongoDB=
+
+# Jiractl-Web Config
+manageUser=
+managePass=

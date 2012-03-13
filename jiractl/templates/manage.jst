@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Management Interface</title>
+  </head>
+  <body>
+    <h2>Manage your Projects:</h2>
+    Add new Project:
+    <form id="addProject" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/init/">
+      ProjectId: <input type="text" id="addProjectId" /><br />
+      Password:  <input type="password" id="addPassword" /><br />
+      <input type="submit" value="Hinzuf&uuml;gen" />
+    </form>
+    <h3>Current Projects:</h3>
+    <table border="5">
+      <tr>
+        <th>ProjectID</th>
+      </tr>
+      {% if (it.projectList) { %}
+        {{ projectList }}
+      {% } else { %}
+        <tr>
+          <td>
+            No projects found.
+          </td>
+        </tr>
+      {% } %}
+    </table>
+    <pre>
+      <script src="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/javascripts/manage.js" type="text/javascript"></script>
+    </pre>
+  </body>
+</html>
