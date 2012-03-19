@@ -8,8 +8,12 @@
   </head>
   <body>
     UpdateTaskStatus:<br />
-    {% if(it.taskUpdateList) { %}
-      {{ taskUpdateList }}
+    {% if(it.stepNames) { %}
+      {% var i; for(i = 0; i < it.stepNames.length; i++) { %}
+        <form method="post" action="{{ uriPrefix }}/updatestatus/{{ i }}">
+          <input type="submit" value="{{ stepNames[i] }}" class="button" />
+        </form>
+      {% } %}
     {% } else { %}
       There were no Workflow-Steps found. Please run your local Jiracontrol-Process first to complete the Setup for this Project.
     {% } %}

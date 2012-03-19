@@ -1,10 +1,10 @@
 var app = module.exports = {
   https: require('https'),
-  cp: require('child_process'),
   fs: require('fs'),
   qs: require('querystring'),
   configParser: require('configparser'),
   taskSerializer: require('taskserializer'),
+  jiraConnector: require('jiraconnector'),
   encodedProjectConfig: "",
   tasksQueue: [],
   readConfig: function () {
@@ -18,11 +18,11 @@ var app = module.exports = {
     }
     app.jiractlProjectId = app.configParser.getPropertyValue('jiractlProjectId', config);
     app.jiractlProjectPass = app.configParser.getPropertyValue('jiractlProjectPass', config, '');
-    app.jiraCliPath = app.configParser.getPropertyValue('jiraCliPath', config);
+    app.jiraCliPath = app.configParser.getPropertyValue('jiraCliPath', config, '');
     app.jiraUrl = app.configParser.getPropertyValue('jiraUrl', config, 'http://localhost:8080');
-    app.jiraUser = app.configParser.getPropertyValue('jiraUser', config);
-    app.jiraPass = app.configParser.getPropertyValue('jiraPass', config);
-    app.projectName = app.configParser.getPropertyValue('projectName', config);
+    app.jiraUser = app.configParser.getPropertyValue('jiraUser', config, '');
+    app.jiraPass = app.configParser.getPropertyValue('jiraPass', config, '');
+    app.projectName = app.configParser.getPropertyValue('projectName', config, '');
     app.numberOfSteps = app.configParser.getPropertyValue('numberOfSteps', config, 5);
     app.stepNames = [];
     var i;
@@ -104,60 +104,23 @@ app.sendRequest = function () {
       } else {
         /*log "##### HTTPS-Request Callback #####"*/
         var tasksToUpdate = JSON.parse(data);
-            tmpFailedTasksQueue = [];
         console.log("Tasks to Update:", tasksToUpdate);
         var i;
         for(i = 0; i < tasksToUpdate.length; i++) {
           app.addToTasksQueue(tasksToUpdate[i]);
         }
-        app.cp.jiraError = function (nr, id) {
-          return function (err) {
-            if(app.projectName && app.tasksQueue && app.tasksQueue[id] && app.tasksQueue[id].jiraTask) {
-              console.log("Error progressing Issue " + app.projectName + "-" + app.tasksQueue[id].jiraTask + ":", err.toString());
-            }
-            if(nr === 1) {
-              tmpFailedTasksQueue.push(app.tasksQueue[id]);
-              if(id === app.tasksQueue.length - 1) {
-                app.tasksQueue = tmpFailedTasksQueue;
-              }
-            } else if(nr === 2) {
-              app.cp.jiraOutput(2, id)("Error Nr.2 -> jiraOutput(2," + id + ")");
-            }
-          };
-        };
-        app.cp.jiraOutput = function (nr, id) {
-          if(nr === 1) {
-            return function (data) {
-              /*log "jiraOutput(1, " + id + "):", data.toString()*/
-              app.cp.jira[id] = app.cp.spawn(app.jiraCliPath + '/jira.sh', ['-a', 'progressIssue', '-s', app.jiraUrl, '-u', app.jiraUser, '-p', app.jiraPass, '--project', app.projectName, '--issue', app.projectName + '-' + app.tasksQueue[id].jiraTask, '--step', app.stepNames[app.tasksQueue[id].statusCode]]);
-              app.cp.jira[id].stderr.on('data', app.cp.jiraError(2, id));
-              app.cp.jira[id].stdout.once('data', app.cp.jiraOutput(2, id));
-            };
-          } else if(nr === 2) {
-            return function (data) {
-              if(data) {
-                /*log "jiraOutput(2, " + id + "):", data.toString()*/
-              }
-              app.cp.jira[id] = app.cp.spawn(app.jiraCliPath + '/jira.sh', ['-a', 'updateIssue', '-s', app.jiraUrl, '-u', app.jiraUser, '-p', app.jiraPass, '--project', app.projectName, '--issue', app.projectName + '-' + app.tasksQueue[id].jiraTask, '--assignee', app.tasksQueue[id].user]);
-              app.cp.jira[id].stderr.on('data', app.cp.jiraError(3, id));
-              app.cp.jira[id].stdout.once('data', app.cp.jiraOutput(3, id));
-            };
-          } else if(nr === 3) {
-            return function (data) {
-              var output = data.toString();
-              /*log "jiraOutput(3, " + id + "):", output*/
-              if(id === app.tasksQueue.length - 1) {
-                app.tasksQueue = tmpFailedTasksQueue;
-              }
-            };
+        var jiraConnectorCallback = function (err, task) {
+          if(err) {
+            console.log("Error:", err);
+          } else if(task) {
+            app.addToTasksQueue(task);
           }
         };
-        app.cp.jira = [];
         var j;
         for(j = 0; j < app.tasksQueue.length; j++) {
-            app.cp.jira[j] = app.cp.spawn(app.jiraCliPath + '/jira.sh', ['-a', 'updateIssue', '-s', app.jiraUrl, '-u', app.jiraUser, '-p', app.jiraPass, '--project', app.projectName, '--issue', app.projectName + '-' + app.tasksQueue[j].jiraTask, '--assignee', app.jiraUser]);
-            app.cp.jira[j].stderr.on('data', app.cp.jiraError(1, j));
-            app.cp.jira[j].stdout.once('data', app.cp.jiraOutput(1, j));
+          app.jiraconnector.progressTask(app.jiraCliPath + '/jira.sh', app.jiraUrl, app.jiraUser, app.jiraPass, app.projectName, app.tasksQueue[j].jiraTask, app.stepNames[app.tasksQueue[j].statusCode], app.tasksQueue[j].user, jiraConnectorCallback);
+          app.tasksQueue.splice(j, 1);
+          j--;
         }
         /*log "REQUEST FINISHED"*/
       }

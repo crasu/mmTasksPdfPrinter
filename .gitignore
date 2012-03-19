@@ -16,6 +16,8 @@ target/
 printer.props
 .target/
 jiractl/node_modules/express
-jiractl/node_modules/mongoose
 jiractl/node_modules/bcrypt
 jiractl/node_modules/jst
+jiractl/node_modules/db_core/node_modules/mongoose
+jiractl/node_modules/db_tasks/node_modules/mongoose
+jiractl/node_modules/db_projects/node_modules/mongoose

@@ -1,0 +1,16 @@
+##################################################
+########### Jiractl Configuration File ###########
+##################################################
+
+# Jira Command Line Interface Config
+jiraCliPath=
+jiraUrl=
+jiraUser=
+jiraPass=
+
+# Project specific Config
+projectName=
+projectPass=
+# List your Users here:
+# ["user1", "user2", "user3", ... ]
+users=

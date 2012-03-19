@@ -5,6 +5,8 @@
 # General Application Config
 # useInternalHTTPS: [yes|no], empty is no
 useInternalHTTPS=
+# useLocalMode: [yes|no], empty is no
+useLocalMode=
 hostname=
 port=
 uriPrefix=

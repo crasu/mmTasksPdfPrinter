@@ -13,7 +13,6 @@ var express = require('express'),
     global = {
       cp: require('child_process'),
       fs: require('fs'),
-      mongoose: require('mongoose'),
       bcrypt: require('bcrypt'),
       configParser: require('configparser')
     };
@@ -21,11 +20,30 @@ var express = require('express'),
 
 
 /**
- * Init Config File
+ * Init Config-File and Config-Parser
  */
 
-global.config = global.fs.readFileSync(__dirname + '/config', 'utf8');
-global.port = process.env.PORT || global.configParser.getPropertyValue('port', global.config);
+global.readConfig = function () {
+  global.config = { };
+  var config = global.fs.readFileSync(__dirname + '/config', 'utf8');
+  global.uriPrefix = global.configParser.getPropertyValue('uriPrefix', config, '');
+  if(global.uriPrefix && global.uriPrefix[0] !== '/') {
+    global.uriPrefix = '/' + global.uriPrefix;
+  }
+  global.config.useInternalHTTPS = global.configParser.getPropertyValue('useInternalHTTPS', config, "no");
+  global.config.useLocalMode = global.configParser.getPropertyValue('useLocalMode', config, "no");
+  global.config.hostname = global.configParser.getPropertyValue('hostname', config);
+  global.config.port = global.configParser.getPropertyValue('port', config);
+  global.config.mongoUser = global.configParser.getPropertyValue('mongoUser', config);
+  global.config.mongoPass = global.configParser.getPropertyValue('mongoPass', config);
+  global.config.mongoHost = global.configParser.getPropertyValue('mongoHost', config);
+  global.config.mongoPort = global.configParser.getPropertyValue('mongoPort', config);
+  global.config.mongoDB = global.configParser.getPropertyValue('mongoDB', config);
+  global.config.manageUser = global.configParser.getPropertyValue('manageUser', config, "admin");
+  global.config.managePass = global.configParser.getPropertyValue('managePass', config, "admin");
+}();
+
+global.port = process.env.PORT || global.config.port;
 
 
 
@@ -33,7 +51,7 @@ global.port = process.env.PORT || global.configParser.getPropertyValue('port', g
  * Init Express Server:
  */
 
-if(global.configParser.getPropertyValue('useInternalHTTPS', global.config) === 'yes') {
+if(global.config.useInternalHTTPS === 'yes') {
   var options = {
     key: require('fs').readFileSync(__dirname + '/ssl/jiractl-key.pem'),
     cert: require('fs').readFileSync(__dirname + '/ssl/jiractl-cert.pem')
@@ -42,6 +60,10 @@ if(global.configParser.getPropertyValue('useInternalHTTPS', global.config) === '
   console.log("DEBUG: Using internal HTTPS-Support");
 } else {
   var app = module.exports = express.createServer();
+}
+
+if(global.config.useLocalMode === 'yes') {
+  global.localMode = true;
 }
 
 
@@ -56,257 +78,100 @@ global.sendFileCallback = function (filename) {
       console.log(err);
       next(err);
     } else {
-      /*log "Transfer:", filename, "succesful."*/
+      /*log "Transfer:", filename, " - succesful."*/
     }
   };
 };
 
-global.uriPrefix = global.configParser.getPropertyValue('uriPrefix', global.config, '');
-if(global.uriPrefix && global.uriPrefix[0] !== '/') {
-  global.uriPrefix = '/' + global.uriPrefix;
+if(global.localMode) {
+  /**
+   * Local Mode
+   */
+
+  global.readLocalConfig = function () {
+    global.localconfig = { };
+    var config = global.fs.readFileSync(__dirname + '/localconfig', 'utf8');
+    global.localconfig.jiraCliPath = global.configParser.getPropertyValue('jiraCliPath', config, '');
+    global.localconfig.jiraUrl = global.configParser.getPropertyValue('jiraUrl', config, 'http://localhost:8080');
+    global.localconfig.jiraUser = global.configParser.getPropertyValue('jiraUser', config, '');
+    global.localconfig.jiraPass = global.configParser.getPropertyValue('jiraPass', config, '');
+    global.localconfig.projectName = global.configParser.getPropertyValue('projectName', config, '');
+    global.localconfig.projectPass = global.configParser.getPropertyValue('projectPass', config, '');
+    global.localconfig.users = JSON.parse(global.configParser.getPropertyValue('users', config, '["admin"]'));
+  }();
+
+  global.jiraconnector = require('jiraconnector');
+
+  global.getStepNames = function (projectId, taskId, callback) {
+    global.jiraconnector.getAvailableWorksteps(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, callback);
+  }
+
+  global.updateTask = function (projectId, taskId, statusCode, user, callback) {
+    global.getStepNames(projectId, taskId, function (err, stepNames) {
+      if(err) {
+        callback(err);
+      } else {
+        global.jiraconnector.progressTask(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, stepNames[statusCode], user, callback);
+      }
+    });
+  };
+
+  global.comparePass = function (pass1, pass2) {
+    return (pass1 === pass2);
+  };
+
+  global.getProjects = function (projectId, callback) {
+    callback(null, [{
+      project: global.localconfig.projectName,
+      password: global.localconfig.projectPass,
+      users: global.localconfig.users
+    }]);
+  };
+} else {
+  /**
+   * Standard Mode
+   */
+
+  global.getStepNames = function (projectId, taskId, callback) {
+    global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+      if(err) {
+        console.log("Error finding Project in DB:", err);
+        callback(new Error("Error finding Project in DB"), undefined);
+      } else if(projects && projects[0] && projects[0].stepNames) {
+        callback(null, projects[0].stepNames);
+      } else {
+        callback(new Error("Invalid Project found in DB"), undefined);
+      }
+    });
+  };
+
+  global.updateTask = function (projectId, taskId, statusCode, user, callback) {
+    var task = {
+      project: projectId,
+      jiraTask: taskId,
+      statusCode: statusCode,
+      user: user
+    };
+    global.Task.saveTaskToDB(task, callback);
+  };
+
+  global.comparePass = function (pass1, pass2) {
+    return global.bcrypt.compareSync(pass1, pass2);
+  };
+
+
+
+  /**
+   * Mongoose: Init MongoDB
+   */
+
+  global.mongoose = require('db_core')(global.config.mongoUser, global.config.mongoPass, global.config.mongoHost, global.config.mongoPort, global.config.mongoDB);
+
+  global.Task = require('db_tasks')(global.mongoose);
+  global.Project = require('db_projects')(global.mongoose, global.Task);
+
+  global.getProjects = global.Project.getProjectsFromDB;
 }
-
-
-
-/**
- * Mongoose: Init MongoDB
- */
-
-global.mongoose.connect('mongodb://' + ((global.configParser.getPropertyValue('mongoUser', global.config) && global.configParser.getPropertyValue('mongoPass', global.config)) ? (global.configParser.getPropertyValue('mongoUser', global.config) + ':' + global.configParser.getPropertyValue('mongoPass', global.config) + '@') : '') + global.configParser.getPropertyValue('mongoHost', global.config) + (global.configParser.getPropertyValue('mongoPort', global.config) ? (':' + global.configParser.getPropertyValue('mongoPort', global.config)) : '') + '/' + global.configParser.getPropertyValue('mongoDB', global.config));
-global.dbSchemas = {
-  task: new global.mongoose.Schema({
-    project: Number,
-    jiraTask: Number,
-    statusCode: Number,
-    user: String
-  }),
-  project: new global.mongoose.Schema({
-    project: Number,
-    stepNames: [String],
-    password: String,
-    users: [String]
-  })
-};
-global.Task = global.mongoose.model('task', global.dbSchemas.task);
-global.Project = global.mongoose.model('project', global.dbSchemas.project);
-
-
-
-/**
- * Database Communication
- */
-
-global.getTasksFromDB = function (projectId, callback) {
-  if(callback) {
-    if(projectId) {
-      global.Task.find({
-        project: projectId
-      }, callback);
-    } else {
-      callback(new Error("Invalid ProjectId passed to getTasksFromDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to getTasksFromDB");
-  }
-};
-
-/*testcbnoe global.getTasksFromDB, [1], "Get Tasks From DB"*/
-/*throws global.getTasksFromDB, [], function (err) {return true;}, "Get Tasks From DB: Throw an Error if no Arguments are passed"*/
-/*throws global.getTasksFromDB, [1], function (err) {return true;}, "Get Tasks From DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.getTasksFromDB, [undefined], "Get Tasks From DB: Reject undefined ProjectId"*/
-
-global.getProjectsFromDB = function (projectId, callback) {
-  if(callback) {
-    if(projectId) {
-      global.Project.find({
-        project: projectId
-      }, callback);
-    } else {
-      callback(new Error("Invalid ProjectId passed to getProjectsFromDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to getProjectsFromDB");
-  }
-};
-
-/*testcbnoe global.getProjectsFromDB, [1], "Get Projects From DB"*/
-/*throws global.getProjectsFromDB, [], function (err) {return true;}, "Get Projects From DB: Throw an Error if no Arguments are passed"*/
-/*throws global.getProjectsFromDB, [1], function (err) {return true;}, "Get Projects From DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.getProjectsFromDB, [undefined], "Get Projects From DB: Reject undefined ProjectId"*/
-
-global.getAllProjectsFromDB = function (callback) {
-  if(callback) {
-    global.Project.find({ }, callback);
-  } else {
-    throw new Error("No Callback passed to getProjectsFromDB");
-  }
-};
-
-/*testcbnoe global.getAllProjectsFromDB, [], "Get All Projects From DB"*/
-/*throws global.getAllProjectsFromDB, [], function (err) {return true;}, "Get All Projects From DB: Throw an Error if no Callback is passed"*/
-
-global.saveTaskToDB = function (task, callback) {
-  if(callback) {
-    if(task && task.project && task.jiraTask && task.statusCode && task.user) {
-      var dbTask = new global.Task();
-      dbTask.project = task.project;
-      dbTask.jiraTask = task.jiraTask;
-      dbTask.statusCode = task.statusCode;
-      dbTask.user = task.user;
-      dbTask.save(callback);
-    } else {
-      callback(new Error("Invalid Task passed to saveTaskToDB"));
-    }
-  } else {
-   throw new Error("No Callback passed to saveTaskToDB");
-  }
-};
-
-/*testcbnoe global.saveTaskToDB, [{project: 1, jiraTask: 2, statusCode: 3, user: "testuser"}], "Save Task to DB"*/
-/*throws global.saveTaskToDB, [], function (err) {return true;}, "Save Task To DB: Throw an Error if no Arguments are passed"*/
-/*throws global.saveTaskToDB, [{project: 1, jiraTask: 2, statusCode: 3, user: "testuser"}], function (err) {return true;}, "Save Task To DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.saveTaskToDB, [undefined], "Save Task To DB: Reject undefined Task"*/
-/*testcberror global.saveTaskToDB, [{jiraTask: 2, statusCode: 3, user: "testuser"}], "Save Task To DB: Reject Task without ProjectId"*/
-/*testcberror global.saveTaskToDB, [{project: 1, statusCode: 3, user: "testuser"}], "Save Task To DB: Reject Task without Jira-Task"*/
-/*testcberror global.saveTaskToDB, [{project: 1, jiraTask: 2, user: "testuser"}], "Save Task To DB: Reject Task without Status-Code"*/
-/*testcberror global.saveTaskToDB, [{project: 1, jiraTask: 2, statusCode: 3}], "Save Task To DB: Reject Task without User"*/
-
-global.saveProjectToDB = function (project, callback) {
-  if(callback) {
-    if(project && project.project && project.stepNames && project.password && project.users) {
-      global.getProjectsFromDB(project.project, function (err, projects) {
-        if(!err && projects && projects.length === 0) {
-          var dbProject = new global.Project();
-          dbProject.project = project.project;
-          dbProject.stepNames = project.stepNames;
-          dbProject.password = project.password;
-          dbProject.users = project.users;
-          dbProject.save(callback);
-        } else {
-          if(err) {
-            /*print "ERROR:".bold.red, err*/
-          } else {
-            /*print "Found Projects in DB:".cyan, projects*/
-          }
-          callback(null);
-        }
-      });
-    } else {
-      /*print "Invalid Project passed to saveProjectToDB:", project*/
-      callback(new Error("Invalid Project passed to saveProjectToDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to saveProjectToDB");
-  }
-};
-
-/*testcbnoe global.saveProjectToDB, [{project: 1, stepNames: [], password: "maynotbeempty", users: ["test"]}], "Save Project to DB"*/
-/*throws global.saveProjectToDB, [], function (err) {return true;}, "Save Project To DB: Throw an Error if no Arguments are passed"*/
-/*throws global.saveProjectToDB, [{project: 1, stepNames: [], password: "maynotbeempty", users: []}], function (err) {return true;}, "Save Project To DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.saveProjectToDB, [undefined], "Save Project To DB: Reject undefined Project"*/
-/*testcberror global.saveProjectToDB, [{stepNames: [], password: "maynotbeempty", users: []}], "Save Project To DB: Reject Project without ProjectId"*/
-/*testcberror global.saveProjectToDB, [{project: 1, password: "maynotbeempty", users: []}], "Save Project To DB: Reject Project without stepNames"*/
-/*testcberror global.saveProjectToDB, [{project: 1, stepNames: [], users: []}], "Save Project To DB: Reject Project without Password"*/
-/*testcberror global.saveProjectToDB, [{project: 1, stepNames: [], password: "", users: []}], "Save Project To DB: Reject Project with empty Password"*/
-/*testcberror global.saveProjectToDB, [{project: 1, stepNames: [], password: "maynotbeempty"}], "Save Project To DB: Reject Project without Users"*/
-
-global.updateProjectStepNamesToDB = function (project, callback) {
-  if(callback) {
-    if(project && project.project && project.stepNames) {
-      global.Project.update({
-        project: project.project
-      }, {
-        stepNames: project.stepNames
-      }, { }, callback);
-    } else {
-      callback(new Error("Invalid Project passed to updateProjectStepNamesToDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to updateProjectStepNamesToDB");
-  }
-};
-
-/*testcbnoe global.updateProjectStepNamesToDB, [{project: 1, stepNames: ["Start Progress", "Stop Progress"]}], "Update Project Step-Names To DB"*/
-/*throws global.updateProjectStepNamesToDB, [], function (err) {return true;}, "Update Project Step-Names To DB: Throw an Error if no Arguments are passed"*/
-/*throws global.updateProjectStepNamesToDB, [{project: 1, stepNames: ["Start Progress", "Stop Progress"]}], function (err) {return true;}, "Update Project Step-Names To DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.updateProjectStepNamesToDB, [undefined], "Update Project Step-Names To DB: Reject undefined Project"*/
-/*testcberror global.updateProjectStepNamesToDB, [{stepNames: []}], "Update Project Step-Names To DB: Reject Project without ProjectId"*/
-/*testcberror global.updateProjectStepNamesToDB, [{project: 1}], "Update Project Step-Names To DB: Reject Project without Step-Names"*/
-
-global.updateProjectUserAddToDB = function (projectId, user, callback) {
-  if(callback) {
-    if(projectId && user) {
-      global.Project.update({
-        project: projectId
-      }, {
-        $push: { users: user }
-      }, { }, callback);
-    } else {
-      callback(new Error("Invalid Username or ProjectId passed to updateProjectUserAddToDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to updateProjectUserAddToDB");
-  }
-};
-
-/*testcbnoe global.updateProjectUserAddToDB, [1, "testuser"], "Update Project: User Add To DB"*/
-/*throws global.updateProjectUserAddToDB, [], function (err) {return true;}, "Update Project: User Add To DB: Throw an Error if no Arguments are passed"*/
-/*throws global.updateProjectUserAddToDB, [1, "testuser"], function (err) {return true;}, "Update Project: User Add To DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.updateProjectUserAddToDB, [undefined, undefined], "Update Project: User Add To DB: Reject undefined ProjectId and User"*/
-/*testcberror global.updateProjectUserAddToDB, [undefined, "testuser"], "Update Project: User Add To DB: Reject undefined ProjectId"*/
-/*testcberror global.updateProjectUserAddToDB, [1, undefined], "Update Project: User Add To DB: Reject undefined User"*/
-
-global.updateProjectUserDelFromDB = function (projectId, user, callback) {
-  if(callback) {
-    if(projectId && user) {
-      global.Project.update({
-        project: projectId
-      }, {
-        $pull: { users: user }
-      }, { }, callback);
-    } else {
-      callback(new Error("Invalid Username or ProjectId passed to updateProjectUserDelFromDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to updateProjectUserDelFromDB");
-  }
-};
-
-/*testcbnoe global.updateProjectUserDelFromDB, [1, "testuser"], "Update Project: User Del From DB"*/
-/*throws global.updateProjectUserDelFromDB, [], function (err) {return true;}, "Update Project: User Del From DB: Throw an Error if no Arguments are passed"*/
-/*throws global.updateProjectUserDelFromDB, [1, "testuser"], function (err) {return true;}, "Update Project: User Del From DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.updateProjectUserDelFromDB, [undefined, undefined], "Update Project: User Add To DB: Reject undefined ProjectId and User"*/
-/*testcberror global.updateProjectUserDelFromDB, [undefined, "testuser"], "Update Project: User Add To DB: Reject undefined ProjectId"*/
-/*testcberror global.updateProjectUserDelFromDB, [1, undefined], "Update Project: User Add To DB: Reject undefined User"*/
-
-global.deleteProjectsFromDB = function (projectId, callback) {
-  if(callback) {
-    if(projectId) {
-      // Removing all Task-Updates that belong to the Project
-      global.Task.remove({
-        project: projectId
-      }, function (err) {
-        if(err) {
-          /*print "Aborting deleteProjectsFromDB:", err*/
-          callback(err);
-        } else {
-          global.Project.remove({
-            project: projectId
-          }, callback);
-        }
-      });
-    } else {
-      callback(new Error("Invalid ProjectId passed to deleteProjectsFromDB"));
-    }
-  } else {
-    throw new Error("No Callback passed to deleteProjectsFromDB");
-  }
-};
-
-/*testcbnoe global.deleteProjectsFromDB, [1], "Delete Projects From DB"*/
-/*throws global.deleteProjectsFromDB, [], function (err) {return true;}, "Delete Projects From DB: Throw an Error if no Arguments are passed"*/
-/*throws global.deleteProjectsFromDB, [1], function (err) {return true;}, "Delete Projects From DB: Throw an Error if no Callback is passed"*/
-/*testcberror global.deleteProjectsFromDB, [undefined], "Delete Projects From DB: Reject undefined "*/
 
 
 
@@ -328,23 +193,23 @@ global.basicAuth = {
   },
 
   admin: function (user, pass) {
-    return (user === global.configParser.getPropertyValue('manageUser', global.config) && pass === global.configParser.getPropertyValue('managePass', global.config));
+    return (user === global.config.manageUser && pass === global.config.managePass);
   },
 
   projectPass: function (req, res, next, validateUser) {
     var projectId = req.params.project || req.session.project;
     if(projectId) {
-      global.getProjectsFromDB(projectId, function (err, projects) {
+      global.getProjects(projectId, function (err, projects) {
         if(err) {
-          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
+          console.log("Error getting Projects from DB with ID:", projectId, "\nERROR:", err);
           res.send('Error checking for existing Projects with this ID.', 337);
         } else {
           express.basicAuth(function (user, pass) {
             if(projects && projects[0] && projects[0].password) {
               if(validateUser && typeof validateUser === 'function') {
-                return (validateUser(user, projects[0]) && global.bcrypt.compareSync(pass, projects[0].password));
+                return (validateUser(user, projects[0]) && (global.comparePass(pass, projects[0].password)));
               } else {
-                return (global.bcrypt.compareSync(pass, projects[0].password));
+                return (global.comparePass(pass, projects[0].password));
               }
             } else {
               return false;
@@ -432,10 +297,10 @@ global.cp.exec('openssl rand -base64 48', {
         /*log "SESSION: Task:", req.session.task*/
       }
     }
-    if(global.configParser.getPropertyValue('useInternalHTTPS', global.config) !== 'yes') {
+    if(global.config.useInternalHTTPS !== 'yes') {
       if(req.headers && req.headers['x-forwarded-proto']) {
         if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + global.configParser.getPropertyValue('hostname', global.config) + req.url);
+          res.redirect('https://' + global.config.hostname + req.url);
         } else {
           next();
         }
@@ -458,10 +323,10 @@ global.cp.exec('openssl rand -base64 48', {
         /*log "SESSION: Task:", req.session.task*/
       }
     }
-    if(global.configParser.getPropertyValue('useInternalHTTPS', global.config) !== 'yes') {
+    if(global.config.useInternalHTTPS !== 'yes') {
       if(req.headers && req.headers['x-forwarded-proto']) {
         if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + global.configParser.getPropertyValue('hostname', global.config) + req.url);
+          res.redirect('https://' + global.config.hostname + req.url);
         } else {
           next();
         }
@@ -474,174 +339,6 @@ global.cp.exec('openssl rand -base64 48', {
     }
   });
 
-  // Jiractl-local Polling
-  app.post(global.uriPrefix + '/jiraupdate/:project', global.basicAuth.jira, function (req, res) {
-    global.getTasksFromDB(req.params.project, function (err, tasksToUpdate) {
-      if(err) {
-        console.log("Error finding Tasks in DB:", err);
-      } else {
-        res.json(tasksToUpdate);
-        global.Task.remove({
-          project: req.params.project
-        }, function (err, numberOfRemovedDocs) {
-          if(err) {
-            console.log("Error removing Tasks from DB:", err);
-          } else {
-            /*log "Removed", numberOfRemovedDocs, "Task-Document(s) from DB."*/
-          }
-        });
-      }
-    });
-    if(req.body) {
-      var project = {
-        project: req.params.project,
-        stepNames: []
-      },
-        stepName;
-      for(stepName in req.body) {
-        if(req.body.hasOwnProperty(stepName)) {
-          project.stepNames.push(req.body[stepName]);
-        }
-      }
-      global.updateProjectStepNamesToDB(project, function (err, updatedProject) {
-        if(err) {
-          console.log("Error updating Project's stepNames:", project);
-        } else {
-          /*log "Successfully updated Project:", updatedProject*/
-        }
-      });
-    }
-  });
-
-  // Administration Interface
-  app.post(global.uriPrefix + '/close', global.basicAuth.user, function (req, res) {
-    if(req.session && req.session.project) {
-      global.deleteProjectsFromDB(req.session.project, function (err, numberOfRemovedDocs) {
-        if(err) {
-          console.log("Error closing Project:", err);
-          res.send('Error closing Project.', 337);
-        } else {
-          /*log "Removed", numberOfRemovedDocs, "Project-Document(s) from DB."*/
-          res.end();
-        }
-      });
-    } else {
-      res.redirect(global.uriPrefix + '/session_not_found.html');
-    }
-  });
-
-  app.get(global.uriPrefix + '/manage', express.basicAuth(global.basicAuth.admin), function (req, res) {
-    global.getAllProjectsFromDB(function (err, projects) {
-      if(err) {
-        console.log("Error getting Projects from DB:", err);
-        res.send('Error checking for existing Projects.', 337);
-      } else {
-        var projectList = "";
-        if(projects) {
-          var i;
-          for(i = 0; i < projects.length; i++) {
-            projectList += '<tr><td align="center"><a href="' + global.uriPrefix + '/manage/' + projects[i].project + '">' + projects[i].project + '</a></td></tr>';
-          }
-        }
-        res.render('manage', {
-          uriPrefix: global.uriPrefix,
-          projectList: projectList
-        });
-      }
-    });
-  });
-
-  app.post(global.uriPrefix + '/init/:project/:password', express.basicAuth(global.basicAuth.admin), function (req, res) {
-    global.getProjectsFromDB(req.params.project, function (err, projects) {
-      if (err) {
-        console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
-        res.send('Error checking for existing Projects with this ID.', 337);
-      } else {
-        // Security note: Only use var-statements here because you have function-scope
-        var pwSalt = global.bcrypt.genSaltSync(10);
-        var pwHash = global.bcrypt.hashSync(req.params.password, pwSalt);
-        if(projects.length === 0) {
-          var credentials = global.basicAuth.getCredentials(req);
-          global.saveProjectToDB({
-            project: req.params.project,
-            password: pwHash,
-            stepNames: [],
-            users: [credentials[0]]
-          }, function (err) {
-            if(err) {
-              console.log("Error saving Project:", err);
-              res.send('Error saving Project.', 337);
-            } else {
-              res.redirect(global.uriPrefix + '/manage');
-            }
-          });
-        } else {
-          res.send('Project already exists.', 337);
-        }
-      }
-    });
-  });
-
-  app.get(global.uriPrefix + '/manage/:project', global.basicAuth.user, function (req, res) {
-    if(req.session) {
-      req.session.project = req.params.project;
-    }
-    global.getProjectsFromDB(req.params.project, function (err, projects) {
-      if(err) {
-        console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
-        res.send('Error checking for existing Projects with this ID.', 337);
-      } else if(projects && projects[0] && projects[0].users) {
-        var i,
-            userList = "";
-        for(i = 0; i < projects[0].users.length; i++) {
-          userList += '<tr><td>' + i + '</td><td>' + projects[0].users[i] + '</td></tr>';
-        }
-        res.render('manageProject', {
-          uriPrefix: global.uriPrefix,
-          userList: userList
-        });
-      } else {
-        res.send('Error: Project not found.', 404);
-      }
-    });
-  });
-
-  app.post(global.uriPrefix + '/useradd/:user', global.basicAuth.user, function (req, res) {
-    /*log "useradd:", req.params.user*/
-    if(req.session && req.session.project) {
-      global.updateProjectUserAddToDB(req.session.project, req.params.user, function (err) {
-        if(err) {
-          console.log("Error adding User:", err);
-          res.send('Error adding User.', 337);
-        } else {
-          /*log "Added User '" + req.params.user + "' to Project", req.session.project*/
-          res.redirect(global.uriPrefix + '/manage/' + req.session.project);
-        }
-      });
-    } else {
-      res.redirect(global.uriPrefix + '/session_not_found.html');
-    }
-  });
-  
-  app.post(global.uriPrefix + '/userdel/:user', global.basicAuth.user, function (req, res) {
-    if(req.session && req.session.project) {
-      global.updateProjectUserDelFromDB(req.session.project, req.params.user, function (err) {
-        if(err) {
-          console.log("Error deleting User:", err);
-          res.send('Error deleting User.', 337);
-        } else {
-          res.redirect(global.uriPrefix + '/manage/' + req.session.project);
-        }
-      });
-    } else {
-      res.redirect(global.uriPrefix + '/session_not_found.html');
-    }
-  });
-
-  app.get('*/favicon.ico', function (req, res) {
-    res.end();
-  });
-  
   // Incoming updates from mobile clients
   app.get(global.uriPrefix + '/update/:project/:jiraTask', global.basicAuth.user, function (req, res) {
     /*log "ID['project']:", req.params.project*/
@@ -653,22 +350,14 @@ global.cp.exec('openssl rand -base64 48', {
         jiraTask: req.params.jiraTask,
         user: credentials[0]
       };
-      global.getProjectsFromDB(req.params.project, function (err, projects) {
+      global.getStepNames(req.params.project, req.params.jiraTask, function (err, stepNames) {
         if(err) {
-          console.log("Error finding Project in DB:", err);
           res.redirect(global.uriPrefix + '/error.html');
-        } else if(projects && projects[0] && projects[0].stepNames) {
-          var i,
-              taskUpdateList = "";
-          for(i = 0; i < projects[0].stepNames.length; i++) {
-            taskUpdateList += '<form method="post" action="' + global.uriPrefix + '/updatestatus/' + i + '"><input type="submit" value="' + projects[0].stepNames[i] + '" class="button" /></form>\n';
-          }
+        } else {
           res.render('update', {
             uriPrefix: global.uriPrefix,
-            taskUpdateList: taskUpdateList
+            stepNames: stepNames
           });
-        } else {
-          res.redirect(global.uriPrefix + '/error.html');
         }
       });
     } else {
@@ -676,25 +365,192 @@ global.cp.exec('openssl rand -base64 48', {
       res.redirect(global.uriPrefix + '/session_not_found.html');
     }
   });
-  
+
   app.post(global.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
     if(req.session && req.session.task) {
-      var task = req.session.task;
-      req.session.destroy();
-      task.statusCode = req.params.statusCode;
-      /*log "Task:", task*/
-      global.saveTaskToDB(task, function (err) {
-        if(err) {
+      global.updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err, task) {
+        if(err || task) {
           res.redirect(global.uriPrefix + '/error.html');
         } else {
           res.redirect(global.uriPrefix + '/done.html');
         }
       });
+      req.session.destroy();
     } else {
       res.redirect(global.uriPrefix + '/session_not_found.html');
     }
   });
 
+  if(!global.localMode) {
+    // Jiractl-local Polling
+    app.post(global.uriPrefix + '/jiraupdate/:project', global.basicAuth.jira, function (req, res) {
+      global.Task.getTasksFromDB(req.params.project, function (err, tasksToUpdate) {
+        if(err) {
+          console.log("Error finding Tasks in DB:", err);
+        } else {
+          res.json(tasksToUpdate);
+          global.Task.remove({
+            project: req.params.project
+          }, function (err, numberOfRemovedDocs) {
+            if(err) {
+              console.log("Error removing Tasks from DB:", err);
+            } else {
+              /*log "Removed", numberOfRemovedDocs, "Task-Document(s) from DB."*/
+            }
+          });
+        }
+      });
+      if(req.body) {
+        var project = {
+          project: req.params.project,
+          stepNames: []
+        },
+          stepName;
+        for(stepName in req.body) {
+          if(req.body.hasOwnProperty(stepName)) {
+            project.stepNames.push(req.body[stepName]);
+          }
+        }
+        global.Project.updateProjectStepNamesToDB(project, function (err, updatedProject) {
+          if(err) {
+            console.log("Error updating Project's stepNames:", project);
+          } else {
+            /*log "Successfully updated Project:", updatedProject*/
+          }
+        });
+      }
+    });
+
+    // Administration Interface
+    app.post(global.uriPrefix + '/close', global.basicAuth.user, function (req, res) {
+      if(req.session && req.session.project) {
+        global.Project.deleteProjectsFromDB(req.session.project, function (err, numberOfRemovedDocs) {
+          if(err) {
+            console.log("Error closing Project:", err);
+            res.send('Error closing Project.', 337);
+          } else {
+            /*log "Removed", numberOfRemovedDocs, "Project-Document(s) from DB."*/
+            res.end();
+          }
+        });
+      } else {
+        res.redirect(global.uriPrefix + '/session_not_found.html');
+      }
+    });
+
+    app.get(global.uriPrefix + '/manage', express.basicAuth(global.basicAuth.admin), function (req, res) {
+      global.Project.getAllProjectsFromDB(function (err, projects) {
+        if(err) {
+          console.log("Error getting Projects from DB:", err);
+          res.send('Error checking for existing Projects.', 337);
+        } else {
+          var projectList = "";
+          if(projects) {
+            var i;
+            for(i = 0; i < projects.length; i++) {
+              projectList += '<tr><td align="center"><a href="' + global.uriPrefix + '/manage/' + projects[i].project + '">' + projects[i].project + '</a></td></tr>';
+            }
+          }
+          res.render('manage', {
+            uriPrefix: global.uriPrefix,
+            projectList: projectList
+          });
+        }
+      });
+    });
+
+    app.post(global.uriPrefix + '/init/:project/:password', express.basicAuth(global.basicAuth.admin), function (req, res) {
+      global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+        if (err) {
+          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
+          res.send('Error checking for existing Projects with this ID.', 337);
+        } else {
+          // Security note: Only use var-statements here because you have function-scope
+          var pwSalt = global.bcrypt.genSaltSync(10);
+          var pwHash = global.bcrypt.hashSync(req.params.password, pwSalt);
+          if(projects.length === 0) {
+            var credentials = global.basicAuth.getCredentials(req);
+            global.Project.saveProjectToDB({
+              project: req.params.project,
+              password: pwHash,
+              stepNames: [],
+              users: [credentials[0]]
+            }, function (err) {
+              if(err) {
+                console.log("Error saving Project:", err);
+                res.send('Error saving Project.', 337);
+              } else {
+                res.redirect(global.uriPrefix + '/manage');
+              }
+            });
+          } else {
+            res.send('Project already exists.', 337);
+          }
+        }
+      });
+    });
+
+    app.get(global.uriPrefix + '/manage/:project', global.basicAuth.user, function (req, res) {
+      if(req.session) {
+        req.session.project = req.params.project;
+      }
+      global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+        if(err) {
+          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
+          res.send('Error checking for existing Projects with this ID.', 337);
+        } else if(projects && projects[0] && projects[0].users) {
+          var i,
+              userList = "";
+          for(i = 0; i < projects[0].users.length; i++) {
+            userList += '<tr><td>' + i + '</td><td>' + projects[0].users[i] + '</td></tr>';
+          }
+          res.render('manageProject', {
+            uriPrefix: global.uriPrefix,
+            userList: userList
+          });
+        } else {
+          res.send('Error: Project not found.', 404);
+        }
+      });
+    });
+
+    app.post(global.uriPrefix + '/useradd/:user', global.basicAuth.user, function (req, res) {
+      /*log "useradd:", req.params.user*/
+      if(req.session && req.session.project) {
+        global.Project.updateProjectUserAddToDB(req.session.project, req.params.user, function (err) {
+          if(err) {
+            console.log("Error adding User:", err);
+            res.send('Error adding User.', 337);
+          } else {
+            /*log "Added User '" + req.params.user + "' to Project", req.session.project*/
+            res.redirect(global.uriPrefix + '/manage/' + req.session.project);
+          }
+        });
+      } else {
+        res.redirect(global.uriPrefix + '/session_not_found.html');
+      }
+    });
+  
+    app.post(global.uriPrefix + '/userdel/:user', global.basicAuth.user, function (req, res) {
+      if(req.session && req.session.project) {
+        global.Project.updateProjectUserDelFromDB(req.session.project, req.params.user, function (err) {
+          if(err) {
+            console.log("Error deleting User:", err);
+            res.send('Error deleting User.', 337);
+          } else {
+            res.redirect(global.uriPrefix + '/manage/' + req.session.project);
+          }
+        });
+      } else {
+        res.redirect(global.uriPrefix + '/session_not_found.html');
+      }
+    });
+  }
+
+  app.get('*/favicon.ico', function (req, res) {
+    res.end();
+  });
+  
   // Remove uriPrefix from Request-Uri to serve the correct static content
   app.get(global.uriPrefix + '/*', function (req, res, next) {
     req.url = req.url.slice(global.uriPrefix.length);
@@ -714,6 +570,6 @@ global.cp.exec('openssl rand -base64 48', {
      */
 
     app.listen(global.port);
-    console.log("Port: %d UriPrefix: %s\n  ***  %s mode  ***", app.address().port, global.uriPrefix, app.settings.env);
+    console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, global.uriPrefix, global.config.useLocalMode, app.settings.env);
   }
 });
