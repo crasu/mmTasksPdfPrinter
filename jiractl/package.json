@@ -2,6 +2,10 @@
     "name": "jiractl"
   , "version": "0.0.1"
   , "private": true
+  , "engines": {
+    "node": "0.6.12"
+  , "npm": "1.1.4"
+  }
   , "dependencies": {
       "express": "2.5.2"
     , "mongoose": "2.5.5"

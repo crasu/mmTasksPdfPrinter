@@ -15,3 +15,7 @@ target/
 .scala_dependencies
 printer.props
 .target/
+jiractl/node_modules/express
+jiractl/node_modules/mongoose
+jiractl/node_modules/bcrypt
+jiractl/node_modules/jst
