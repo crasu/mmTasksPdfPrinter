@@ -339,6 +339,17 @@ global.cp.exec('openssl rand -base64 48', {
     }
   });
 
+  // AgileCards Jira-Plugin-Support
+  app.get(global.uriPrefix + '/update/:jiraKey', function (req, res, next) {
+    /*log "update/:jiraKey"*/
+    if(req.params.jiraKey.indexOf('-') !== -1) {
+      /*log "Old URL:", req.url*/
+      req.url = global.uriPrefix + '/update/' + req.params.jiraKey.replace('-', '/');
+      /*log "New URL:", req.url*/
+      next();
+    }
+  });
+
   // Incoming updates from mobile clients
   app.get(global.uriPrefix + '/update/:project/:jiraTask', global.basicAuth.user, function (req, res) {
     /*log "ID['project']:", req.params.project*/
