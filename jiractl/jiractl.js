@@ -311,6 +311,62 @@ global.deleteProjectsFromDB = function (projectId, callback) {
 
 
 /**
+ * Authentication Middleware:
+ */
+
+global.basicAuth = {
+  user: function (req, res, next) {
+    global.basicAuth.projectPass(req, res, next, function (user, project) {
+      return (project.users.indexOf(user) !== -1);
+    });
+  },
+
+  jira: function (req, res, next) {
+    global.basicAuth.projectPass(req, res, next, function (user) {
+      return (user === 'jira');
+    });
+  },
+
+  admin: function (user, pass) {
+    return (user === global.configParser.getPropertyValue('manageUser', global.config) && pass === global.configParser.getPropertyValue('managePass', global.config));
+  },
+
+  projectPass: function (req, res, next, validateUser) {
+    var projectId = req.params.project || req.session.project;
+    if(projectId) {
+      global.getProjectsFromDB(projectId, function (err, projects) {
+        if(err) {
+          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
+          res.send('Error checking for existing Projects with this ID.', 337);
+        } else {
+          express.basicAuth(function (user, pass) {
+            if(projects && projects[0] && projects[0].password) {
+              if(validateUser && typeof validateUser === 'function') {
+                return (validateUser(user, projects[0]) && global.bcrypt.compareSync(pass, projects[0].password));
+              } else {
+                return (global.bcrypt.compareSync(pass, projects[0].password));
+              }
+            } else {
+              return false;
+            }
+          })(req, res, next);
+        }
+      });
+    } else {
+      express.basicAuth(function (user, pass) {
+        return false;
+      })(req, res, next);
+    }
+  },
+
+  getCredentials: function (req) {
+    return new Buffer(req.headers.authorization.split(' ')[1], 'base64').toString().split(':');
+  }
+};
+  
+
+
+/**
  * Express: Configuration
  */
 
@@ -359,60 +415,6 @@ global.cp.exec('openssl rand -base64 48', {
     app.use(express.errorHandler()); 
   });
  
-
-
-  /**
-   * Authentication Middleware:
-   */
-  
-  global.basicAuth = {
-    user: function (req, res, next) {
-      global.basicAuth.projectPass(req, res, next, function (user, project) {
-        return (project.users.indexOf(user) !== -1);
-      });
-    },
-
-    jira: function (req, res, next) {
-      global.basicAuth.projectPass(req, res, next, function (user) {
-        return (user === 'jira');
-      });
-    },
-
-    admin: function (user, pass) {
-      return (user === global.configParser.getPropertyValue('manageUser', global.config) && pass === global.configParser.getPropertyValue('managePass', global.config));
-    },
-
-    projectPass: function (req, res, next, validateUser) {
-      var projectId = req.params.project || req.session.project;
-      if(projectId) {
-        global.getProjectsFromDB(projectId, function (err, projects) {
-          if(err) {
-          } else {
-            express.basicAuth(function (user, pass) {
-              if(projects && projects[0] && projects[0].password) {
-                if(validateUser && typeof validateUser === 'function') {
-                  return (validateUser(user, projects[0]) && global.bcrypt.compareSync(pass, projects[0].password));
-                } else {
-                  return (global.bcrypt.compareSync(pass, projects[0].password));
-                }
-              } else {
-                return false;
-              }
-            })(req, res, next);
-          }
-        });
-      } else {
-        express.basicAuth(function (user, pass) {
-          return false;
-        })(req, res, next);
-      }
-    },
-
-    getCredentials: function (req) {
-      return new Buffer(req.headers.authorization.split(' ')[1], 'base64').toString().split(':');
-    }
-  };
-  
 
 
   /**
