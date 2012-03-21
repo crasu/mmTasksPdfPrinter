@@ -22,8 +22,18 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
   }
 
   def create(stories: List[Story]): Seq[PdfPTable] = {
-    val cards = for (s <- stories; t <- s.tasks)
-      yield createCell(s, t)
+    val cards = {
+      val cards = for (s <- stories; t <- s.tasks)
+        yield createCell(s, t)
+      val zippedCards = cards.zipWithIndex
+      val divisor = Math.ceil(cards.length.toDouble / noOfElementsPerPage.toDouble).toInt
+      val sortedCardLists = for (i <- 0 until divisor)
+        yield {
+          for (card <- zippedCards.filter({case (_, index) => index%divisor == i}))
+            yield card._1
+        }
+      sortedCardLists.flatten
+    }
 
     val pages = cards grouped noOfElementsPerPage map { cells =>
       val page = new PdfPTable(config.size.taskColumnNumber)
