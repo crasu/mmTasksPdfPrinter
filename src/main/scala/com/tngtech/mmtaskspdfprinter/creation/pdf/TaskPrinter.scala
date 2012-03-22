@@ -26,13 +26,13 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
       val cards = for (s <- stories; t <- s.tasks)
         yield createCell(s, t)
       val zippedCards = cards.zipWithIndex
-      val divisor = Math.ceil(cards.length.toDouble / noOfElementsPerPage.toDouble).toInt
-      val sortedCardLists = for (i <- 0 until divisor)
-        yield {
-          for (card <- zippedCards.filter({case (_, index) => index%divisor == i}))
-            yield card._1
-        }
-      sortedCardLists.flatten
+      val divisor = math.ceil(cards.length.toDouble / noOfElementsPerPage.toDouble).toInt
+      for {
+        i <- 0 until divisor
+        (card, index) <- zippedCards
+        if index % divisor == i
+      }
+        yield card
     }
 
     val pages = cards grouped noOfElementsPerPage map { cells =>
