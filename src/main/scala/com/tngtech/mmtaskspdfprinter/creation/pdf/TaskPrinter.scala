@@ -109,7 +109,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     var table = new PdfPTable(config.size.innerTableCols)
     table.setWidthPercentage(100f)
     if (config.size.innerTableCols == 2) table.setWidths(
-      Array((contentSize.getWidth() / taskColumnNumber - 1) - config.companyLogo.getScaledHeight,
+      Array((contentSize.getWidth() / taskColumnNumber - 1) - config.companyLogo.getScaledHeight - 25,
         config.companyLogo.getScaledHeight + 15))
     var cell = new PdfPCell()
     cell.setBorder(Rectangle.NO_BORDER)
