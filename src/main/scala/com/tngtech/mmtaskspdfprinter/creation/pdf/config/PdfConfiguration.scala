@@ -20,7 +20,14 @@ class PdfConfiguration extends CentralConfiguration {
   val size = SizeType.parse(properties.getProperty("pdf.layout", "medium"))
   val pageSize = PageSize.A4
   val jiraControlUrl = properties.getProperty("pdf.jiraControlUrl")
-  val jiraControlProjectId : Int = properties.getProperty("pdf.jiraControlProjectId", "0").toInt
+  val jiraControlProjectId = {
+    val tmp = properties.getProperty("pdf.jiraControlProjectId", "")
+    if(tmp.equals("")) {
+      properties.getProperty("jira.project", "")
+    } else {
+      tmp
+    }
+  }
 
   def generateQrCodes() = (!jiraControlUrl.equals("") && (jiraControlProjectId != 0))
 

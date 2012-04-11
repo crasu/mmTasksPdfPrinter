@@ -23,7 +23,7 @@ object JiraControlQrLinkEncoder {
     qrCode
   }
 
-  def getJiraControlUrl(jiraControlUrl : String, projectId : Int, jiraKey: String) : String = if (jiraKey.equals("")) {
+  def getJiraControlUrl(jiraControlUrl : String, projectId : String, jiraKey: String) : String = if (jiraKey.equals("")) {
     ""
   } else {
     val taskId = extractJiraTaskId(jiraKey)

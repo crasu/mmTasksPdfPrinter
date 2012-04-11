@@ -74,7 +74,7 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
       logoAndQrCodePhrase.add(new Chunk(config.companyLogo, 0, 0))
       if (!task.jiraKey.equals("")) {
         var taskKey = ""
-        if(!config.jiraControlUrl.equals("") && (config.jiraControlProjectId != 0)) {
+        if(!config.jiraControlUrl.equals("")) {
           logoAndQrCodePhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, task.jiraKey), config.size.tasksQrCodeRenderingInfo))
         } else {
           taskKey += "  "
