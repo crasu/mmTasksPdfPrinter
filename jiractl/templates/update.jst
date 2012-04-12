@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/stylesheets/style_handheld.css" type="text/css" />
   </head>
   <body>
-    UpdateTaskStatus:<br />
+    {% if(it.issueInfo) { %}
+      {{ issueInfo }}<br />
+    {% } else { %}
+      UpdateTaskStatus:<br />
+    {% } %}
+    {% if(it.updateInfo) { %}
+      {{ updateInfo }}<br />
+    {% } %}
     {% if(it.stepNames) { %}
       {% var i; for(i = 0; i < it.stepNames.length; i++) { %}
         <form method="post" action="{{ uriPrefix }}/updatestatus/{{ i }}">

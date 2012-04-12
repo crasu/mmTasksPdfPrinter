@@ -104,7 +104,26 @@ if(global.localMode) {
 
   global.getStepNames = function (projectId, taskId, callback) {
     global.jiraconnector.getAvailableWorksteps(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, callback);
-  }
+  };
+
+  global.getTaskInfo = function (projectId, taskId, callback) {
+    global.jiraconnector.getAvailableWorksteps(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, function (err, stepNames) {
+      if(err) {
+        callback(err);
+      } else {
+        var taskInfo = {};
+        taskInfo.stepNames = stepNames;
+        global.jiraconnector.getIssueInfo(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, function (err, issueInfo) {
+          if(err) {
+            callback(err);
+          } else {
+            taskInfo.issueInfo = issueInfo;
+            callback(null, taskInfo);
+          }
+        });
+      }
+    });
+  };
 
   global.updateTask = function (projectId, taskId, statusCode, user, callback) {
     global.getStepNames(projectId, taskId, function (err, stepNames) {
@@ -141,6 +160,18 @@ if(global.localMode) {
         callback(null, projects[0].stepNames);
       } else {
         callback(new Error("Invalid Project found in DB"), undefined);
+      }
+    });
+  };
+
+  global.getTaskInfo = function (projectId, taskId, callback) {
+    global.getStepNames(projectId, taskId, function (err, stepNames) {
+      if(err) {
+        callback(err);
+      } else {
+        var taskInfo = {};
+        taskInfo.stepNames = stepNames;
+        callback(null, taskInfo);
       }
     });
   };
@@ -361,14 +392,17 @@ global.cp.exec('openssl rand -base64 48', {
         jiraTask: req.params.jiraTask,
         user: credentials[0]
       };
-      global.getStepNames(req.params.project, req.params.jiraTask, function (err, stepNames) {
+      global.getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
         if(err) {
           res.redirect(global.uriPrefix + '/error.html');
         } else {
-          res.render('update', {
-            uriPrefix: global.uriPrefix,
-            stepNames: stepNames
-          });
+          var renderProps = taskInfo;
+          renderProps.uriPrefix = global.uriPrefix;
+          if(req.session.updateInfo) {
+            renderProps.updateInfo = req.session.updateInfo;
+            delete req.session.updateInfo;
+          }
+          res.render('update', renderProps);
         }
       });
     } else {
@@ -378,15 +412,16 @@ global.cp.exec('openssl rand -base64 48', {
   });
 
   app.post(global.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
-    if(req.session && req.session.task) {
+    if(req.session && req.session.task && req.session.task.project && req.session.task.jiraTask) {
       global.updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err, task) {
         if(err || task) {
           res.redirect(global.uriPrefix + '/error.html');
         } else {
-          res.redirect(global.uriPrefix + '/done.html');
+          req.session.updateInfo = '<p class="updateInfo">Successfully updated Issue ' + req.session.task.jiraTask + '.</p>';
+          res.redirect(global.uriPrefix + '/update/' + req.session.task.project + '/' + req.session.task.jiraTask);
         }
+        delete req.session.task;
       });
-      req.session.destroy();
     } else {
       res.redirect(global.uriPrefix + '/session_not_found.html');
     }

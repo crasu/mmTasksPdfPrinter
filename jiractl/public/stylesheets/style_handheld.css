@@ -1,13 +1,22 @@
 body {
   padding: 100px;
-  font: 88px "Lucida Grande", Helvetica, Arial, sans-serif;
+  font: 48px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
 }
 
+.issueInfo {
+  background-color: #FFFFFF;
+}
+
+.updateInfo {
+  background-color: #22dd22;
+}
+
 .button {
   width: 95%;
   margin-top: 5%;
+  font-size: 88px;
 }
