@@ -118,7 +118,7 @@ app.sendRequest = function () {
         };
         var j;
         for(j = 0; j < app.tasksQueue.length; j++) {
-          app.jiraconnector.progressTask(app.jiraCliPath + '/jira.sh', app.jiraUrl, app.jiraUser, app.jiraPass, app.projectName, app.tasksQueue[j].jiraTask, app.stepNames[app.tasksQueue[j].statusCode], app.tasksQueue[j].user, jiraConnectorCallback);
+          app.jiraConnector.progressTask(app.jiraCliPath + '/jira.sh', app.jiraUrl, app.jiraUser, app.jiraPass, app.projectName, app.tasksQueue[j].jiraTask, app.stepNames[app.tasksQueue[j].statusCode], app.tasksQueue[j].user, jiraConnectorCallback);
           app.tasksQueue.splice(j, 1);
           j--;
         }
