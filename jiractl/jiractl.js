@@ -394,6 +394,7 @@ global.cp.exec('openssl rand -base64 48', {
       };
       global.getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
         if(err) {
+          console.log("Error on update:", err, "Task-Info:", taskInfo);
           res.redirect(global.uriPrefix + '/error.html');
         } else {
           var renderProps = taskInfo;
@@ -413,8 +414,9 @@ global.cp.exec('openssl rand -base64 48', {
 
   app.post(global.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
     if(req.session && req.session.task && req.session.task.project && req.session.task.jiraTask) {
-      global.updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err, task) {
-        if(err || task) {
+      global.updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err) {
+        if(err) {
+          console.log("Error on updatestatus:", err, "Task:", req.session.task);
           res.redirect(global.uriPrefix + '/error.html');
         } else {
           req.session.updateInfo = '<p class="updateInfo">Successfully updated Issue ' + req.session.task.jiraTask + '.</p>';
