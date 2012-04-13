@@ -152,7 +152,7 @@ if(global.localMode) {
    */
 
   global.getStepNames = function (projectId, taskId, callback) {
-    global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+    global.Project.getProjectsFromDB(projectId, function (err, projects) {
       if(err) {
         console.log("Error finding Project in DB:", err);
         callback(new Error("Error finding Project in DB"), undefined);
