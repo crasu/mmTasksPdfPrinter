@@ -10,40 +10,57 @@
  */
 
 var express = require('express'),
-    global = {
-      cp: require('child_process'),
-      fs: require('fs'),
-      bcrypt: require('bcrypt'),
-      configParser: require('configparser')
-    };
+    cp = require('child_process'),
+    fs = require('fs'),
+    bcrypt = require('bcrypt');
 
+var app;
+
+var config;
+   
 
 
 /**
  * Init Config-File and Config-Parser
  */
 
-global.readConfig = function () {
-  global.config = { };
-  var config = global.fs.readFileSync(__dirname + '/config', 'utf8');
-  global.uriPrefix = global.configParser.getPropertyValue('uriPrefix', config, '');
-  if(global.uriPrefix && global.uriPrefix[0] !== '/') {
-    global.uriPrefix = '/' + global.uriPrefix;
-  }
-  global.config.useInternalHTTPS = global.configParser.getPropertyValue('useInternalHTTPS', config, "no");
-  global.config.useLocalMode = global.configParser.getPropertyValue('useLocalMode', config, "no");
-  global.config.hostname = global.configParser.getPropertyValue('hostname', config);
-  global.config.port = global.configParser.getPropertyValue('port', config);
-  global.config.mongoUser = global.configParser.getPropertyValue('mongoUser', config);
-  global.config.mongoPass = global.configParser.getPropertyValue('mongoPass', config);
-  global.config.mongoHost = global.configParser.getPropertyValue('mongoHost', config);
-  global.config.mongoPort = global.configParser.getPropertyValue('mongoPort', config);
-  global.config.mongoDB = global.configParser.getPropertyValue('mongoDB', config);
-  global.config.manageUser = global.configParser.getPropertyValue('manageUser', config, "admin");
-  global.config.managePass = global.configParser.getPropertyValue('managePass', config, "admin");
-}();
+var readConfig = function () {
+  config = function () {
+    var configFile = fs.readFileSync(__dirname + '/config.json', 'utf8');
+    var config;
+    try {
+      config = JSON.parse(configFile);
+    } catch (err) {
+      console.log("Invalid JSON in Config-File:");
+      console.log(err);
+      process.exit(1);
+    }
+    var defaultConfig = {
+      "useInternalHTTPS": "no",
+      "useLocalMode": "no",
+      "uriPrefix": "",
+      "manageUser": "admin",
+      "managePass": "admin"
+    };
+    var prop;
+    for(prop in defaultConfig) {
+      if(typeof config[prop] === 'undefined') {
+        config[prop] = defaultConfig[prop];
+      }
+    }
+    return config;
+  }();
 
-global.port = process.env.PORT || global.config.port;
+  if(config.uriPrefix && config.uriPrefix[0] !== '/') {
+    config.uriPrefix = '/' + config.uriPrefix;
+  }
+
+  if(process.env.PORT) {
+    config.port = process.env.PORT;
+  }
+
+  /*log "Read Config:", config*/
+}();
 
 
 
@@ -51,20 +68,18 @@ global.port = process.env.PORT || global.config.port;
  * Init Express Server:
  */
 
-if(global.config.useInternalHTTPS === 'yes') {
+if(config.useInternalHTTPS === 'yes') {
   var options = {
     key: require('fs').readFileSync(__dirname + '/ssl/jiractl-key.pem'),
     cert: require('fs').readFileSync(__dirname + '/ssl/jiractl-cert.pem')
   },
   app = module.exports = express.createServer(options);
-  console.log("DEBUG: Using internal HTTPS-Support");
+  /*log "DEBUG: Using internal HTTPS-Support"*/
 } else {
-  var app = module.exports = express.createServer();
+  app = module.exports = express.createServer();
 }
 
-if(global.config.useLocalMode === 'yes') {
-  global.localMode = true;
-}
+config.useLocalMode = (config.useLocalMode === 'yes');
 
 
 
@@ -72,7 +87,7 @@ if(global.config.useLocalMode === 'yes') {
  * General functionality
  */
 
-global.sendFileCallback = function (filename) {
+var sendFileCallback = function (filename) {
   return function (err) {
     if(err) {
       console.log(err);
@@ -83,37 +98,62 @@ global.sendFileCallback = function (filename) {
   };
 };
 
-if(global.localMode) {
+var getStepNames;
+var getTaskInfo;
+var updateTask;
+var comparePass;
+var getProjects;
+
+if(config.useLocalMode) {
   /**
    * Local Mode
    */
 
-  global.readLocalConfig = function () {
-    global.localconfig = { };
-    var config = global.fs.readFileSync(__dirname + '/localconfig', 'utf8');
-    global.localconfig.jiraCliPath = global.configParser.getPropertyValue('jiraCliPath', config, '');
-    global.localconfig.jiraUrl = global.configParser.getPropertyValue('jiraUrl', config, 'http://localhost:8080');
-    global.localconfig.jiraUser = global.configParser.getPropertyValue('jiraUser', config, '');
-    global.localconfig.jiraPass = global.configParser.getPropertyValue('jiraPass', config, '');
-    global.localconfig.projectName = global.configParser.getPropertyValue('projectName', config, '');
-    global.localconfig.projectPass = global.configParser.getPropertyValue('projectPass', config, '');
-    global.localconfig.users = JSON.parse(global.configParser.getPropertyValue('users', config, '["admin"]'));
+  var readLocalConfig = function () {
+    config.localconfig = function () {
+      var localconfigFile = fs.readFileSync(__dirname + '/localconfig.json', 'utf8');
+      var localconfig;
+      try {
+        localconfig = JSON.parse(localconfigFile);
+      } catch (err) {
+        console.log("Invalid JSON in Local-Config-File:");
+        console.log(err);
+        process.exit(1);
+      }
+      var defaultLocalConfig = {
+        "jiraCliPath": '',
+        "jiraUrl": 'http://localhost:8080',
+        "jiraUser": '',
+        "jiraPass": '',
+        "projectName": '',
+        "projectPass": '',
+        "users": '["admin"]'
+      };
+      var prop;
+      for(prop in defaultLocalConfig) {
+        if(typeof localconfig[prop] === 'undefined') {
+          localconfig[prop] = defaultLocalConfig[prop];
+        }
+      }
+      return localconfig;
+    }();
+    /*log "Read Local-Config:", config.localconfig*/
   }();
 
-  global.jiraconnector = require('jiraconnector');
+  var jiraconnector = require('jiraconnector');
 
-  global.getStepNames = function (projectId, taskId, callback) {
-    global.jiraconnector.getAvailableWorksteps(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, callback);
+  getStepNames = function (projectId, taskId, callback) {
+    jiraconnector.getAvailableWorksteps(config.localconfig, taskId, callback);
   };
 
-  global.getTaskInfo = function (projectId, taskId, callback) {
-    global.jiraconnector.getAvailableWorksteps(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, function (err, stepNames) {
+  getTaskInfo = function (projectId, taskId, callback) {
+    jiraconnector.getAvailableWorksteps(config.localconfig, taskId, function (err, stepNames) {
       if(err) {
         callback(err);
       } else {
         var taskInfo = {};
         taskInfo.stepNames = stepNames;
-        global.jiraconnector.getIssueInfo(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, function (err, issueInfo) {
+        jiraconnector.getIssueInfo(config.localconfig, taskId, function (err, issueInfo) {
           if(err) {
             callback(err);
           } else {
@@ -125,34 +165,44 @@ if(global.localMode) {
     });
   };
 
-  global.updateTask = function (projectId, taskId, statusCode, user, callback) {
-    global.getStepNames(projectId, taskId, function (err, stepNames) {
+  updateTask = function (projectId, taskId, statusCode, user, callback) {
+    getStepNames(projectId, taskId, function (err, stepNames) {
       if(err) {
         callback(err);
       } else {
-        global.jiraconnector.progressTask(global.localconfig.jiraCliPath + '/jira.sh', global.localconfig.jiraUrl, global.localconfig.jiraUser, global.localconfig.jiraPass, projectId, taskId, stepNames[statusCode], user, callback);
+        jiraconnector.progressTask(config.localconfig, taskId, stepNames[statusCode], user, callback);
       }
     });
   };
 
-  global.comparePass = function (pass1, pass2) {
+  comparePass = function (pass1, pass2) {
     return (pass1 === pass2);
   };
 
-  global.getProjects = function (projectId, callback) {
+  getProjects = function (projectId, callback) {
     callback(null, [{
-      project: global.localconfig.projectName,
-      password: global.localconfig.projectPass,
-      users: global.localconfig.users
+      project: config.localconfig.projectName,
+      password: config.localconfig.projectPass,
+      users: config.localconfig.users
     }]);
   };
+
 } else {
   /**
    * Standard Mode
    */
 
-  global.getStepNames = function (projectId, taskId, callback) {
-    global.Project.getProjectsFromDB(projectId, function (err, projects) {
+  /**
+   * Mongoose: Init MongoDB
+   */
+
+  var mongoose = require('db_core')(config.mongoUser, config.mongoPass, config.mongoHost, config.mongoPort, config.mongoDB);
+
+  var Task = require('db_tasks')(mongoose);
+  var Project = require('db_projects')(mongoose, Task);
+
+  getStepNames = function (projectId, taskId, callback) {
+    Project.getProjectsFromDB(projectId, function (err, projects) {
       if(err) {
         console.log("Error finding Project in DB:", err);
         callback(new Error("Error finding Project in DB"), undefined);
@@ -164,8 +214,8 @@ if(global.localMode) {
     });
   };
 
-  global.getTaskInfo = function (projectId, taskId, callback) {
-    global.getStepNames(projectId, taskId, function (err, stepNames) {
+  getTaskInfo = function (projectId, taskId, callback) {
+    getStepNames(projectId, taskId, function (err, stepNames) {
       if(err) {
         callback(err);
       } else {
@@ -176,32 +226,21 @@ if(global.localMode) {
     });
   };
 
-  global.updateTask = function (projectId, taskId, statusCode, user, callback) {
+  updateTask = function (projectId, taskId, statusCode, user, callback) {
     var task = {
       project: projectId,
       jiraTask: taskId,
       statusCode: statusCode,
       user: user
     };
-    global.Task.saveTaskToDB(task, callback);
+    Task.saveTaskToDB(task, callback);
   };
 
-  global.comparePass = function (pass1, pass2) {
-    return global.bcrypt.compareSync(pass1, pass2);
+  comparePass = function (pass1, pass2) {
+    return bcrypt.compareSync(pass1, pass2);
   };
 
-
-
-  /**
-   * Mongoose: Init MongoDB
-   */
-
-  global.mongoose = require('db_core')(global.config.mongoUser, global.config.mongoPass, global.config.mongoHost, global.config.mongoPort, global.config.mongoDB);
-
-  global.Task = require('db_tasks')(global.mongoose);
-  global.Project = require('db_projects')(global.mongoose, global.Task);
-
-  global.getProjects = global.Project.getProjectsFromDB;
+  getProjects = Project.getProjectsFromDB;
 }
 
 
@@ -210,27 +249,27 @@ if(global.localMode) {
  * Authentication Middleware:
  */
 
-global.basicAuth = {
+basicAuth = {
   user: function (req, res, next) {
-    global.basicAuth.projectPass(req, res, next, function (user, project) {
+    basicAuth.projectPass(req, res, next, function (user, project) {
       return (project.users.indexOf(user) !== -1);
     });
   },
 
   jira: function (req, res, next) {
-    global.basicAuth.projectPass(req, res, next, function (user) {
+    basicAuth.projectPass(req, res, next, function (user) {
       return (user === 'jira');
     });
   },
 
   admin: function (user, pass) {
-    return (user === global.config.manageUser && pass === global.config.managePass);
+    return (user === config.manageUser && pass === config.managePass);
   },
 
   projectPass: function (req, res, next, validateUser) {
     var projectId = req.params.project || req.session.project;
     if(projectId) {
-      global.getProjects(projectId, function (err, projects) {
+      getProjects(projectId, function (err, projects) {
         if(err) {
           console.log("Error getting Projects from DB with ID:", projectId, "\nERROR:", err);
           res.send('Error checking for existing Projects with this ID.', 337);
@@ -238,9 +277,9 @@ global.basicAuth = {
           express.basicAuth(function (user, pass) {
             if(projects && projects[0] && projects[0].password) {
               if(validateUser && typeof validateUser === 'function') {
-                return (validateUser(user, projects[0]) && (global.comparePass(pass, projects[0].password)));
+                return (validateUser(user, projects[0]) && (comparePass(pass, projects[0].password)));
               } else {
-                return (global.comparePass(pass, projects[0].password));
+                return (comparePass(pass, projects[0].password));
               }
             } else {
               return false;
@@ -266,7 +305,7 @@ global.basicAuth = {
  * Express: Configuration
  */
 
-global.cp.exec('openssl rand -base64 48', {
+cp.exec('openssl rand -base64 48', {
   encoding: 'utf8',
   timeout: '0',
   maxBuffer: 200*1024,
@@ -328,10 +367,10 @@ global.cp.exec('openssl rand -base64 48', {
         /*log "SESSION: Task:", req.session.task*/
       }
     }
-    if(global.config.useInternalHTTPS !== 'yes') {
+    if(config.useInternalHTTPS !== 'yes') {
       if(req.headers && req.headers['x-forwarded-proto']) {
         if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + global.config.hostname + req.url);
+          res.redirect('https://' + config.hostname + req.url);
         } else {
           next();
         }
@@ -354,10 +393,10 @@ global.cp.exec('openssl rand -base64 48', {
         /*log "SESSION: Task:", req.session.task*/
       }
     }
-    if(global.config.useInternalHTTPS !== 'yes') {
+    if(config.useInternalHTTPS !== 'yes') {
       if(req.headers && req.headers['x-forwarded-proto']) {
         if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + global.config.hostname + req.url);
+          res.redirect('https://' + config.hostname + req.url);
         } else {
           next();
         }
@@ -371,34 +410,34 @@ global.cp.exec('openssl rand -base64 48', {
   });
 
   // AgileCards Jira-Plugin-Support
-  app.get(global.uriPrefix + '/update/:jiraKey', function (req, res, next) {
+  app.get(config.uriPrefix + '/update/:jiraKey', function (req, res, next) {
     /*log "update/:jiraKey"*/
     if(req.params.jiraKey.indexOf('-') !== -1) {
       /*log "Old URL:", req.url*/
-      req.url = global.uriPrefix + '/update/' + req.params.jiraKey.replace('-', '/');
+      req.url = config.uriPrefix + '/update/' + req.params.jiraKey.replace('-', '/');
       /*log "New URL:", req.url*/
       next();
     }
   });
 
   // Incoming updates from mobile clients
-  app.get(global.uriPrefix + '/update/:project/:jiraTask', global.basicAuth.user, function (req, res) {
+  app.get(config.uriPrefix + '/update/:project/:jiraTask', basicAuth.user, function (req, res) {
     /*log "ID['project']:", req.params.project*/
     /*log "ID['jiraTask']:", req.params.jiraTask*/
-    var credentials = global.basicAuth.getCredentials(req);
+    var credentials = basicAuth.getCredentials(req);
     if(req.session) {
       req.session.task = {
         project: req.params.project,
         jiraTask: req.params.jiraTask,
         user: credentials[0]
       };
-      global.getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
+      getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
         if(err) {
           console.log("Error on update:", err, "Task-Info:", taskInfo);
-          res.redirect(global.uriPrefix + '/error.html');
+          res.redirect(config.uriPrefix + '/error.html');
         } else {
           var renderProps = taskInfo;
-          renderProps.uriPrefix = global.uriPrefix;
+          renderProps.uriPrefix = config.uriPrefix;
           if(req.session.updateInfo) {
             renderProps.updateInfo = req.session.updateInfo;
             delete req.session.updateInfo;
@@ -408,36 +447,36 @@ global.cp.exec('openssl rand -base64 48', {
       });
     } else {
       /*log "req.session:", req.session*/
-      res.redirect(global.uriPrefix + '/session_not_found.html');
+      res.redirect(config.uriPrefix + '/session_not_found.html');
     }
   });
 
-  app.post(global.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
+  app.post(config.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
     if(req.session && req.session.task && req.session.task.project && req.session.task.jiraTask) {
-      global.updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err) {
+      updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err) {
         if(err) {
           console.log("Error on updatestatus:", err, "Task:", req.session.task);
-          res.redirect(global.uriPrefix + '/error.html');
+          res.redirect(config.uriPrefix + '/error.html');
         } else {
           req.session.updateInfo = '<p class="updateInfo">Successfully updated Issue ' + req.session.task.jiraTask + '.</p>';
-          res.redirect(global.uriPrefix + '/update/' + req.session.task.project + '/' + req.session.task.jiraTask);
+          res.redirect(config.uriPrefix + '/update/' + req.session.task.project + '/' + req.session.task.jiraTask);
         }
         delete req.session.task;
       });
     } else {
-      res.redirect(global.uriPrefix + '/session_not_found.html');
+      res.redirect(config.uriPrefix + '/session_not_found.html');
     }
   });
 
-  if(!global.localMode) {
+  if(!config.useLocalMode) {
     // Jiractl-local Polling
-    app.post(global.uriPrefix + '/jiraupdate/:project', global.basicAuth.jira, function (req, res) {
-      global.Task.getTasksFromDB(req.params.project, function (err, tasksToUpdate) {
+    app.post(config.uriPrefix + '/jiraupdate/:project', basicAuth.jira, function (req, res) {
+      Task.getTasksFromDB(req.params.project, function (err, tasksToUpdate) {
         if(err) {
           console.log("Error finding Tasks in DB:", err);
         } else {
           res.json(tasksToUpdate);
-          global.Task.remove({
+          Task.remove({
             project: req.params.project
           }, function (err, numberOfRemovedDocs) {
             if(err) {
@@ -459,7 +498,7 @@ global.cp.exec('openssl rand -base64 48', {
             project.stepNames.push(req.body[stepName]);
           }
         }
-        global.Project.updateProjectStepNamesToDB(project, function (err, updatedProject) {
+        Project.updateProjectStepNamesToDB(project, function (err, updatedProject) {
           if(err) {
             console.log("Error updating Project's stepNames:", project);
           } else {
@@ -470,9 +509,9 @@ global.cp.exec('openssl rand -base64 48', {
     });
 
     // Administration Interface
-    app.post(global.uriPrefix + '/close', global.basicAuth.user, function (req, res) {
+    app.post(config.uriPrefix + '/close', basicAuth.user, function (req, res) {
       if(req.session && req.session.project) {
-        global.Project.deleteProjectsFromDB(req.session.project, function (err, numberOfRemovedDocs) {
+        Project.deleteProjectsFromDB(req.session.project, function (err, numberOfRemovedDocs) {
           if(err) {
             console.log("Error closing Project:", err);
             res.send('Error closing Project.', 337);
@@ -482,12 +521,12 @@ global.cp.exec('openssl rand -base64 48', {
           }
         });
       } else {
-        res.redirect(global.uriPrefix + '/session_not_found.html');
+        res.redirect(config.uriPrefix + '/session_not_found.html');
       }
     });
 
-    app.get(global.uriPrefix + '/manage', express.basicAuth(global.basicAuth.admin), function (req, res) {
-      global.Project.getAllProjectsFromDB(function (err, projects) {
+    app.get(config.uriPrefix + '/manage', express.basicAuth(basicAuth.admin), function (req, res) {
+      Project.getAllProjectsFromDB(function (err, projects) {
         if(err) {
           console.log("Error getting Projects from DB:", err);
           res.send('Error checking for existing Projects.', 337);
@@ -496,29 +535,29 @@ global.cp.exec('openssl rand -base64 48', {
           if(projects) {
             var i;
             for(i = 0; i < projects.length; i++) {
-              projectList += '<tr><td align="center"><a href="' + global.uriPrefix + '/manage/' + projects[i].project + '">' + projects[i].project + '</a></td></tr>';
+              projectList += '<tr><td align="center"><a href="' + config.uriPrefix + '/manage/' + projects[i].project + '">' + projects[i].project + '</a></td></tr>';
             }
           }
           res.render('manage', {
-            uriPrefix: global.uriPrefix,
+            uriPrefix: config.uriPrefix,
             projectList: projectList
           });
         }
       });
     });
 
-    app.post(global.uriPrefix + '/init/:project/:password', express.basicAuth(global.basicAuth.admin), function (req, res) {
-      global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+    app.post(config.uriPrefix + '/init/:project/:password', express.basicAuth(basicAuth.admin), function (req, res) {
+      Project.getProjectsFromDB(req.params.project, function (err, projects) {
         if (err) {
           console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
           res.send('Error checking for existing Projects with this ID.', 337);
         } else {
           // Security note: Only use var-statements here because you have function-scope
-          var pwSalt = global.bcrypt.genSaltSync(10);
-          var pwHash = global.bcrypt.hashSync(req.params.password, pwSalt);
+          var pwSalt = bcrypt.genSaltSync(10);
+          var pwHash = bcrypt.hashSync(req.params.password, pwSalt);
           if(projects.length === 0) {
-            var credentials = global.basicAuth.getCredentials(req);
-            global.Project.saveProjectToDB({
+            var credentials = basicAuth.getCredentials(req);
+            Project.saveProjectToDB({
               project: req.params.project,
               password: pwHash,
               stepNames: [],
@@ -528,7 +567,7 @@ global.cp.exec('openssl rand -base64 48', {
                 console.log("Error saving Project:", err);
                 res.send('Error saving Project.', 337);
               } else {
-                res.redirect(global.uriPrefix + '/manage');
+                res.redirect(config.uriPrefix + '/manage');
               }
             });
           } else {
@@ -538,11 +577,11 @@ global.cp.exec('openssl rand -base64 48', {
       });
     });
 
-    app.get(global.uriPrefix + '/manage/:project', global.basicAuth.user, function (req, res) {
+    app.get(config.uriPrefix + '/manage/:project', basicAuth.user, function (req, res) {
       if(req.session) {
         req.session.project = req.params.project;
       }
-      global.Project.getProjectsFromDB(req.params.project, function (err, projects) {
+      Project.getProjectsFromDB(req.params.project, function (err, projects) {
         if(err) {
           console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
           res.send('Error checking for existing Projects with this ID.', 337);
@@ -553,7 +592,7 @@ global.cp.exec('openssl rand -base64 48', {
             userList += '<tr><td>' + i + '</td><td>' + projects[0].users[i] + '</td></tr>';
           }
           res.render('manageProject', {
-            uriPrefix: global.uriPrefix,
+            uriPrefix: config.uriPrefix,
             userList: userList
           });
         } else {
@@ -562,35 +601,35 @@ global.cp.exec('openssl rand -base64 48', {
       });
     });
 
-    app.post(global.uriPrefix + '/useradd/:user', global.basicAuth.user, function (req, res) {
+    app.post(config.uriPrefix + '/useradd/:user', basicAuth.user, function (req, res) {
       /*log "useradd:", req.params.user*/
       if(req.session && req.session.project) {
-        global.Project.updateProjectUserAddToDB(req.session.project, req.params.user, function (err) {
+        Project.updateProjectUserAddToDB(req.session.project, req.params.user, function (err) {
           if(err) {
             console.log("Error adding User:", err);
             res.send('Error adding User.', 337);
           } else {
             /*log "Added User '" + req.params.user + "' to Project", req.session.project*/
-            res.redirect(global.uriPrefix + '/manage/' + req.session.project);
+            res.redirect(config.uriPrefix + '/manage/' + req.session.project);
           }
         });
       } else {
-        res.redirect(global.uriPrefix + '/session_not_found.html');
+        res.redirect(config.uriPrefix + '/session_not_found.html');
       }
     });
   
-    app.post(global.uriPrefix + '/userdel/:user', global.basicAuth.user, function (req, res) {
+    app.post(config.uriPrefix + '/userdel/:user', basicAuth.user, function (req, res) {
       if(req.session && req.session.project) {
-        global.Project.updateProjectUserDelFromDB(req.session.project, req.params.user, function (err) {
+        Project.updateProjectUserDelFromDB(req.session.project, req.params.user, function (err) {
           if(err) {
             console.log("Error deleting User:", err);
             res.send('Error deleting User.', 337);
           } else {
-            res.redirect(global.uriPrefix + '/manage/' + req.session.project);
+            res.redirect(config.uriPrefix + '/manage/' + req.session.project);
           }
         });
       } else {
-        res.redirect(global.uriPrefix + '/session_not_found.html');
+        res.redirect(config.uriPrefix + '/session_not_found.html');
       }
     });
   }
@@ -600,13 +639,13 @@ global.cp.exec('openssl rand -base64 48', {
   });
   
   // Remove uriPrefix from Request-Uri to serve the correct static content
-  app.get(global.uriPrefix + '/*', function (req, res, next) {
-    req.url = req.url.slice(global.uriPrefix.length);
+  app.get(config.uriPrefix + '/*', function (req, res, next) {
+    req.url = req.url.slice(config.uriPrefix.length);
     next();
   });
 
-  app.post(global.uriPrefix + '/*', function (req, res, next) {
-    req.url = req.url.slice(global.uriPrefix.length);
+  app.post(config.uriPrefix + '/*', function (req, res, next) {
+    req.url = req.url.slice(config.uriPrefix.length);
     next();
   });
 
@@ -617,7 +656,7 @@ global.cp.exec('openssl rand -base64 48', {
      * Express: Start Server
      */
 
-    app.listen(global.port);
-    console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, global.uriPrefix, global.config.useLocalMode, app.settings.env);
+    app.listen(config.port);
+    console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
   }
 });

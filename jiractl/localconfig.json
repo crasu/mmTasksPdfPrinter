@@ -1,0 +1,11 @@
+{
+  "jiraCliPath": '',
+  "jiraUrl": '',
+  "jiraUser": '',
+  "jiraPass": '',
+
+  "projectName": '',
+  "projectPass": '',
+
+  "users": [ ]
+}

@@ -1,54 +1,19 @@
+var config;
+var encodedProjectConfig = "";
+
+var jiraConnector = require('jiraconnector');
+
+var https = require('https');
+var fs = require('fs');
+var qs = require('querystring');
+
 var app = module.exports = {
-  https: require('https'),
-  fs: require('fs'),
-  qs: require('querystring'),
-  configParser: require('configparser'),
-  taskSerializer: require('taskserializer'),
-  jiraConnector: require('jiraconnector'),
-  encodedProjectConfig: "",
   tasksQueue: [],
-  readConfig: function () {
-    var config = app.fs.readFileSync(__dirname + '/config', 'utf8');
-    app.jiraUpdateInterval = app.configParser.getPropertyValue('jiraUpdateInterval', config, 300000);
-    app.jiractlHost = app.configParser.getPropertyValue('jiractlHost', config, 'jiractl.herokuapp.com');
-    app.jiractlHostPort = app.configParser.getPropertyValue('jiractlHostPort', config, '443');
-    app.jiractlUriPrefix = app.configParser.getPropertyValue('jiractlUriPrefix', config, '');
-    if(app.jiractlUriPrefix && app.jiractlUriPrefix[0] !== '/') {
-      app.jiractlUriPrefix = '/' + app.jiractlUriPrefix;
-    }
-    app.jiractlProjectId = app.configParser.getPropertyValue('jiractlProjectId', config);
-    app.jiractlProjectPass = app.configParser.getPropertyValue('jiractlProjectPass', config, '');
-    app.jiraCliPath = app.configParser.getPropertyValue('jiraCliPath', config, '');
-    app.jiraUrl = app.configParser.getPropertyValue('jiraUrl', config, 'http://localhost:8080');
-    app.jiraUser = app.configParser.getPropertyValue('jiraUser', config, '');
-    app.jiraPass = app.configParser.getPropertyValue('jiraPass', config, '');
-    app.projectName = app.configParser.getPropertyValue('projectName', config, '');
-    app.numberOfSteps = app.configParser.getPropertyValue('numberOfSteps', config, 5);
-    app.stepNames = [];
-    var i;
-    for(i = 0; i < app.numberOfSteps; i++) {
-      app.stepNames.push(app.configParser.getPropertyValue('stepId-' + i, config));
-    }
-    app.encodedProjectConfig = app.qs.stringify(app.stepNames);
-  },
-  readTasksQueue: function () {
-    var tasks = app.taskSerializer.deserializeTasks(app.fs.readFileSync(__dirname + '/.jiractl.tasks-queue', 'utf8'));
-    if(tasks) {
-      var i;
-      for(i = 0; i < tasks.length; i++) {
-        app.addToTasksQueue(tasks[i]);
-      }
-    }
-  },
-  saveTasksQueue: function () {
-    /*log "Saving Tasks:", app.taskSerializer.serializeTasks(app.tasksQueue)*/
-    app.fs.writeFileSync(__dirname + '/.jiractl.tasks-queue', app.taskSerializer.serializeTasks(app.tasksQueue), 'utf8');
-  },
-  addToTasksQueue: function (task) {
+  addTaskToTasksQueue: function (task) {
     if(task) {
       if(!app.tasksQueue) {
         app.tasksQueue = [task];
-      } else if(app.taskSerializer.serializeTasks(app.tasksQueue).indexOf(app.taskSerializer.serializeTasks([task])) === -1) {
+      } else if(JSON.stringify(app.tasksQueue).indexOf(JSON.stringify(task)) === -1) {
         app.tasksQueue.push(task);
       } else {
         console.log("WARNING: Skipped Task:", task);
@@ -57,44 +22,92 @@ var app = module.exports = {
   }
 };
 
-/**
- * Program:
- */
+var readConfig = function () {
+  config = function () {
+    var configFile = global.fs.readFileSync(__dirname + '/config.json', 'utf8');
+    var config;
+    try {
+      config = JSON.parse(configFile);
+    } catch (err) {
+      console.log("Invalid JSON in Config-File:");
+      console.log(err);
+      process.exit(1);
+    }
+    var defaultConfig = {
+      "jiraUpdateInterval": 300000,
+      "jiractlHost": 'jiractl.herokuapp.com',
+      "jiractlHostPort": '443',
+      "jiractlUriPrefix": '',
+      "jiractlProjectPass": '',
+      "jiraCliPath": '',
+      "jiraUrl": 'http://localhost:8080',
+      "jiraUser": '',
+      "jiraPass": '',
+      "projectName": ''
+    };
+    if(defaultConfig.jiractlUriPrefix && defaultConfig.jiractlUriPrefix[0] !== '/') {
+      defaultConfig.jiractlUriPrefix = '/' + defaultConfig.jiractlUriPrefix;
+    }
+    var prop;
+    for(prop in defaultConfig) {
+      if(typeof config[prop] === 'undefined') {
+        config[prop] = defaultConfig[prop];
+      }
+    }
+    return config;
+  }();
+  encodedProjectConfig = qs.stringify(config.stepNames);
+};
 
 /*log "Reading Config:"*/
-app.readConfig();
-/*log "config: jiraUpdateInterval:", app.jiraUpdateInterval*/
-/*log "config: jiractlHost:", app.jiractlHost*/
-/*log "config: jiractlHostPort:", app.jiractlHostPort*/
-/*log "config: jiractlUriPrefix:", app.jiractlUriPrefix*/
-/*log "config: jiractlProjectId:", app.jiractlProjectId*/
-/*log "config: jiractlProjectPass:", app.jiractlProjectPass*/
-/*log "config: jiraCliPath:", app.jiraCliPath*/
-/*log "config: jiraUrl:", app.jiraUrl*/
-/*log "config: jiraUser:", app.jiraUser*/
-/*log "config: jiraPass:", app.jiraPass*/
-/*log "config: projectName:", app.projectName*/
-/*log "config: numberOfSteps:", app.numberOfSteps*/
-/*log "config: stepNames:", app.stepNames*/
+readConfig();
+/*log "config: jiraUpdateInterval:", config.jiraUpdateInterval*/
+/*log "config: jiractlHost:", config.jiractlHost*/
+/*log "config: jiractlHostPort:", config.jiractlHostPort*/
+/*log "config: jiractlUriPrefix:", config.jiractlUriPrefix*/
+/*log "config: jiractlProjectId:", config.jiractlProjectId*/
+/*log "config: jiractlProjectPass:", config.jiractlProjectPass*/
+/*log "config: jiraCliPath:", config.jiraCliPath*/
+/*log "config: jiraUrl:", config.jiraUrl*/
+/*log "config: jiraUser:", config.jiraUser*/
+/*log "config: jiraPass:", config.jiraPass*/
+/*log "config: projectName:", config.projectName*/
+/*log "config: stepNames:", config.stepNames*/
+
+var readTasksQueue = function () {
+  try {
+    var tasks = JSON.parse(fs.readFileSync(__dirname + '/.jiractl.tasks-queue', 'utf8'));
+    var i;
+    for(i = 0; i < tasks.length; i++) {
+      app.addTaskToTasksQueue(tasks[i]);
+    }
+  } catch (err) {
+    console.log("Error reading TasksQueue:", err);
+  }
+};
 
 /*log "Reading Tasks-Queue:"*/
-app.readTasksQueue();
+readTasksQueue();
 /*log app.tasksQueue*/
 
 /**
  * HTTPS-Request to the Jiractl-Server
  */
 
-app.sendRequest = function () {
-  app.request = app.https.request({
-    host: app.jiractlHost,
-    port: app.jiractlHostPort,
-    path: app.jiractlUriPrefix + '/jiraupdate/' + app.jiractlProjectId,
-    auth: 'jira:' + app.jiractlProjectPass,
+var saveTasksQueue = function () {
+  fs.writeFileSync(__dirname + '/.jiractl.tasks-queue', JSON.stringify(app.tasksQueue), 'utf8');
+};
+
+var checkTasks = function () {
+  var request = https.request({
+    host: config.jiractlHost,
+    port: config.jiractlHostPort,
+    path: config.jiractlUriPrefix + '/jiraupdate/' + config.jiractlProjectId,
+    auth: 'jira:' + config.jiractlProjectPass,
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': app.encodedProjectConfig.length
+      'Content-Length': encodedProjectConfig.length
     }
   }, function (res) {
     res.setEncoding('utf8');
@@ -107,37 +120,53 @@ app.sendRequest = function () {
         console.log("Tasks to Update:", tasksToUpdate);
         var i;
         for(i = 0; i < tasksToUpdate.length; i++) {
-          app.addToTasksQueue(tasksToUpdate[i]);
-        }
-        var jiraConnectorCallback = function (err, task) {
-          if(err) {
-            console.log("Error:", err);
-          } else if(task) {
-            app.addToTasksQueue(task);
-          }
-        };
-        var j;
-        for(j = 0; j < app.tasksQueue.length; j++) {
-          app.jiraConnector.progressTask(app.jiraCliPath + '/jira.sh', app.jiraUrl, app.jiraUser, app.jiraPass, app.projectName, app.tasksQueue[j].jiraTask, app.stepNames[app.tasksQueue[j].statusCode], app.tasksQueue[j].user, jiraConnectorCallback);
-          app.tasksQueue.splice(j, 1);
-          j--;
+          app.addTaskToTasksQueue(tasksToUpdate[i]);
         }
         /*log "REQUEST FINISHED"*/
       }
     });
   });
 
-  app.request.on('error', function (err) {
+  request.on('error', function (err) {
     console.log(err);
   });
 
   // Add the current Project Configuration to the HTTPS-Request
-  app.request.write(app.encodedProjectConfig, 'utf8');
-  app.request.end();
+  request.write(encodedProjectConfig, 'utf8');
+  request.end();
+};
+
+var jiraConnectorCallback = function (err, task) {
+  if(err) {
+    console.log("Error:", err);
+  } else if(task) {
+    app.addTaskToTasksQueue(task);
+  }
+};
+
+var updateTasksInJira = function () {
+  if(app.tasksQueue) {
+    var j;
+    for(j = 0; j < app.tasksQueue.length; j++) {
+      jiraConnector.progressTask(config, app.tasksQueue[j].jiraTask, config.stepNames[app.tasksQueue[j].statusCode], app.tasksQueue[j].user, jiraConnectorCallback);
+    }
+    app.tasksQueue.splice(0);
+  }
 };
 
 process.on('SIGINT', process.exit);
-process.on('exit', app.saveTasksQueue);
+process.on('exit', saveTasksQueue);
 
-setInterval(app.sendRequest, app.jiraUpdateInterval);
-app.sendRequest();
+/**
+ * Main Program:
+ */
+
+app.mainLoop = function () {
+  checkTasks();
+  updateTasksInJira();
+};
+
+if(!module.parent) {
+  app.mainLoop();
+  setInterval(app.mainLoop, config.jiraUpdateInterval);
+}

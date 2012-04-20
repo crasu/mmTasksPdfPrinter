@@ -1,0 +1,16 @@
+{
+  "useInternalHTTPS": "",
+  "useLocalMode": "",
+  "hostname": "",
+  "port": ,
+  "uriPrefix": "",
+
+  "mongoUser": "",
+  "mongoPass": "",
+  "mongoHost": "",
+  "mongoPort": ,
+  "mongoDB": "",
+
+  "manageUser": "",
+  "managePass": ""
+}

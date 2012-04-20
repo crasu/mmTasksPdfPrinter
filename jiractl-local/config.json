@@ -1,0 +1,20 @@
+{
+    "jiraUpdateInterval": 30000,
+
+    "jiractl": {
+        "host": "",
+        "port": 443,
+        "uriPrefix": "",
+        "projectId": 1337,
+        "pass": ""
+    },
+
+    "jiraCliPath": "",
+    "jiraUrl": "",
+    "jiraUser": "",
+    "jiraPass": "",
+
+    "projectName": "",
+
+    "stepNames": [""]
+}
