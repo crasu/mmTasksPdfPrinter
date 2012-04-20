@@ -16,51 +16,7 @@ var express = require('express'),
 
 var app;
 
-var config;
-   
-
-
-/**
- * Init Config-File and Config-Parser
- */
-
-var readConfig = function () {
-  config = function () {
-    var configFile = fs.readFileSync(__dirname + '/config.json', 'utf8');
-    var config;
-    try {
-      config = JSON.parse(configFile);
-    } catch (err) {
-      console.log("Invalid JSON in Config-File:");
-      console.log(err);
-      process.exit(1);
-    }
-    var defaultConfig = {
-      "useInternalHTTPS": "no",
-      "useLocalMode": "no",
-      "uriPrefix": "",
-      "manageUser": "admin",
-      "managePass": "admin"
-    };
-    var prop;
-    for(prop in defaultConfig) {
-      if(typeof config[prop] === 'undefined') {
-        config[prop] = defaultConfig[prop];
-      }
-    }
-    return config;
-  }();
-
-  if(config.uriPrefix && config.uriPrefix[0] !== '/') {
-    config.uriPrefix = '/' + config.uriPrefix;
-  }
-
-  if(process.env.PORT) {
-    config.port = process.env.PORT;
-  }
-
-  /*log "Read Config:", config*/
-}();
+var config = require('./readConfig')(fs);
 
 
 
@@ -87,17 +43,6 @@ config.useLocalMode = (config.useLocalMode === 'yes');
  * General functionality
  */
 
-var sendFileCallback = function (filename) {
-  return function (err) {
-    if(err) {
-      console.log(err);
-      next(err);
-    } else {
-      /*log "Transfer:", filename, " - succesful."*/
-    }
-  };
-};
-
 var getStepNames;
 var getTaskInfo;
 var updateTask;
@@ -109,36 +54,7 @@ if(config.useLocalMode) {
    * Local Mode
    */
 
-  var readLocalConfig = function () {
-    config.localconfig = function () {
-      var localconfigFile = fs.readFileSync(__dirname + '/localconfig.json', 'utf8');
-      var localconfig;
-      try {
-        localconfig = JSON.parse(localconfigFile);
-      } catch (err) {
-        console.log("Invalid JSON in Local-Config-File:");
-        console.log(err);
-        process.exit(1);
-      }
-      var defaultLocalConfig = {
-        "jiraCliPath": '',
-        "jiraUrl": 'http://localhost:8080',
-        "jiraUser": '',
-        "jiraPass": '',
-        "projectName": '',
-        "projectPass": '',
-        "users": '["admin"]'
-      };
-      var prop;
-      for(prop in defaultLocalConfig) {
-        if(typeof localconfig[prop] === 'undefined') {
-          localconfig[prop] = defaultLocalConfig[prop];
-        }
-      }
-      return localconfig;
-    }();
-    /*log "Read Local-Config:", config.localconfig*/
-  }();
+  config.localconfig = require('./readLocalConfig')(fs);
 
   var jiraconnector = require('jiraconnector');
 
@@ -192,12 +108,8 @@ if(config.useLocalMode) {
    * Standard Mode
    */
 
-  /**
-   * Mongoose: Init MongoDB
-   */
-
+  // Mongoose: Init MongoDB Connection
   var mongoose = require('db_core')(config.mongoUser, config.mongoPass, config.mongoHost, config.mongoPort, config.mongoDB);
-
   var Task = require('db_tasks')(mongoose);
   var Project = require('db_projects')(mongoose, Task);
 
@@ -313,6 +225,7 @@ cp.exec('openssl rand -base64 48', {
   cwd: null,
   env: null
 }, function (err, stdout, stderr) {
+  // START secretSessionHashKey Callback
   var secretSessionHashKey;
   if(err) {
     console.log("WARN: Using default random key to generate session hash codes...");
@@ -659,4 +572,4 @@ cp.exec('openssl rand -base64 48', {
     app.listen(config.port);
     console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
   }
-});
+}); // END secretSessionHashKey Callback

@@ -1,11 +1,11 @@
-var config;
-var encodedProjectConfig = "";
-
-var jiraConnector = require('jiraconnector');
-
-var https = require('https');
 var fs = require('fs');
 var qs = require('querystring');
+var https = require('https');
+
+var config = require('./readConfig')(fs);
+var encodedProjectConfig = qs.stringify(config.stepNames);
+
+var jiraConnector = require('jiraconnector');
 
 var app = module.exports = {
   tasksQueue: [],
@@ -22,57 +22,11 @@ var app = module.exports = {
   }
 };
 
-var readConfig = function () {
-  config = function () {
-    var configFile = global.fs.readFileSync(__dirname + '/config.json', 'utf8');
-    var config;
-    try {
-      config = JSON.parse(configFile);
-    } catch (err) {
-      console.log("Invalid JSON in Config-File:");
-      console.log(err);
-      process.exit(1);
-    }
-    var defaultConfig = {
-      "jiraUpdateInterval": 300000,
-      "jiractlHost": 'jiractl.herokuapp.com',
-      "jiractlHostPort": '443',
-      "jiractlUriPrefix": '',
-      "jiractlProjectPass": '',
-      "jiraCliPath": '',
-      "jiraUrl": 'http://localhost:8080',
-      "jiraUser": '',
-      "jiraPass": '',
-      "projectName": ''
-    };
-    if(defaultConfig.jiractlUriPrefix && defaultConfig.jiractlUriPrefix[0] !== '/') {
-      defaultConfig.jiractlUriPrefix = '/' + defaultConfig.jiractlUriPrefix;
-    }
-    var prop;
-    for(prop in defaultConfig) {
-      if(typeof config[prop] === 'undefined') {
-        config[prop] = defaultConfig[prop];
-      }
-    }
-    return config;
-  }();
-  encodedProjectConfig = qs.stringify(config.stepNames);
-};
 
-/*log "Reading Config:"*/
-readConfig();
-/*log "config: jiraUpdateInterval:", config.jiraUpdateInterval*/
-/*log "config: jiractlHost:", config.jiractlHost*/
-/*log "config: jiractlHostPort:", config.jiractlHostPort*/
-/*log "config: jiractlUriPrefix:", config.jiractlUriPrefix*/
-/*log "config: jiractlProjectId:", config.jiractlProjectId*/
-/*log "config: jiractlProjectPass:", config.jiractlProjectPass*/
-/*log "config: jiraCliPath:", config.jiraCliPath*/
-/*log "config: jiraUrl:", config.jiraUrl*/
-/*log "config: jiraUser:", config.jiraUser*/
-/*log "config: jiraPass:", config.jiraPass*/
-/*log "config: projectName:", config.projectName*/
-/*log "config: stepNames:", config.stepNames*/
+
+/**
+ * Read and Save Tasks to the Tasks-Queue
+ */
 
 var readTasksQueue = function () {
   try {
@@ -84,19 +38,19 @@ var readTasksQueue = function () {
   } catch (err) {
     console.log("Error reading TasksQueue:", err);
   }
+  /*log "Reading Tasks-Queue:"*/
+  /*log app.tasksQueue*/
 };
-
-/*log "Reading Tasks-Queue:"*/
-readTasksQueue();
-/*log app.tasksQueue*/
-
-/**
- * HTTPS-Request to the Jiractl-Server
- */
 
 var saveTasksQueue = function () {
   fs.writeFileSync(__dirname + '/.jiractl.tasks-queue', JSON.stringify(app.tasksQueue), 'utf8');
 };
+
+
+
+/**
+ * HTTPS-Request to the Jiractl-Server
+ */
 
 var checkTasks = function () {
   var request = https.request({
@@ -136,6 +90,12 @@ var checkTasks = function () {
   request.end();
 };
 
+
+
+/**
+ * Process the Tasks in the Tasks-Queue
+ */
+
 var jiraConnectorCallback = function (err, task) {
   if(err) {
     console.log("Error:", err);
@@ -154,11 +114,10 @@ var updateTasksInJira = function () {
   }
 };
 
-process.on('SIGINT', process.exit);
-process.on('exit', saveTasksQueue);
+
 
 /**
- * Main Program:
+ * Main Loop sending out the requests and processing the Tasks in JIRA
  */
 
 app.mainLoop = function () {
@@ -167,6 +126,15 @@ app.mainLoop = function () {
 };
 
 if(!module.parent) {
+  /**
+   * Main Program:
+   */
+
+  readTasksQueue();
+
   app.mainLoop();
   setInterval(app.mainLoop, config.jiraUpdateInterval);
+
+  process.on('SIGINT', process.exit);
+  process.on('exit', saveTasksQueue);
 }
