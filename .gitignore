@@ -1,6 +1,7 @@
 .classpath
 .idea/
 .project
+.settings.xml
 scala_dependencies
 lib_managed/
 mmTasksPdfPrinter.iml
