@@ -6,6 +6,7 @@ module.exports = function (fs) {
   } catch (err) {
     console.log("Invalid JSON in Config-File:");
     console.log(err);
+    // REVIEW: nicht so schön in Untermodulen den Prozess zu beenden. Lieber im Aufrufer abfangen und dort beenden
     process.exit(1);
   }
   var defaultConfig = {
@@ -25,12 +26,20 @@ module.exports = function (fs) {
   }
   var prop;
   for(prop in defaultConfig) {
+      // REVIEW: Standardpattern: if(defaultConfig.hasOwnProperty(prop) { ...
+      // wenn man nur über die eigenen Eigenschaften und nicht über dne prototype
+      // vererbte iterieren will
     if(typeof config[prop] === 'undefined') {
       config[prop] = defaultConfig[prop];
     }
   }
 
+  // REVIEW: sinnloser Kommentar. Entfernen :-)
   /*log "Reading Config:", config*/
 
   return config;
 };
+
+// REVIEW: um die Lesbarkeit auf die Spitze zu treiben, würde ich noch zwei
+// Funktionen definieren: ensureSlashPrefix und mergeConfigurations.
+// Die DefaultConfig würde ich vor den "operativen" Teil ziehen.

@@ -11,6 +11,10 @@ var app = module.exports = {
   tasksQueue: [],
   addTaskToTasksQueue: function (task) {
     if(task) {
+      // REVIEW: das gibt so keinen Sinn: app.tasksQueue ist immer definiert, d.h.
+      // folgende Bedingung ist nie wahr. Und wenn sie doch jemals wahr werden würde
+      // dann würde dir dein Task nicht in die neu erzeugte Liste hinzugefügt werden,
+      // weil der Teil im else if steht ;-)
       if(!app.tasksQueue) {
         app.tasksQueue = [task];
       } else if(JSON.stringify(app.tasksQueue).indexOf(JSON.stringify(task)) === -1) {
@@ -138,3 +142,10 @@ if(!module.parent) {
   process.on('SIGINT', process.exit);
   process.on('exit', saveTasksQueue);
 }
+
+// REVIEW: schon viel lesbarer als beim ersten Mal. Das einzige was mich noch stört
+// ist die Trennung der app-Bestandteile an zwei Stellen (oben: updateTasks... unten: mainLoop)
+// 
+// Ansonsten würde ich die Log-Kommentare entfernen oder noch besser ein 
+// logging framework verwenden und den auskommentierten Meldungen das DEBUG Level zuweisen
+// (denn dafür hast du sie verwendet nehme ich an :-) )
