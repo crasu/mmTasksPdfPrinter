@@ -2,7 +2,7 @@
   "useInternalHTTPS": "",
   "useLocalMode": "",
   "hostname": "",
-  "port": ,
+  "port": , // REVIEW: hier fehlt doch was?
   "uriPrefix": "",
 
   "mongoUser": "",

@@ -1,3 +1,6 @@
+// REVIEW: Fast-Duplikat von jiractl-local oder? Besser noch ein lib Verzeichnis machen
+// und nur einmal vorhalten und Defaultconfig von außen übergeben (die kann dann auch den 
+// Port beinhalten, den du unten noch setzt)
 module.exports = function (fs) {
   var configFile = fs.readFileSync(__dirname + '/config.json', 'utf8');
   var config;
@@ -9,7 +12,7 @@ module.exports = function (fs) {
     process.exit(1);
   }
   var defaultConfig = {
-    "useInternalHTTPS": "no",
+    "useInternalHTTPS": "no", // REVIEW: warum nicht true und false?
     "useLocalMode": "no",
     "uriPrefix": "",
     "manageUser": "admin",

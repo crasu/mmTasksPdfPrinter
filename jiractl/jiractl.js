@@ -3,6 +3,15 @@
  */
 'use strict';
 
+// REVIEW: Generell: arbeite doch mehr mit Dateien und Ordnern zur Strukturierung
+// (ähnlich zu Namespaces in java). Du kannst ja jederzeit die Dateien mit require
+// einbinden. Das macht das ganze viel übersichtlicher.
+//
+// Gerade deine Express-Routen lassen sich doch wunderbar auslagern. Die sind ja
+// teilweise wie Plugins. Man muss ja nicht gleich ein Pluginsystem verwenden,
+// man kann die Anwendung aber trotzdem entsprechend strukturieren.
+//
+
 
 
 /**
@@ -24,7 +33,7 @@ var config = require('./readConfig')(fs);
  * Init Express Server:
  */
 
-if(config.useInternalHTTPS === 'yes') {
+if(config.useInternalHTTPS === 'yes') { // REVIEW: besser true/false verwenden (case-unabhängig) 
   var options = {
     key: require('fs').readFileSync(__dirname + '/ssl/jiractl-key.pem'),
     cert: require('fs').readFileSync(__dirname + '/ssl/jiractl-cert.pem')
@@ -49,6 +58,14 @@ var updateTask;
 var comparePass;
 var getProjects;
 
+// REVIEW: gute Idee hier vom Modus zu abstrahieren, allerdings birgt deine
+// Variante die Gefahr einer nur "halben" Abstraktion, da du kein Blockscoping hast.
+// D.h. dass dein jiraconnector im local mode auch nach der Anweisung evtl.
+// noch verfügbar ist und es dann nur im anderen Modus kracht. keine IDE kann 
+// dir das anzeigen. 
+// Zwei Dateien wúrden außerdem für mehr Übersicht sorgen. Besser also:
+// Zwei Module (Dateien reichen, müssen keine node extra node module mit package.json sein)
+// erzeugen, die dasselbe Interface anbieten.
 if(config.useLocalMode) {
   /**
    * Local Mode
@@ -63,6 +80,7 @@ if(config.useLocalMode) {
   };
 
   getTaskInfo = function (projectId, taskId, callback) {
+    // REVIEW: hier auch async verwenden?
     jiraconnector.getAvailableWorksteps(config.localconfig, taskId, function (err, stepNames) {
       if(err) {
         callback(err);
@@ -82,6 +100,7 @@ if(config.useLocalMode) {
   };
 
   updateTask = function (projectId, taskId, statusCode, user, callback) {
+      // REVIEW: hier auch async verwenden?
     getStepNames(projectId, taskId, function (err, stepNames) {
       if(err) {
         callback(err);
@@ -109,6 +128,11 @@ if(config.useLocalMode) {
    */
 
   // Mongoose: Init MongoDB Connection
+  // REVIEW: die Idee finde ich gut, dass du am Ende zwei DAO-Objekte hast für den entsprechenden Zugriff
+  // Ich denke ich würde sie aber in einem node_module vereinen, also z.B. so als erste Idee:
+  // var dbdao = require('db_dao').initialize(...);
+  // var Task = dbdao.Task;
+  // nicht ganz klar ist mir, warum das Projekt vom Task abhängt und nicht umgekehrt
   var mongoose = require('db_core')(config.mongoUser, config.mongoPass, config.mongoHost, config.mongoPort, config.mongoDB);
   var Task = require('db_tasks')(mongoose);
   var Project = require('db_projects')(mongoose, Task);
@@ -160,7 +184,26 @@ if(config.useLocalMode) {
 /**
  * Authentication Middleware:
  */
-
+// REVIEW: in eine eigene Datei verschieben
+// REVIEW: hier fehlt ein var
+// REVIEW: diese Authentifizierung finde ich zu krass. Dein Ziel ist, für
+// verschiedene Routen verschiedene Mechanismen zu verwenden, oder? Der Ansatz ist
+// gut, aber dass innendrin nochmal express.basicAuth aufgerufen wird, kommt
+// mir mehr als komisch vor und ist total verwirrend. Du drehst irgendwie die
+// gedachte Reihenfolge um. Normal ruft dich die basicAuth-middleware auf und 
+// nicht umgekehrt. Ich nehme an, du hattest ein Problem mit der Asynchronität :-)
+// Die middleware kann aber auch asynchrone checks.
+// So wäre es meiner Meinung nach richtig:
+//  - Du implementierst hier drei Funktionen mit der Signatur
+//      function(user, password, callback) { ... }
+//  - Sobald du fertig mit der Prüfung bist, das kann auch asynchron sein,
+//    rufst du callback auf, und zwar ist der erste Parameter ein evtl. Fehler
+//    und der zweite der ggf. gültige User
+//  - bei deinen Routen übergibst du nicht basicAuth.jira sondern express.basicAuth(basicAuth.jira)
+//     wobei basicAuth.jira die geänderte Funktion ist
+// Folge: du kannst dich hier ganz auf die Prüfung konzentrieren und musst nicht
+// nochmal express.basicAuth aufrufen und gleich ausführen. (das hat jetzt eine halbe Stunde gedauert,
+// rauszufinden was hier eigentlich passiert ;-) )
 basicAuth = {
   user: function (req, res, next) {
     basicAuth.projectPass(req, res, next, function (user, project) {
@@ -186,7 +229,7 @@ basicAuth = {
           console.log("Error getting Projects from DB with ID:", projectId, "\nERROR:", err);
           res.send('Error checking for existing Projects with this ID.', 337);
         } else {
-          express.basicAuth(function (user, pass) {
+          express.basicAuth(function (user, pass) { 
             if(projects && projects[0] && projects[0].password) {
               if(validateUser && typeof validateUser === 'function') {
                 return (validateUser(user, projects[0]) && (comparePass(pass, projects[0].password)));
@@ -216,7 +259,7 @@ basicAuth = {
 /**
  * Express: Configuration
  */
-
+// REVIEW: in eine eigene Datei verschieben
 cp.exec('openssl rand -base64 48', {
   encoding: 'utf8',
   timeout: '0',
@@ -235,6 +278,10 @@ cp.exec('openssl rand -base64 48', {
   }
   
   /*notequal secretSessionHashKey, "default-random-key-8738675454u89732375789ncgv8fvhnfcdhsduyigbfzucgnsdugkgngnuewhbdkufy4egvnjehcgfykzegb2skuvfngyezucbygsnucbfygukzegcuzgdfbgcysesfgdn", "Use random generated SessionHashKey"*/
+
+  // REVIEW: das ist irgendwie unschön, dass die komplete Konfiguration im callback von 
+  // cp.exec stattfindet. Hier lieber wieder eine eine eigene Funktion configureApplication 
+  // oder ähnliches, am besten in einer eigenen Datei, und mit async einen Wasserfall aufbauen
 
   app.configure(function () {
     app.set('views', __dirname + '/templates');
@@ -268,8 +315,21 @@ cp.exec('openssl rand -base64 48', {
   /**
    * Express: Routes
    */
-
-  // Debugging:
+  // REVIEW: Logging Framework verwenden und Debug-Level setzen
+  // Debugging:  // REVIEW: Debugging stimmt auch nicht ganz, hier wird auch 
+  // nach https umgeleitet. Lieber zwei Funktionen drausmachen und die erste 
+  // nur aufrufen, wenn auch der Loglevel auf debug gesetzt ist
+  
+  // REVIEW: deine Routen sind nicht konsistent benannt. Ein Projekt initialisiert man
+  // z.B. mit 'init/id', project oder ähnliches kommt da nicht drin vor. Bei den Usern
+  // gibt es dann aber 'useradd' und 'userdel'
+  // Besser wäre zum Beispiel:
+  //  - users/id/add
+  //  - users/id/delete
+  //  - projects/id/init
+  //  - projects/id/manage
+  // noch schöner wäre natürlich, wenn add = PUT request und delete = DEL request
+  // ohne explizite Angabe (Stichwort REST)
   app.get('/*', function (req, res, next) {
     /*log "GET-Request:", req.url*/
     if(req.session) {
@@ -322,6 +382,7 @@ cp.exec('openssl rand -base64 48', {
     }
   });
 
+  // REVIEW: in eigenes Modul verschieben
   // AgileCards Jira-Plugin-Support
   app.get(config.uriPrefix + '/update/:jiraKey', function (req, res, next) {
     /*log "update/:jiraKey"*/
@@ -333,6 +394,7 @@ cp.exec('openssl rand -base64 48', {
     }
   });
 
+  // REVIEW: in eigenes Modul verschieben
   // Incoming updates from mobile clients
   app.get(config.uriPrefix + '/update/:project/:jiraTask', basicAuth.user, function (req, res) {
     /*log "ID['project']:", req.params.project*/
@@ -342,7 +404,7 @@ cp.exec('openssl rand -base64 48', {
       req.session.task = {
         project: req.params.project,
         jiraTask: req.params.jiraTask,
-        user: credentials[0]
+        user: credentials[0] //  REVIEW: sollte eigentlih req.user sein (das sollte zumindest die basicAuth middleware machen)
       };
       getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
         if(err) {
@@ -381,6 +443,7 @@ cp.exec('openssl rand -base64 48', {
     }
   });
 
+  // REVIEW: das könnte z.B. auch in dein Localmode Modul
   if(!config.useLocalMode) {
     // Jiractl-local Polling
     app.post(config.uriPrefix + '/jiraupdate/:project', basicAuth.jira, function (req, res) {
@@ -474,7 +537,7 @@ cp.exec('openssl rand -base64 48', {
               project: req.params.project,
               password: pwHash,
               stepNames: [],
-              users: [credentials[0]]
+              users: [credentials[0]]  //  REVIEW: sollte eigentlih req.user sein (das sollte zumindest die basicAuth middleware machen)
             }, function (err) {
               if(err) {
                 console.log("Error saving Project:", err);
@@ -557,6 +620,8 @@ cp.exec('openssl rand -base64 48', {
     next();
   });
 
+  // REVIEW: eventuell app.all verwenden, gilt dann für alle http-Methoden
+  // oder gleichen Code in eine Funktion auslagern.
   app.post(config.uriPrefix + '/*', function (req, res, next) {
     req.url = req.url.slice(config.uriPrefix.length);
     next();
@@ -572,4 +637,4 @@ cp.exec('openssl rand -base64 48', {
     app.listen(config.port);
     console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
   }
-}); // END secretSessionHashKey Callback
+}); // END secretSessionHashKey Callback // REVIEW: da fragt man sich wirklich, warum hier der secret session hash key callback zu Ende ist :-)

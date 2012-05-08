@@ -1,3 +1,5 @@
+// REVIEW: JSON kennt keine ' sondern nur ".
+// Kommentare wie dieser sind auch nicht erlaubt :-)
 {
   "jiraCliPath": '',
   "jiraUrl": '',

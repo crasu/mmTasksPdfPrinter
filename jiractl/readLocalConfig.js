@@ -1,3 +1,5 @@
+// REVIEW: siehe auch readConfig.js. Lieber Dateinamen und Defaultconfig übergeben
+// und nur noch ein Module mit der Core-Funktionalität haben (lesen und mergen)
 module.exports = function () {
   var localconfigFile = fs.readFileSync(__dirname + '/localconfig.json', 'utf8');
   var localconfig;
