@@ -10,12 +10,8 @@
       "express": "2.5.2"
     , "bcrypt": ">= 0.5.0"
     , "jst": ">= 0.0.13"
-    , "configparser": ">= 0.0.1"
   }
   , "optionalDependencies": {
       "jiraconnector": ">= 0.0.1"
-    , "db_core": ">= 0.0.1"
-    , "db_tasks": ">= 0.0.1"
-    , "db_projects": ">= 0.0.1"
   }
 }

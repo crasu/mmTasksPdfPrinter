@@ -1,13 +1,11 @@
-// REVIEW: JSON kennt keine ' sondern nur ".
-// Kommentare wie dieser sind auch nicht erlaubt :-)
 {
-  "jiraCliPath": '',
-  "jiraUrl": '',
-  "jiraUser": '',
-  "jiraPass": '',
+  "jiraCliPath": "/opt/atlassian/atlassian-cli",
+  "jiraUrl": "http://localhost:8484/",
+  "jiraUser": "admin",
+  "jiraPass": "admin",
 
-  "projectName": '',
-  "projectPass": '',
+  "projectName": "DEMO",
+  "projectPass": "admin",
 
-  "users": [ ]
+  "users": ["admin","testuser"]
 }

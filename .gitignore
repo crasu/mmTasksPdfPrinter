@@ -16,10 +16,9 @@ target/
 .scala_dependencies
 printer.props
 .target/
+jiractl/node_modules/async
 jiractl/node_modules/express
-jiractl/node_modules/bcrypt
 jiractl/node_modules/jst
-jiractl/node_modules/db_core/node_modules/mongoose
-jiractl/node_modules/db_tasks/node_modules/mongoose
-jiractl/node_modules/db_projects/node_modules/mongoose
+jiractl/lib/node_modules
 jiractl/node_modules/jiraconnector/node_modules/
+jiractl-local/lib/node_modules

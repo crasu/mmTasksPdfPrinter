@@ -1,7 +1,7 @@
 var global = {
   addProject: function () {
-    if(document.getElementById('addProjectId').value && document.getElementById('addPassword').value) {
-      document.getElementById('addProject').action += document.getElementById('addProjectId').value + "/" + document.getElementById('addPassword').value;
+    if(document.getElementById('addProjectId').value && document.getElementById('addProjectId').value) {
+      document.getElementById('addProject').action += document.getElementById('addProjectId').value + "/init";
       return true;
     } else {
       alert("Please Enter a ProjectId and a Password");

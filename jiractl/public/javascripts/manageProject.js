@@ -1,7 +1,7 @@
 var global = {
   addUser: function () {
     if(document.getElementById('addUserName').value) {
-      document.getElementById('addUser').action += document.getElementById('addUserName').value;
+      document.getElementById('addUser').action += document.getElementById('addUserName').value + '/add';
       return true;
     } else {
       alert("Please specify the Username for the new User.");
@@ -10,7 +10,7 @@ var global = {
   },
   delUser: function () {
     if(document.getElementById('delUserName').value) {
-      document.getElementById('delUser').action += document.getElementById('delUserName').value;
+      document.getElementById('delUser').action += document.getElementById('delUserName').value + '/delete';
       return true;
     } else {
       alert("Please specify the Username to delete the User.");

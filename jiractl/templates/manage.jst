@@ -8,9 +8,9 @@
   <body>
     <h2>Manage your Projects:</h2>
     Add new Project:
-    <form id="addProject" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/init/">
+    <form id="addProject" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/projects/">
       ProjectId: <input type="text" id="addProjectId" /><br />
-      Password:  <input type="password" id="addPassword" /><br />
+      Password:  <input type="password" id="addProjectPassword" name="password" /><br />
       <input type="submit" value="Hinzuf&uuml;gen" />
     </form>
     <h3>Current Projects:</h3>

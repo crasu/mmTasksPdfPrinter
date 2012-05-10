@@ -8,12 +8,12 @@
   <body>
     <h2>Manage your Project:</h2>
     Add new user:
-    <form id="addUser" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/useradd/">
+    <form id="addUser" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/users/">
       <input type="text" id="addUserName" />
       <input type="submit" value="Hinzuf&uuml;gen" />
     </form>
     Delete User:
-    <form id="delUser" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/userdel/">
+    <form id="delUser" method="POST" action="{% if(it.uriPrefix) { %}{{ uriPrefix }}{% } %}/users/">
       <input type="text" id="delUserName" />
       <input type="submit" value="L&ouml;schen" />
     </form>

@@ -1,16 +1,15 @@
 {
-  "useInternalHTTPS": "",
-  "useLocalMode": "",
+  "useInternalHTTPS": true,
+  "useLocalMode": false,
   "hostname": "",
-  "port": , // REVIEW: hier fehlt doch was?
-  "uriPrefix": "",
+  "port": 1443,
+  "uriPrefix": "jiractl",
 
-  "mongoUser": "",
-  "mongoPass": "",
-  "mongoHost": "",
-  "mongoPort": ,
-  "mongoDB": "",
+  "mongoUser": "jiractl",
+  "mongoPass": "foo987bar123tngbarfoos",
+  "mongoHost": "localhost",
+  "mongoDB": "jiractl",
 
-  "manageUser": "",
-  "managePass": ""
+  "manageUser": "admin",
+  "managePass": "admin"
 }

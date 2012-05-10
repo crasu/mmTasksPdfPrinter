@@ -3,15 +3,6 @@
  */
 'use strict';
 
-// REVIEW: Generell: arbeite doch mehr mit Dateien und Ordnern zur Strukturierung
-// (ähnlich zu Namespaces in java). Du kannst ja jederzeit die Dateien mit require
-// einbinden. Das macht das ganze viel übersichtlicher.
-//
-// Gerade deine Express-Routen lassen sich doch wunderbar auslagern. Die sind ja
-// teilweise wie Plugins. Man muss ja nicht gleich ein Pluginsystem verwenden,
-// man kann die Anwendung aber trotzdem entsprechend strukturieren.
-//
-
 
 
 /**
@@ -21,11 +12,25 @@
 var express = require('express'),
     cp = require('child_process'),
     fs = require('fs'),
-    bcrypt = require('bcrypt');
+    async = require('async');
 
 var app;
 
-var config = require('./readConfig')(fs);
+var defaultConfig = {
+  "useInternalHTTPS": false,
+  "useLocalMode": false,
+  "uriPrefix": "",
+  "manageUser": "admin",
+  "managePass": "admin"
+};
+
+try {
+  var configFile = fs.readFileSync(__dirname + '/config.json', 'utf8');
+  var config = require(__dirname + '/lib/readConfig').readConfig(configFile, defaultConfig);
+  config.uriPrefix = require(__dirname + '/lib/readConfig').ensureSlashPrefix(config.uriPrefix);
+} catch(err) {
+  process.exit(1);
+}
 
 
 
@@ -33,18 +38,18 @@ var config = require('./readConfig')(fs);
  * Init Express Server:
  */
 
-if(config.useInternalHTTPS === 'yes') { // REVIEW: besser true/false verwenden (case-unabhängig) 
+if(config.useInternalHTTPS) {
   var options = {
     key: require('fs').readFileSync(__dirname + '/ssl/jiractl-key.pem'),
     cert: require('fs').readFileSync(__dirname + '/ssl/jiractl-cert.pem')
   },
   app = module.exports = express.createServer(options);
-  /*log "DEBUG: Using internal HTTPS-Support"*/
+  console.log("DEBUG: Using internal HTTPS-Support");
 } else {
   app = module.exports = express.createServer();
 }
 
-config.useLocalMode = (config.useLocalMode === 'yes');
+config.useLocalMode = (config.useLocalMode);
 
 
 
@@ -57,584 +62,85 @@ var getTaskInfo;
 var updateTask;
 var comparePass;
 var getProjects;
+var modeSpecificRoutes;
 
-// REVIEW: gute Idee hier vom Modus zu abstrahieren, allerdings birgt deine
-// Variante die Gefahr einer nur "halben" Abstraktion, da du kein Blockscoping hast.
-// D.h. dass dein jiraconnector im local mode auch nach der Anweisung evtl.
-// noch verfügbar ist und es dann nur im anderen Modus kracht. keine IDE kann 
-// dir das anzeigen. 
-// Zwei Dateien wúrden außerdem für mehr Übersicht sorgen. Besser also:
-// Zwei Module (Dateien reichen, müssen keine node extra node module mit package.json sein)
-// erzeugen, die dasselbe Interface anbieten.
+var initInterface = function (interfaceObj) {
+  getStepNames = interfaceObj.getStepNames;
+  getTaskInfo = interfaceObj.getTaskInfo;
+  updateTask = interfaceObj.updateTask;
+  comparePass = interfaceObj.comparePass;
+  getProjects = interfaceObj.getProjects;
+  modeSpecificRoutes = interfaceObj.routes;
+};
+
 if(config.useLocalMode) {
-  /**
-   * Local Mode
-   */
-
-  config.localconfig = require('./readLocalConfig')(fs);
-
-  var jiraconnector = require('jiraconnector');
-
-  getStepNames = function (projectId, taskId, callback) {
-    jiraconnector.getAvailableWorksteps(config.localconfig, taskId, callback);
-  };
-
-  getTaskInfo = function (projectId, taskId, callback) {
-    // REVIEW: hier auch async verwenden?
-    jiraconnector.getAvailableWorksteps(config.localconfig, taskId, function (err, stepNames) {
-      if(err) {
-        callback(err);
-      } else {
-        var taskInfo = {};
-        taskInfo.stepNames = stepNames;
-        jiraconnector.getIssueInfo(config.localconfig, taskId, function (err, issueInfo) {
-          if(err) {
-            callback(err);
-          } else {
-            taskInfo.issueInfo = issueInfo;
-            callback(null, taskInfo);
-          }
-        });
-      }
-    });
-  };
-
-  updateTask = function (projectId, taskId, statusCode, user, callback) {
-      // REVIEW: hier auch async verwenden?
-    getStepNames(projectId, taskId, function (err, stepNames) {
-      if(err) {
-        callback(err);
-      } else {
-        jiraconnector.progressTask(config.localconfig, taskId, stepNames[statusCode], user, callback);
-      }
-    });
-  };
-
-  comparePass = function (pass1, pass2) {
-    return (pass1 === pass2);
-  };
-
-  getProjects = function (projectId, callback) {
-    callback(null, [{
-      project: config.localconfig.projectName,
-      password: config.localconfig.projectPass,
-      users: config.localconfig.users
-    }]);
-  };
-
+  initInterface(require(__dirname + '/lib/localMode'));
 } else {
-  /**
-   * Standard Mode
-   */
-
-  // Mongoose: Init MongoDB Connection
-  // REVIEW: die Idee finde ich gut, dass du am Ende zwei DAO-Objekte hast für den entsprechenden Zugriff
-  // Ich denke ich würde sie aber in einem node_module vereinen, also z.B. so als erste Idee:
-  // var dbdao = require('db_dao').initialize(...);
-  // var Task = dbdao.Task;
-  // nicht ganz klar ist mir, warum das Projekt vom Task abhängt und nicht umgekehrt
-  var mongoose = require('db_core')(config.mongoUser, config.mongoPass, config.mongoHost, config.mongoPort, config.mongoDB);
-  var Task = require('db_tasks')(mongoose);
-  var Project = require('db_projects')(mongoose, Task);
-
-  getStepNames = function (projectId, taskId, callback) {
-    Project.getProjectsFromDB(projectId, function (err, projects) {
-      if(err) {
-        console.log("Error finding Project in DB:", err);
-        callback(new Error("Error finding Project in DB"), undefined);
-      } else if(projects && projects[0] && projects[0].stepNames) {
-        callback(null, projects[0].stepNames);
-      } else {
-        callback(new Error("Invalid Project found in DB"), undefined);
-      }
-    });
-  };
-
-  getTaskInfo = function (projectId, taskId, callback) {
-    getStepNames(projectId, taskId, function (err, stepNames) {
-      if(err) {
-        callback(err);
-      } else {
-        var taskInfo = {};
-        taskInfo.stepNames = stepNames;
-        callback(null, taskInfo);
-      }
-    });
-  };
-
-  updateTask = function (projectId, taskId, statusCode, user, callback) {
-    var task = {
-      project: projectId,
-      jiraTask: taskId,
-      statusCode: statusCode,
-      user: user
-    };
-    Task.saveTaskToDB(task, callback);
-  };
-
-  comparePass = function (pass1, pass2) {
-    return bcrypt.compareSync(pass1, pass2);
-  };
-
-  getProjects = Project.getProjectsFromDB;
+  initInterface(require(__dirname + '/lib/normalMode')(config));
 }
 
-
-
-/**
- * Authentication Middleware:
- */
-// REVIEW: in eine eigene Datei verschieben
-// REVIEW: hier fehlt ein var
-// REVIEW: diese Authentifizierung finde ich zu krass. Dein Ziel ist, für
-// verschiedene Routen verschiedene Mechanismen zu verwenden, oder? Der Ansatz ist
-// gut, aber dass innendrin nochmal express.basicAuth aufgerufen wird, kommt
-// mir mehr als komisch vor und ist total verwirrend. Du drehst irgendwie die
-// gedachte Reihenfolge um. Normal ruft dich die basicAuth-middleware auf und 
-// nicht umgekehrt. Ich nehme an, du hattest ein Problem mit der Asynchronität :-)
-// Die middleware kann aber auch asynchrone checks.
-// So wäre es meiner Meinung nach richtig:
-//  - Du implementierst hier drei Funktionen mit der Signatur
-//      function(user, password, callback) { ... }
-//  - Sobald du fertig mit der Prüfung bist, das kann auch asynchron sein,
-//    rufst du callback auf, und zwar ist der erste Parameter ein evtl. Fehler
-//    und der zweite der ggf. gültige User
-//  - bei deinen Routen übergibst du nicht basicAuth.jira sondern express.basicAuth(basicAuth.jira)
-//     wobei basicAuth.jira die geänderte Funktion ist
-// Folge: du kannst dich hier ganz auf die Prüfung konzentrieren und musst nicht
-// nochmal express.basicAuth aufrufen und gleich ausführen. (das hat jetzt eine halbe Stunde gedauert,
-// rauszufinden was hier eigentlich passiert ;-) )
-basicAuth = {
-  user: function (req, res, next) {
-    basicAuth.projectPass(req, res, next, function (user, project) {
-      return (project.users.indexOf(user) !== -1);
-    });
-  },
-
-  jira: function (req, res, next) {
-    basicAuth.projectPass(req, res, next, function (user) {
-      return (user === 'jira');
-    });
-  },
-
-  admin: function (user, pass) {
-    return (user === config.manageUser && pass === config.managePass);
-  },
-
-  projectPass: function (req, res, next, validateUser) {
-    var projectId = req.params.project || req.session.project;
-    if(projectId) {
-      getProjects(projectId, function (err, projects) {
-        if(err) {
-          console.log("Error getting Projects from DB with ID:", projectId, "\nERROR:", err);
-          res.send('Error checking for existing Projects with this ID.', 337);
-        } else {
-          express.basicAuth(function (user, pass) { 
-            if(projects && projects[0] && projects[0].password) {
-              if(validateUser && typeof validateUser === 'function') {
-                return (validateUser(user, projects[0]) && (comparePass(pass, projects[0].password)));
-              } else {
-                return (comparePass(pass, projects[0].password));
-              }
-            } else {
-              return false;
-            }
-          })(req, res, next);
-        }
-      });
-    } else {
-      express.basicAuth(function (user, pass) {
-        return false;
-      })(req, res, next);
-    }
-  },
-
-  getCredentials: function (req) {
-    return new Buffer(req.headers.authorization.split(' ')[1], 'base64').toString().split(':');
-  }
-};
-  
-
+var basicAuth = require(__dirname + '/lib/basicAuth')(express, config, getProjects, comparePass);
 
 /**
  * Express: Configuration
  */
-// REVIEW: in eine eigene Datei verschieben
-cp.exec('openssl rand -base64 48', {
-  encoding: 'utf8',
-  timeout: '0',
-  maxBuffer: 200*1024,
-  killSignal: 'SIGTERM',
-  cwd: null,
-  env: null
-}, function (err, stdout, stderr) {
-  // START secretSessionHashKey Callback
-  var secretSessionHashKey;
+async.parallel({
+  secretSessionHashKey: function (cb) {
+    cp.exec('openssl rand -base64 48', {
+      encoding: 'utf8',
+      timeout: '0',
+      maxBuffer: 200*1024,
+      killSignal: 'SIGTERM',
+      cwd: null,
+      env: null
+    }, function (err, stdout, stderr) {
+      cb(err, stdout);
+    });
+  }
+}, function (err, result) {
   if(err) {
-    console.log("WARN: Using default random key to generate session hash codes...");
-    secretSessionHashKey = "default-random-key-8738675454u89732375789ncgv8fvhnfcdhsduyigbfzucgnsdugkgngnuewhbdkufy4egvnjehcgfykzegb2skuvfngyezucbygsnucbfygukzegcuzgdfbgcysesfgdn";
+    console.log("ERROR: " + err);
   } else {
-    secretSessionHashKey = stdout;
+    var secretSessionHashKey;
+    if(!secretSessionHashKey) {
+      console.log("WARN: Using default random key to generate session hash codes...");
+      secretSessionHashKey = "default-random-key-8738675454u89732375789ncgv8fvhnfcdhsduyigbfzucgnsdugkgngnuewhbdkufy4egvnjehcgfykzegb2skuvfngyezucbygsnucbfygukzegcuzgdfbgcysesfgdn";
+    } else {
+      secretSessionHashKey = result.secretSessionHashKey;
+    }
+
+    /*notequal secretSessionHashKey, "default-random-key-8738675454u89732375789ncgv8fvhnfcdhsduyigbfzucgnsdugkgngnuewhbdkufy4egvnjehcgfykzegb2skuvfngyezucbygsnucbfygukzegcuzgdfbgcysesfgdn", "Use random generated SessionHashKey"*/
+
+    require(__dirname + '/lib/configureApplication')(app, express, secretSessionHashKey); 
+    var routes = require(__dirname + '/lib/routes')(config, getTaskInfo, updateTask);
+
+    app.all('/*', routes.redirect);
+    app.get(config.uriPrefix + '/update/:jiraKey', routes.updateJiraKey);
+    app.get(config.uriPrefix + '/update/:project/:jiraTask', basicAuth.user, routes.updateProjectTask);
+    app.post(config.uriPrefix + '/updatestatus/:statusCode', routes.updatestatus);
+
+    if(!config.useLocalMode) {
+      app.post(config.uriPrefix + '/jiraupdate/:project', basicAuth.jira, modeSpecificRoutes.jiraupdate);
+      app.post(config.uriPrefix + '/close', basicAuth.user, modeSpecificRoutes.close);
+      app.get(config.uriPrefix + '/manage', basicAuth.admin, modeSpecificRoutes.manage);
+      app.post(config.uriPrefix + '/projects/:project/init', basicAuth.admin, modeSpecificRoutes.initProject);
+      app.get(config.uriPrefix + '/projects/:project/manage', basicAuth.user, modeSpecificRoutes.manageProject);
+      app.post(config.uriPrefix + '/users/:user/add', basicAuth.user, modeSpecificRoutes.useradd);
+      app.post(config.uriPrefix + '/users/:user/delete', basicAuth.user, modeSpecificRoutes.userdel);
+    }
+
+    app.get('*/favicon.ico', routes.favicon);
+    app.all(config.uriPrefix + '/*', routes.removePrefix);
+
+
+
+    if(!module.parent) {
+      /**
+       * Express: Start Server
+       */
+
+      app.listen(config.port);
+      console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
+    }
   }
-  
-  /*notequal secretSessionHashKey, "default-random-key-8738675454u89732375789ncgv8fvhnfcdhsduyigbfzucgnsdugkgngnuewhbdkufy4egvnjehcgfykzegb2skuvfngyezucbygsnucbfygukzegcuzgdfbgcysesfgdn", "Use random generated SessionHashKey"*/
-
-  // REVIEW: das ist irgendwie unschön, dass die komplete Konfiguration im callback von 
-  // cp.exec stattfindet. Hier lieber wieder eine eine eigene Funktion configureApplication 
-  // oder ähnliches, am besten in einer eigenen Datei, und mit async einen Wasserfall aufbauen
-
-  app.configure(function () {
-    app.set('views', __dirname + '/templates');
-    app.set('view engine', 'jst');
-    app.set('view options', {
-      layout: false
-    });
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
-    app.use(express.cookieParser());
-    app.use(express.session({
-      secret: secretSessionHashKey
-    }));
-    app.use(app.router);
-    app.use(express['static'](__dirname + '/public'));
-  });
-
-  app.configure('development', function () {
-    app.use(express.errorHandler({
-      dumpExceptions: true,
-      showStack: true
-    })); 
-  });
-
-  app.configure('production', function () {
-    app.use(express.errorHandler()); 
-  });
- 
-
-
-  /**
-   * Express: Routes
-   */
-  // REVIEW: Logging Framework verwenden und Debug-Level setzen
-  // Debugging:  // REVIEW: Debugging stimmt auch nicht ganz, hier wird auch 
-  // nach https umgeleitet. Lieber zwei Funktionen drausmachen und die erste 
-  // nur aufrufen, wenn auch der Loglevel auf debug gesetzt ist
-  
-  // REVIEW: deine Routen sind nicht konsistent benannt. Ein Projekt initialisiert man
-  // z.B. mit 'init/id', project oder ähnliches kommt da nicht drin vor. Bei den Usern
-  // gibt es dann aber 'useradd' und 'userdel'
-  // Besser wäre zum Beispiel:
-  //  - users/id/add
-  //  - users/id/delete
-  //  - projects/id/init
-  //  - projects/id/manage
-  // noch schöner wäre natürlich, wenn add = PUT request und delete = DEL request
-  // ohne explizite Angabe (Stichwort REST)
-  app.get('/*', function (req, res, next) {
-    /*log "GET-Request:", req.url*/
-    if(req.session) {
-      if(req.session.project) {
-        /*log "SESSION: Project:", req.session.project*/
-      }
-      if(req.session.task) {
-        /*log "SESSION: Task:", req.session.task*/
-      }
-    }
-    if(config.useInternalHTTPS !== 'yes') {
-      if(req.headers && req.headers['x-forwarded-proto']) {
-        if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + config.hostname + req.url);
-        } else {
-          next();
-        }
-      } else {
-        console.log("WARNING: Internal HTTPS-Support is off and req.headers['x-forwarded-proto'] was not found - Bypassing Heroku HTTPS-Redirect");
-        next();
-      }
-    } else {
-      next();
-    }
-  });
-
-  app.post('/*', function (req, res, next) {
-    /*log "POST-Request:", req.url*/
-    if(req.session) {
-      if(req.session.project) {
-        /*log "SESSION: Project:", req.session.project*/
-      }
-      if(req.session.task) {
-        /*log "SESSION: Task:", req.session.task*/
-      }
-    }
-    if(config.useInternalHTTPS !== 'yes') {
-      if(req.headers && req.headers['x-forwarded-proto']) {
-        if(req.headers['x-forwarded-proto'] !== 'https') {
-          res.redirect('https://' + config.hostname + req.url);
-        } else {
-          next();
-        }
-      } else {
-        console.log("WARNING: Internal HTTPS-Support is off and req.headers['x-forwarded-proto'] was not found - Bypassing Heroku HTTPS-Redirect");
-        next();
-      }
-    } else {
-      next();
-    }
-  });
-
-  // REVIEW: in eigenes Modul verschieben
-  // AgileCards Jira-Plugin-Support
-  app.get(config.uriPrefix + '/update/:jiraKey', function (req, res, next) {
-    /*log "update/:jiraKey"*/
-    if(req.params.jiraKey.indexOf('-') !== -1) {
-      /*log "Old URL:", req.url*/
-      req.url = config.uriPrefix + '/update/' + req.params.jiraKey.replace('-', '/');
-      /*log "New URL:", req.url*/
-      next();
-    }
-  });
-
-  // REVIEW: in eigenes Modul verschieben
-  // Incoming updates from mobile clients
-  app.get(config.uriPrefix + '/update/:project/:jiraTask', basicAuth.user, function (req, res) {
-    /*log "ID['project']:", req.params.project*/
-    /*log "ID['jiraTask']:", req.params.jiraTask*/
-    var credentials = basicAuth.getCredentials(req);
-    if(req.session) {
-      req.session.task = {
-        project: req.params.project,
-        jiraTask: req.params.jiraTask,
-        user: credentials[0] //  REVIEW: sollte eigentlih req.user sein (das sollte zumindest die basicAuth middleware machen)
-      };
-      getTaskInfo(req.params.project, req.params.jiraTask, function (err, taskInfo) {
-        if(err) {
-          console.log("Error on update:", err, "Task-Info:", taskInfo);
-          res.redirect(config.uriPrefix + '/error.html');
-        } else {
-          var renderProps = taskInfo;
-          renderProps.uriPrefix = config.uriPrefix;
-          if(req.session.updateInfo) {
-            renderProps.updateInfo = req.session.updateInfo;
-            delete req.session.updateInfo;
-          }
-          res.render('update', renderProps);
-        }
-      });
-    } else {
-      /*log "req.session:", req.session*/
-      res.redirect(config.uriPrefix + '/session_not_found.html');
-    }
-  });
-
-  app.post(config.uriPrefix + '/updatestatus/:statusCode', function (req, res) {
-    if(req.session && req.session.task && req.session.task.project && req.session.task.jiraTask) {
-      updateTask(req.session.task.project, req.session.task.jiraTask, req.params.statusCode, req.session.task.user, function (err) {
-        if(err) {
-          console.log("Error on updatestatus:", err, "Task:", req.session.task);
-          res.redirect(config.uriPrefix + '/error.html');
-        } else {
-          req.session.updateInfo = '<p class="updateInfo">Successfully updated Issue ' + req.session.task.jiraTask + '.</p>';
-          res.redirect(config.uriPrefix + '/update/' + req.session.task.project + '/' + req.session.task.jiraTask);
-        }
-        delete req.session.task;
-      });
-    } else {
-      res.redirect(config.uriPrefix + '/session_not_found.html');
-    }
-  });
-
-  // REVIEW: das könnte z.B. auch in dein Localmode Modul
-  if(!config.useLocalMode) {
-    // Jiractl-local Polling
-    app.post(config.uriPrefix + '/jiraupdate/:project', basicAuth.jira, function (req, res) {
-      Task.getTasksFromDB(req.params.project, function (err, tasksToUpdate) {
-        if(err) {
-          console.log("Error finding Tasks in DB:", err);
-        } else {
-          res.json(tasksToUpdate);
-          Task.remove({
-            project: req.params.project
-          }, function (err, numberOfRemovedDocs) {
-            if(err) {
-              console.log("Error removing Tasks from DB:", err);
-            } else {
-              /*log "Removed", numberOfRemovedDocs, "Task-Document(s) from DB."*/
-            }
-          });
-        }
-      });
-      if(req.body) {
-        var project = {
-          project: req.params.project,
-          stepNames: []
-        },
-          stepName;
-        for(stepName in req.body) {
-          if(req.body.hasOwnProperty(stepName)) {
-            project.stepNames.push(req.body[stepName]);
-          }
-        }
-        Project.updateProjectStepNamesToDB(project, function (err, updatedProject) {
-          if(err) {
-            console.log("Error updating Project's stepNames:", project);
-          } else {
-            /*log "Successfully updated Project:", updatedProject*/
-          }
-        });
-      }
-    });
-
-    // Administration Interface
-    app.post(config.uriPrefix + '/close', basicAuth.user, function (req, res) {
-      if(req.session && req.session.project) {
-        Project.deleteProjectsFromDB(req.session.project, function (err, numberOfRemovedDocs) {
-          if(err) {
-            console.log("Error closing Project:", err);
-            res.send('Error closing Project.', 337);
-          } else {
-            /*log "Removed", numberOfRemovedDocs, "Project-Document(s) from DB."*/
-            res.end();
-          }
-        });
-      } else {
-        res.redirect(config.uriPrefix + '/session_not_found.html');
-      }
-    });
-
-    app.get(config.uriPrefix + '/manage', express.basicAuth(basicAuth.admin), function (req, res) {
-      Project.getAllProjectsFromDB(function (err, projects) {
-        if(err) {
-          console.log("Error getting Projects from DB:", err);
-          res.send('Error checking for existing Projects.', 337);
-        } else {
-          var projectList = "";
-          if(projects) {
-            var i;
-            for(i = 0; i < projects.length; i++) {
-              projectList += '<tr><td align="center"><a href="' + config.uriPrefix + '/manage/' + projects[i].project + '">' + projects[i].project + '</a></td></tr>';
-            }
-          }
-          res.render('manage', {
-            uriPrefix: config.uriPrefix,
-            projectList: projectList
-          });
-        }
-      });
-    });
-
-    app.post(config.uriPrefix + '/init/:project/:password', express.basicAuth(basicAuth.admin), function (req, res) {
-      Project.getProjectsFromDB(req.params.project, function (err, projects) {
-        if (err) {
-          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
-          res.send('Error checking for existing Projects with this ID.', 337);
-        } else {
-          // Security note: Only use var-statements here because you have function-scope
-          var pwSalt = bcrypt.genSaltSync(10);
-          var pwHash = bcrypt.hashSync(req.params.password, pwSalt);
-          if(projects.length === 0) {
-            var credentials = basicAuth.getCredentials(req);
-            Project.saveProjectToDB({
-              project: req.params.project,
-              password: pwHash,
-              stepNames: [],
-              users: [credentials[0]]  //  REVIEW: sollte eigentlih req.user sein (das sollte zumindest die basicAuth middleware machen)
-            }, function (err) {
-              if(err) {
-                console.log("Error saving Project:", err);
-                res.send('Error saving Project.', 337);
-              } else {
-                res.redirect(config.uriPrefix + '/manage');
-              }
-            });
-          } else {
-            res.send('Project already exists.', 337);
-          }
-        }
-      });
-    });
-
-    app.get(config.uriPrefix + '/manage/:project', basicAuth.user, function (req, res) {
-      if(req.session) {
-        req.session.project = req.params.project;
-      }
-      Project.getProjectsFromDB(req.params.project, function (err, projects) {
-        if(err) {
-          console.log("Error getting Projects from DB with ID:", req.params.project, "\nERROR:", err);
-          res.send('Error checking for existing Projects with this ID.', 337);
-        } else if(projects && projects[0] && projects[0].users) {
-          var i,
-              userList = "";
-          for(i = 0; i < projects[0].users.length; i++) {
-            userList += '<tr><td>' + i + '</td><td>' + projects[0].users[i] + '</td></tr>';
-          }
-          res.render('manageProject', {
-            uriPrefix: config.uriPrefix,
-            userList: userList
-          });
-        } else {
-          res.send('Error: Project not found.', 404);
-        }
-      });
-    });
-
-    app.post(config.uriPrefix + '/useradd/:user', basicAuth.user, function (req, res) {
-      /*log "useradd:", req.params.user*/
-      if(req.session && req.session.project) {
-        Project.updateProjectUserAddToDB(req.session.project, req.params.user, function (err) {
-          if(err) {
-            console.log("Error adding User:", err);
-            res.send('Error adding User.', 337);
-          } else {
-            /*log "Added User '" + req.params.user + "' to Project", req.session.project*/
-            res.redirect(config.uriPrefix + '/manage/' + req.session.project);
-          }
-        });
-      } else {
-        res.redirect(config.uriPrefix + '/session_not_found.html');
-      }
-    });
-  
-    app.post(config.uriPrefix + '/userdel/:user', basicAuth.user, function (req, res) {
-      if(req.session && req.session.project) {
-        Project.updateProjectUserDelFromDB(req.session.project, req.params.user, function (err) {
-          if(err) {
-            console.log("Error deleting User:", err);
-            res.send('Error deleting User.', 337);
-          } else {
-            res.redirect(config.uriPrefix + '/manage/' + req.session.project);
-          }
-        });
-      } else {
-        res.redirect(config.uriPrefix + '/session_not_found.html');
-      }
-    });
-  }
-
-  app.get('*/favicon.ico', function (req, res) {
-    res.end();
-  });
-  
-  // Remove uriPrefix from Request-Uri to serve the correct static content
-  app.get(config.uriPrefix + '/*', function (req, res, next) {
-    req.url = req.url.slice(config.uriPrefix.length);
-    next();
-  });
-
-  // REVIEW: eventuell app.all verwenden, gilt dann für alle http-Methoden
-  // oder gleichen Code in eine Funktion auslagern.
-  app.post(config.uriPrefix + '/*', function (req, res, next) {
-    req.url = req.url.slice(config.uriPrefix.length);
-    next();
-  });
-
-
-
-  if(!module.parent) {
-    /**
-     * Express: Start Server
-     */
-
-    app.listen(config.port);
-    console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
-  }
-}); // END secretSessionHashKey Callback // REVIEW: da fragt man sich wirklich, warum hier der secret session hash key callback zu Ende ist :-)
+});

@@ -1,20 +1,30 @@
 var fs = require('fs');
-var qs = require('querystring');
-var https = require('https');
+var defaultConfig = {
+  "jiraUpdateInterval": 300000,
+  "jiractlHost": 'jiractl.herokuapp.com',
+  "jiractlHostPort": '443',
+  "jiractlUriPrefix": '',
+  "jiractlProjectPass": '',
+  "jiraCliPath": '',
+  "jiraUrl": 'http://localhost:8080',
+  "jiraUser": '',
+  "jiraPass": '',
+  "projectName": ''
+};
+try {
+  var configFile = fs.readFileSync(__dirname + '/config.json', 'utf8');
+  var config = require(__dirname + '/lib/readConfig').readConfig(configFile, defaultConfig);
+  config.jiractlUriPrefix = require(__dirname + '/lib/readConfig').ensureSlashPrefix(config.jiractlUriPrefix);
+} catch(err) {
+  process.exit(1);
+}
 
-var config = require('./readConfig')(fs);
-var encodedProjectConfig = qs.stringify(config.stepNames);
-
-var jiraConnector = require('jiraconnector');
+var encodedProjectConfig = require('querystring').stringify(config.stepNames);
 
 var app = module.exports = {
   tasksQueue: [],
   addTaskToTasksQueue: function (task) {
     if(task) {
-      // REVIEW: das gibt so keinen Sinn: app.tasksQueue ist immer definiert, d.h.
-      // folgende Bedingung ist nie wahr. Und wenn sie doch jemals wahr werden würde
-      // dann würde dir dein Task nicht in die neu erzeugte Liste hinzugefügt werden,
-      // weil der Teil im else if steht ;-)
       if(!app.tasksQueue) {
         app.tasksQueue = [task];
       } else if(JSON.stringify(app.tasksQueue).indexOf(JSON.stringify(task)) === -1) {
@@ -42,8 +52,8 @@ var readTasksQueue = function () {
   } catch (err) {
     console.log("Error reading TasksQueue:", err);
   }
-  /*log "Reading Tasks-Queue:"*/
-  /*log app.tasksQueue*/
+  console.log("Reading Tasks-Queue:");
+  console.log(app.tasksQueue);
 };
 
 var saveTasksQueue = function () {
@@ -55,6 +65,8 @@ var saveTasksQueue = function () {
 /**
  * HTTPS-Request to the Jiractl-Server
  */
+
+var https = require('https');
 
 var checkTasks = function () {
   var request = https.request({
@@ -73,14 +85,12 @@ var checkTasks = function () {
       if(data === 'Unauthorized') {
         console.log("ERROR: Acces denied. Please check your Jira-Credentials in config");
       } else {
-        /*log "##### HTTPS-Request Callback #####"*/
         var tasksToUpdate = JSON.parse(data);
         console.log("Tasks to Update:", tasksToUpdate);
         var i;
         for(i = 0; i < tasksToUpdate.length; i++) {
           app.addTaskToTasksQueue(tasksToUpdate[i]);
         }
-        /*log "REQUEST FINISHED"*/
       }
     });
   });
@@ -99,6 +109,8 @@ var checkTasks = function () {
 /**
  * Process the Tasks in the Tasks-Queue
  */
+
+var jiraConnector = require('jiraconnector');
 
 var jiraConnectorCallback = function (err, task) {
   if(err) {
@@ -142,10 +154,3 @@ if(!module.parent) {
   process.on('SIGINT', process.exit);
   process.on('exit', saveTasksQueue);
 }
-
-// REVIEW: schon viel lesbarer als beim ersten Mal. Das einzige was mich noch stört
-// ist die Trennung der app-Bestandteile an zwei Stellen (oben: updateTasks... unten: mainLoop)
-// 
-// Ansonsten würde ich die Log-Kommentare entfernen oder noch besser ein 
-// logging framework verwenden und den auskommentierten Meldungen das DEBUG Level zuweisen
-// (denn dafür hast du sie verwendet nehme ich an :-) )
