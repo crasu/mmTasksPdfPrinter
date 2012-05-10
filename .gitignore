@@ -17,8 +17,9 @@ target/
 printer.props
 .target/
 jiractl/node_modules/async
+jiractl/node_modules/bcrypt
 jiractl/node_modules/express
+jiractl/node_modules/mongoose
 jiractl/node_modules/jst
-jiractl/lib/node_modules
 jiractl/node_modules/jiraconnector/node_modules/
 jiractl-local/lib/node_modules
