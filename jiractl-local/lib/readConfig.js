@@ -12,7 +12,7 @@ var mergeConfigurations = function (config, defaultConfig) {
 
 module.exports = {
   ensureSlashPrefix: function (property) {
-    if(typeof property === 'string' && property[0] !== '/') {
+    if(typeof property === 'string' && typeof property[0] === 'string' && property[0] !== '/') {
       return '/' + property;
     } else {
       return property;

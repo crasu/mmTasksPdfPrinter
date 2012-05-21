@@ -139,7 +139,7 @@ async.parallel({
        * Express: Start Server
        */
 
-      app.listen(config.port);
+      app.listen(process.env.PORT || config.port);
       console.log("Port: %d, UriPrefix: %s, LocalMode: %s\n  ***  %s mode  ***", app.address().port, config.uriPrefix, config.useLocalMode, app.settings.env);
     }
   }
