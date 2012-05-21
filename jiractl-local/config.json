@@ -2,19 +2,19 @@
     "jiraUpdateInterval": 30000,
 
     "jiractl": {
-        "host": "",
+        "host": "jiractl.herokuapp.com",
         "port": 443,
-        "uriPrefix": "",
-        "projectId": 1337,
-        "pass": ""
+        "uriPrefix": "<yourUriPrefix>",
+        "projectId": <yourProjectId>,
+        "pass": "<yourProjectPassword>"
     },
 
-    "jiraCliPath": "",
-    "jiraUrl": "",
-    "jiraUser": "",
-    "jiraPass": "",
+    "jiraCliPath": "</Path/To/Your/JiraCLI>",
+    "jiraUrl": "<yourJiraUrl>",
+    "jiraUser": "<yourJiraUser>",
+    "jiraPass": "<yourJiraPassword>",
 
-    "projectName": "",
+    "projectName": "<yourJiraProjectKey>",
 
-    "stepNames": [""]
+    "stepNames": ["Start Progress", "Stop Progress", "To be reviewed", "In Review", "Resolve Issue", "Reopen Issue", "Close Issue"]
 }

@@ -1,11 +1,11 @@
 {
-  "jiraCliPath": "/opt/atlassian/atlassian-cli",
-  "jiraUrl": "http://localhost:8484/",
-  "jiraUser": "admin",
-  "jiraPass": "admin",
+  "jiraCliPath": "</Path/To/Your/JiraCLI>",
+  "jiraUrl": "<yourJiraUrl>",
+  "jiraUser": "<yourJiraUser>",
+  "jiraPass": "<yourJiraPass>",
 
-  "projectName": "DEMO",
-  "projectPass": "admin",
+  "projectName": "<yourJiraProjectKey>",
+  "projectPass": "<yourProjectPassword",
 
-  "users": ["admin","testuser"]
+  "users": ["admin", "developer1", "developer2"]
 }
