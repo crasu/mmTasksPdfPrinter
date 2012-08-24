@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-	"junit" % "junit" % "4.5" % "test->default",
+  "junit" % "junit" % "4.5" % "test->default",
   "org.scalatest" %% "scalatest" % "1.6.1" % "test->default",
   "org.specs2" %% "specs2" % "1.6.1" % "test->default",
   "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test->default",
@@ -35,6 +35,10 @@ libraryDependencies ++= Seq(
   "org.hamcrest" % "hamcrest-library" % "1.2.1" % "test->default",
   "com.novocode" % "junit-interface" % "0.7" % "test->default"
 )
+
+seq(webSettings :_*)
+
+libraryDependencies += "org.mortbay.jetty" % "jetty" % "6.1.22" % "container"
 
 // reduce the maximum number of errors shown by the Scala compiler
 maxErrors := 20
@@ -94,7 +98,7 @@ timingFormat := {
 crossPaths := false
 
 // add a JVM option to use when forking a JVM for 'run'
-javaOptions += "-Xmx2G"
+javaOptions += "-Xmx2G -XX:MaxPermSize=256M"
 
 // only use a single thread for building
 //parallelExecution := false
@@ -140,4 +144,3 @@ persistLogLevel := Level.Debug
 //   lib_managed/ in the build root (not per-project).
 retrieveManaged := true
 
-seq(com.github.siasia.WebPlugin.webSettings(Compile) :_*)
