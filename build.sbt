@@ -96,7 +96,7 @@ timingFormat := {
 crossPaths := false
 
 // add a JVM option to use when forking a JVM for 'run'
-javaOptions += "-Xmx2G -XX:MaxPermSize=256M"
+javaOptions += "-Xmx2G -XX:MaxPermSize=512M"
 
 // only use a single thread for building
 //parallelExecution := false
