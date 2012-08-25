@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
   "com.novocode" % "junit-interface" % "0.7" % "test->default"
 )
 
-seq(webSettings :_*)
+seq(com.github.siasia.WebPlugin.webSettings :_*)
 
 libraryDependencies += "org.mortbay.jetty" % "jetty" % "6.1.22" % "container"
 
