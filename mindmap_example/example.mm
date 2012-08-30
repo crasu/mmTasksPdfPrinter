@@ -2,7 +2,7 @@
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
 <node CREATED="1265988225850" ID="ID_204900544" MODIFIED="1269505504609" TEXT="Product Backlog">
 <node CREATED="1269526293331" ID="Freemind_Link_879171622" MODIFIED="1272014836816" POSITION="right" TEXT="Sprint 2010-20 (123 pts)">
-<node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1287734314282" TEXT="asdf">
+<node CREATED="1269526441170" ID="Freemind_Link_96745043" MODIFIED="1346134983562" TEXT="Hallo">
 <icon BUILTIN="full-1"/>
 <icon BUILTIN="bookmark"/>
 <node CREATED="1269526448681" ID="Freemind_Link_1892252504" MODIFIED="1269526465865" TEXT="foo">
@@ -19,7 +19,7 @@
 </node>
 </node>
 <node CREATED="1265988535423" ID="ID_692299973" MODIFIED="1320053572902" POSITION="right" TEXT="Sprint1">
-<node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1310647970082" TEXT="Some Story: A tale about... {29}">
+<node CREATED="1265988501967" ID="ID_1335473995" MODIFIED="1346320215248" TEXT="Some Story: A tale about... {29}">
 <icon BUILTIN="bookmark"/>
 <node CREATED="1265988549931" ID="ID_316971051" MODIFIED="1272014950967" TEXT="Dev {16}">
 <node CREATED="1265988588697" ID="ID_1496815280" MODIFIED="1272014945145" TEXT="buy Mindstorms set (5)">
@@ -50,6 +50,12 @@
 <icon BUILTIN="attach"/>
 </node>
 </node>
+<node CREATED="1346320215248" ID="ID_934553312" MODIFIED="1346320446862" TEXT="acceptance">
+<font BOLD="true" NAME="SansSerif" SIZE="12"/>
+<icon BUILTIN="list"/>
+<node CREATED="1346320420413" ID="ID_1595149272" MODIFIED="1346320428414" TEXT="Es"/>
+<node CREATED="1346320446863" ID="ID_1207021510" MODIFIED="1346320454217" TEXT="funktioniert!!"/>
+</node>
 </node>
 <node CREATED="1265988501967" ID="ID_1254971138" MODIFIED="1310648003853" TEXT="Some Story: A tale about 0.5 points {0.5}">
 <icon BUILTIN="bookmark"/>
@@ -70,10 +76,6 @@
 <node CREATED="1265988669068" ID="ID_1172579810" MODIFIED="1269504965482" TEXT="deploy to production">
 <icon BUILTIN="attach"/>
 </node>
-</node>
-<node CREATED="1314622139449" ID="ID_1349106394" MODIFIED="1317816243750" TEXT="acceptance">
-<font BOLD="true" NAME="SansSerif" SIZE="12"/>
-<icon BUILTIN="list"/>
 </node>
 </node>
 <node CREATED="1269505016971" ID="ID_474350437" MODIFIED="1287733202853" TEXT="Another Story (30)">

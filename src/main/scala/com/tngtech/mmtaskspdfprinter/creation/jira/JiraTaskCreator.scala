@@ -40,10 +40,17 @@ class JiraTaskCreator(val config: JiraConfiguration, val projectName: String,
     }
     story.copy(jiraKey = issueKey, tasks = tasksWithKeys)
   }
-
-  private def createIssue(story: Story) = 
-    soapClient.createIssue(story.name)
-
+  
+  private def createIssue(story: Story): String = {
+	if (!story.acceptanceCriteria.isEmpty){
+    		soapClient.createIssue(story.name, description = "acceptance criteria for " + story.name + ":\n"
+		  + story.acceptanceCriteria.map("- " + _).mkString("\n"))
+  	} else {
+    		soapClient.createIssue(story.name, description = "acceptance criteria for " + story.name + ":\n"
+		   + "None")
+  	}
+  }
+	
   private def createSubissue(parentId: String, story: Story, task: Task): String = {
     val category =
       if (task.category.isEmpty) ""
@@ -55,3 +62,4 @@ class JiraTaskCreator(val config: JiraConfiguration, val projectName: String,
         task.subtasks.map("- " + _.description).mkString("\n"))
   }
 }
+

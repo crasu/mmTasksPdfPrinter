@@ -5,7 +5,7 @@ version := "1.4"
 organization := "com.tngtech"
 
 // set the Scala version used for the project
-scalaVersion := "2.9.1"
+scalaVersion := "2.9.2"
 
 // set the main Scala source directory to be <base>/src
 //scalaSource in Compile <<= baseDirectory(_ / "src")
@@ -16,27 +16,30 @@ scalaVersion := "2.9.1"
 resolvers += "Web plugin repo" at "http://siasia.github.com/maven2"
 
 libraryDependencies ++= Seq(
-    "net.liftweb" %% "lift-mapper" % "2.4-M4" % "compile->default",
-	"commons-lang" % "commons-lang" % "2.4" % "compile->default",
-    "com.itextpdf" % "itextpdf" % "5.1.2" % "compile->default",
-    "org.mortbay.jetty" % "jetty" % "6.1.22" % "container->default",
-    "net.sf.jopt-simple" % "jopt-simple" % "4.1" % "compile->default" withSources,
-    "net.htmlparser.jericho" % "jericho-html" % "3.1" % "compile->default",
-    "commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default"
+  	"net.liftweb" % "lift-mapper_2.9.1" % "2.4-M4" % "compile->default",
+	"commons-lang" % "commons-lang" % "2.6" % "compile->default",
+	"com.itextpdf" % "itextpdf" % "5.3.2" % "compile->default",
+	"org.mortbay.jetty" % "jetty" % "6.1.26" % "container",
+  	"net.sf.jopt-simple" % "jopt-simple" % "4.3" % "compile->default" withSources,
+  	"net.htmlparser.jericho" % "jericho-html" % "3.2" % "compile->default",
+	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default"
 )
 
 libraryDependencies ++= Seq(
-    "junit" % "junit" % "4.5" % "test->default",
-    "org.scalatest" %% "scalatest" % "1.6.1" % "test->default",
-    "org.specs2" %% "specs2" % "1.6.1" % "test->default",
-    "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test->default",
-    "org.scala-tools.testing" %% "specs" % "1.6.9" % "test->default",
-    "org.mockito" % "mockito-core" % "1.8.4" % "test->default",
-    "org.hamcrest" % "hamcrest-library" % "1.2.1" % "test->default",
-    "com.novocode" % "junit-interface" % "0.7" % "test->default"
+  "junit" % "junit" % "4.10" % "test->default",
+  "org.scalatest" %% "scalatest" % "1.8" % "test->default",
+  "org.specs2" % "specs2_2.9.1" % "1.8.1" % "test->default",
+  "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test->default",
+  "org.scala-tools.testing" % "specs_2.9.1" % "1.6.9" % "test->default",
+  "org.mockito" % "mockito-core" % "1.9.0" % "test->default",
+  "org.hamcrest" % "hamcrest-library" % "1.3" % "test->default",
+  "com.novocode" % "junit-interface" % "0.8" % "test->default"
 )
 
 seq(com.github.siasia.WebPlugin.webSettings :_*)
+
+// auskommentiert, da bereits in den oberen libraryDependencies
+//libraryDependencies += "org.mortbay.jetty" % "jetty" % "6.1.26" % "container"
 
 // reduce the maximum number of errors shown by the Scala compiler
 maxErrors := 20

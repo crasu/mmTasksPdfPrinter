@@ -8,4 +8,4 @@ case x if (x.startsWith("0.12")) => "com.github.siasia" %% "xsbt-web-plugin" % "
 
 resolvers += Classpaths.typesafeResolver
 
-//addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse" % "1.5.0")
+addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse" % "2.1.0")

@@ -110,13 +110,14 @@ class JiraSoapMessages(host: String, user: String, password: String, client: Soa
     }
   }
   
-  def createIssue(summary: String): String = {
+  def createIssue(summary: String, description:String): String = {
     val req = 
         <soap:createIssue soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
       		<in0 xsi:type="xsd:string">{loginSettings.get.token}</in0>
     			<in1>
     				<project>{loginSettings.get.project}</project>
     				<summary>{summary}</summary>
+				<description>{description}</description>
     				<type>{loginSettings.get.issueTypeId}</type>
     			</in1>
     		</soap:createIssue>
