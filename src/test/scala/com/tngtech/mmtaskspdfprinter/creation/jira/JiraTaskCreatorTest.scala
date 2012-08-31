@@ -20,8 +20,8 @@ class JiraTaskCreatorTest extends Specification with Mockito {
     "call the right functions from the JIRA API and retrieve the JIRA keys" in {
       val soap = mock[JiraSoapMessages]
       val conf = mock[JiraConfiguration]
-      soap.createIssue(==("Story1")) returns "jiraStory1"
-      soap.createIssue(==("Story2")) returns "jiraStory2"
+      soap.createIssue(==("Story1"), anyString()) returns "jiraStory1"
+      soap.createIssue(==("Story2"), anyString()) returns "jiraStory2"
       soap.createSubissue(anyString(), ==("Task1-1"), anyString()) returns "jiraTask1-1"
       soap.createSubissue( anyString(), ==("Task2-1"), anyString()) returns "jiraTask2-1"
       soap.createSubissue(anyString(), ==("Task2-2"), anyString()) returns "jiraTask2-2"
@@ -41,7 +41,7 @@ class JiraTaskCreatorTest extends Specification with Mockito {
 	            Subtask("Subtask2-2-4"))))))
       val updatedSprint = jc.create(List(sprint))
 
-      there were two(soap).createIssue(anyString())
+      there were two(soap).createIssue(anyString(), anyString())
       there were three(soap).createSubissue(anyString(), anyString(), anyString())
       
       updatedSprint.head.stories.map(_.jiraKey) must_== List("jiraStory1", "jiraStory2")
