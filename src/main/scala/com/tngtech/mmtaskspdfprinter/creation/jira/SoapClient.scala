@@ -117,7 +117,7 @@ class JiraSoapMessages(host: String, user: String, password: String, client: Soa
                 <in1>
                     <project>{loginSettings.get.project}</project>
                     <summary>{summary}</summary>
-                <description>{description}</description>
+                    <description>{description}</description>
                     <type>{loginSettings.get.issueTypeId}</type>
                 </in1>
             </soap:createIssue>
