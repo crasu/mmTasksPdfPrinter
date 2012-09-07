@@ -3,8 +3,8 @@ mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind
 or Freeplane file. It is a Scala/Lift Servlet which parses a mm-file and creates
 a PDF with your Story and Task cards.
 
-= nähere Informationen =
-Nähere Informationen (bzgl. Software, Arbeitsweise ...) zum mmTasksPdfPrinter findet man im Confluence unter dem Stichwort 'Task Printer'.
+= more information =
+You can find more information about the task printer in the confluence.
 
 = Convention =
 The tool assumes that you've applied these rules on your Mind Map:

@@ -42,12 +42,11 @@ class JiraTaskCreator(val config: JiraConfiguration, val projectName: String,
   }
   
   private def createIssue(story: Story): String = {
+    val name = "acceptance criteria for " + story.name + ":\n" 
 	if (!story.acceptanceCriteria.isEmpty){
-    		soapClient.createIssue(story.name, description = "acceptance criteria for " + story.name + ":\n"
-		  + story.acceptanceCriteria.map("- " + _).mkString("\n"))
+    		soapClient.createIssue(story.name, description = name + story.acceptanceCriteria.map("- " + _).mkString("\n"))
   	} else {
-    		soapClient.createIssue(story.name, description = "acceptance criteria for " + story.name + ":\n"
-		   + "None")
+    		soapClient.createIssue(story.name, description = name + "None")
   	}
   }
 	

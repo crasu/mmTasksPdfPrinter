@@ -38,9 +38,6 @@ libraryDependencies ++= Seq(
 
 seq(com.github.siasia.WebPlugin.webSettings :_*)
 
-// auskommentiert, da bereits in den oberen libraryDependencies
-//libraryDependencies += "org.mortbay.jetty" % "jetty" % "6.1.26" % "container"
-
 // reduce the maximum number of errors shown by the Scala compiler
 maxErrors := 20
 
