@@ -1,3 +1,5 @@
+import AssemblyKeys._ 
+
 name := "mmTasksPdfPrinter"
 
 version := "1.4"
@@ -142,3 +144,4 @@ persistLogLevel := Level.Debug
 //   lib_managed/ in the build root (not per-project).
 retrieveManaged := true
 
+assemblySettings
