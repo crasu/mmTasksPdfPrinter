@@ -23,3 +23,5 @@ jiractl/node_modules/mongoose
 jiractl/node_modules/jst
 jiractl/node_modules/jiraconnector/node_modules/
 jiractl-local/lib/node_modules
+.cache
+.settings

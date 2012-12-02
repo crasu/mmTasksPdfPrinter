@@ -15,15 +15,17 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
   val validData = XML.loadString(MmParserTestData.validData)
   val invalidData = XML.loadString(MmParserTestData.invalidData)
+  
+  val parser = new MmParser()
 
   describe("MmParser sanity check") {
     val sanityCheck = PrivateMethod[Boolean]('sanityCheck)
     it("must detect valid data") {
-      val actForValid = MmParser invokePrivate sanityCheck(validData)
+      val actForValid = parser invokePrivate sanityCheck(validData)
       actForValid must be (true)
     }
     it("must detect invalid data") {
-      val actForInvalid = MmParser invokePrivate sanityCheck(invalidData)
+      val actForInvalid = parser invokePrivate sanityCheck(invalidData)
       actForInvalid must be (false)
     }
   }
@@ -33,7 +35,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
     val extractDescription = PrivateMethod[String]('extractDescription)
     val exp = "Sprint 2010-20 SomeMoreText"
     it("must remove things in brackets and whitespaces") {
-      val act = MmParser invokePrivate extractDescription(desc)
+      val act = parser invokePrivate extractDescription(desc)
       act must be (exp)
     }
   }
@@ -43,32 +45,32 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
     val descBrackets = <node TEXT="   Sprint 2010-20 (123 pts) SomeMoreText   " />
     it("must parse points in brackets") {
-      val act = MmParser invokePrivate extractScrumPoints(descBrackets)
+      val act = parser invokePrivate extractScrumPoints(descBrackets)
       act must be (123 pts)
     }
 
     val descCurely = <node TEXT="   Sprint 2010-20 { 7 pts} SomeMoreText   " />
 
     it("must parse points in curely brackets") {
-      val act = MmParser invokePrivate extractScrumPoints(descCurely)
+      val act = parser invokePrivate extractScrumPoints(descCurely)
       act must be (7 pts)
     }
     
     val descCurely05 = <node TEXT="   Sprint 2010-20 { 0.5 pts} SomeMoreText   " />
     it("must parse 0.5 points in curely brackets") {
-      val act = MmParser invokePrivate extractScrumPoints(descCurely05)
+      val act = parser invokePrivate extractScrumPoints(descCurely05)
       act must be (HalfScrumPoint)
     }
     
     val descCurely05Comma = <node TEXT="   Sprint 2010-20 { 0,5 pts} SomeMoreText   " />
     it("must parse 0,5 points in curely brackets") {
-      val act = MmParser invokePrivate extractScrumPoints(descCurely05Comma)
+      val act = parser invokePrivate extractScrumPoints(descCurely05Comma)
       act must be (HalfScrumPoint)
     }
 
     val descCombined = <node TEXT="   Sprint 2010-20 (123 pts) (5 beers) SomeMoreText   " />
     it("must parse points even if it is ambiguous") {
-      val act = MmParser invokePrivate extractScrumPoints(descCombined)
+      val act = parser invokePrivate extractScrumPoints(descCombined)
       act must be (5 pts)
     }
   }
@@ -90,7 +92,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       val exp = List(Subtask("write module mod1"),
         Subtask("write module mod2 part a"),
         Subtask("write module mod2 part b"))
-      val subtasks = MmParser.extractSubtasks(subtaskTree)
+      val subtasks = parser.extractSubtasks(subtaskTree)
       subtasks.toList must be(exp)
     }
     it("must parse all tasks of a story") {
@@ -110,7 +112,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       val exp = List(Subtask("write module mod1"),
         Subtask("write module mod2 part a"),
         Subtask("write module mod2 part b"))
-      val subtasks = MmParser.extractSubtasks(subtaskTree)
+      val subtasks = parser.extractSubtasks(subtaskTree)
       subtasks.toList must be(exp)
     }
     
@@ -144,7 +146,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         Task("bar \"foobar\"", ""),
         Task("foo2", "cat"),
         Task("foo3", "cat1 cat2"))
-      val act = MmParser.extractTasksFromStory(story)
+      val act = parser.extractTasksFromStory(story)
       act must be(exp)
     }
 
@@ -166,7 +168,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
         Sprint("Product Backlog"),
         Sprint("Backlog"),
         Sprint("backlog"))
-      val act = MmParser.traverseBacklogs(root)
+      val act = parser.traverseBacklogs(root)
       act.toList must be(exp)
     }
     
@@ -197,7 +199,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
 
       val exp = List(Sprint("Sprint 2010-20",
         Story("csasd 2412432", priority = 1 st)))
-      val act = MmParser.parse(root)
+      val act = parser.parse(root)
       act.toList must equal(exp)
     }
     
@@ -224,7 +226,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
             Story("a", 5 pts, priority = 1 st),
             Story("b", 3 pts, priority = 2 nd),
             Story("c", priority = 3 th, acceptanceCriteria = List("abc")))
-        MmParser.extractStoriesFromSprint(xml) must be (exp)
+        parser.extractStoriesFromSprint(xml) must be (exp)
     }
     
     it("must find acceptance criteria") {
@@ -248,11 +250,11 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
           </node>
         </node>
         val exp = List("a1a", "a1b", "a2")
-        MmParser.extractAcceptanceCriteria(xml) must be (exp)
+        parser.extractAcceptanceCriteria(xml) must be (exp)
     }
   }
 
-  describe("MmParser") {
+  describe("parser") {
     val exp = List(
       Sprint("Sprint 2010-20", List( 
         Story("asdf", priority = 1 st, 
@@ -298,7 +300,7 @@ class MmParserTest extends Spec with MustMatchers with PrivateMethodTester {
       ))
     )
     it("must parse a xml file to an internal data structure") {
-      val act = MmParser.parse(validData)
+      val act = parser.parse(validData)
       for {(b1,b2) <- act zip exp} {
         b1.name must be (b2.name)
         b1.stories.size must be (b2.stories.size)

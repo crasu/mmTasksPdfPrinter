@@ -23,6 +23,12 @@ class UnitsOfWorkTest extends Spec with MustMatchers {
       t.subtasks must be (exp)
     }
   }
+  
+  describe("The TaskIdGenerator") {
+    it("must generate the hashcode") {
+      TaskIdGenerator.generate("plaintext") must be ("GNDEW")
+    }
+  }
 
   describe("A story") {
      val s = 

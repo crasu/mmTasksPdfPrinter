@@ -30,6 +30,7 @@ class PdfConfiguration extends CentralConfiguration {
   }
 
   def generateQrCodes() = (!jiraControlUrl.equals("") && (jiraControlProjectId != 0))
+  val autoGenerateCommitKey =  properties.getProperty("AutoGenerateCommitKey", "false").toBoolean
 
   val companyLogo =  {
     val img = fetch_logo()

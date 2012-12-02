@@ -42,7 +42,7 @@ object Main {
 
     val options = parser.parse(args: _*);
 
-    val sprints = MmParser.parse(XML.loadFile(fileOpt.value(options)))
+    val sprints = (new MmParser).parse(XML.loadFile(fileOpt.value(options)))
     if (options.has("list")) {
       sprints map (_.name) foreach println
     } else {

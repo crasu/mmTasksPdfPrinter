@@ -1,12 +1,12 @@
 package com.tngtech.mmtaskspdfprinter.parsing
 
 import com.tngtech.mmtaskspdfprinter.scrum._
-
 import org.apache.commons.lang.StringEscapeUtils
 import scala.xml._
 import net.htmlparser.jericho._
+import com.tngtech.mmtaskspdfprinter.creation.pdf.config.PdfConfiguration
 
-object MmParser {
+class MmParser(val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
   private val storyAnnotation = "bookmark"
   private val taskAnnotation = "attach"
   private val backlogPattern = """(?i)\s*(.*Sprint.*|.*Backlog.*)\s*""".r
@@ -55,7 +55,9 @@ object MmParser {
         val desc = extractDescription(node)
         val subtasks = extractSubtasks(node)
         val cat = categories.reverse mkString " "
-        Seq(Task(desc, cat, subtasks))
+       
+        val key = if(config.autoGenerateCommitKey) TaskIdGenerator.generate(desc) else ""
+        Seq(Task(desc, cat, subtasks, key))
       } else {
         val cat = extractDescription(node) :: categories
         node \ "node" flatMap (loop(_, cat))

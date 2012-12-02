@@ -27,7 +27,7 @@ trait Selection {
   private def askForSprint(xhtml: Group): NodeSeq = try {
     val file = uploadContainer.is.open_!.file
     val xml = XML.loadString(new String(file, "UTF-8"))
-    val backlogs = MmParser.parse(xml).toList
+    val backlogs = (new MmParser).parse(xml).toList
     bind("storySelection", chooseTemplate("choose", "selection", xhtml),
       "story" -> createStorySelectBox(backlogs))
   } catch {

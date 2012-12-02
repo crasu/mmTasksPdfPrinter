@@ -8,8 +8,7 @@ import com.tngtech.mmtaskspdfprinter.scrum._
 import com.tngtech.mmtaskspdfprinter.creation.pdf.config._
 import java.io.ByteArrayOutputStream
 
-class PdfPrinter(
-  val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
+class PdfPrinter(val config: PdfConfiguration = PdfConfiguration.defaultConfig) {
 
   def create(backlogs: List[Sprint], out: OutputStream): Unit = {
     val doc = {

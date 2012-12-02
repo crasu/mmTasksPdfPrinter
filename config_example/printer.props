@@ -29,3 +29,5 @@ jira.user=testuser
 # admin interface ('Issue Types') should they change
 jira.issuetypename=Task
 jira.subissuetypename=Sub-task
+
+AutoGenerateCommitKey=true
