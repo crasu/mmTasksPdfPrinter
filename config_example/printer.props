@@ -30,4 +30,4 @@ jira.user=testuser
 jira.issuetypename=Task
 jira.subissuetypename=Sub-task
 
-AutoGenerateCommitKey=true
+AutoGenerateCommitKey=false

@@ -58,6 +58,10 @@ object Main {
         sprints2.head
       }
       val printer = new PdfPrinter()
+      
+      if (!options.has("pdf"))
+        failWithHelp("Argument --pdf missing")
+        
       printer.create(List(sprint), new FileOutputStream(pdfOpt.value(options)))
     }
   }
