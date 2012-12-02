@@ -96,9 +96,9 @@ class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
     val storyCell = {
       val storyPhrase = new Phrase()
       storyPhrase.add(new Chunk("\n" + story.name, config.size.hugeFont))
-      storyPhrase.add(new Chunk("\n\n\n" + story.jiraKey + "\n", config.size.bigFont))
-      if (!story.jiraKey.equals("") && config.generateQrCodes()) {
-        storyPhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, story.jiraKey), config.size.storyQrCodeRenderingInfo))}
+      storyPhrase.add(new Chunk("\n\n\n" + story.key + "\n", config.size.bigFont))
+      if (!story.key.equals("") && config.generateQrCodes()) {
+        storyPhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, story.key), config.size.storyQrCodeRenderingInfo))}
 
       val storyCell = new PdfPCell(storyPhrase)
       storyCell.setBorder(Rectangle.NO_BORDER)

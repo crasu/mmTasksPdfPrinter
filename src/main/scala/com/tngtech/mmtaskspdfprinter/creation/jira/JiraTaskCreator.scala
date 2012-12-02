@@ -36,9 +36,9 @@ class JiraTaskCreator(val config: JiraConfiguration, val projectName: String,
     val issueKey = createIssue(story)
     val tasksWithKeys = for (task <- story.tasks) yield {
       val subissueKey = createSubissue(issueKey, story, task)
-      task.copy(jiraKey = subissueKey) 
+      task.copy(key = subissueKey) 
     }
-    story.copy(jiraKey = issueKey, tasks = tasksWithKeys)
+    story.copy(key = issueKey, tasks = tasksWithKeys)
   }
   
   private def createIssue(story: Story): String = {

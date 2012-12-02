@@ -44,9 +44,9 @@ class JiraTaskCreatorTest extends Specification with Mockito {
       there were two(soap).createIssue(anyString(), anyString())
       there were three(soap).createSubissue(anyString(), anyString(), anyString())
       
-      updatedSprint.head.stories.map(_.jiraKey) must_== List("jiraStory1", "jiraStory2")
+      updatedSprint.head.stories.map(_.key) must_== List("jiraStory1", "jiraStory2")
       val updatedTasks = for(sprint <- updatedSprint; story <- sprint.stories; task <- story.tasks) yield task
-      updatedTasks.map(_.jiraKey) must_== List("jiraTask1-1", "jiraTask2-1", "jiraTask2-2")
+      updatedTasks.map(_.key) must_== List("jiraTask1-1", "jiraTask2-1", "jiraTask2-2")
     }
   }
 }

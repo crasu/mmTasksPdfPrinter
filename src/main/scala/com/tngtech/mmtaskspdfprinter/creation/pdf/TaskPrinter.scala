@@ -72,22 +72,22 @@ private class TaskPrinter(contentSize: Rectangle, config: PdfConfiguration) {
     val logoAndQrCodePhrase = {
       val logoAndQrCodePhrase = new Phrase(config.size.leading)
       logoAndQrCodePhrase.add(new Chunk(config.companyLogo, 0, 0))
-      if (!task.jiraKey.equals("")) {
+      if (!task.key.equals("")) {
         var taskKey = ""
         if(!config.jiraControlUrl.equals("")) {
-          logoAndQrCodePhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, task.jiraKey), config.size.tasksQrCodeRenderingInfo))
+          logoAndQrCodePhrase.add(JiraControlQrLinkEncoder.getQrCodeAsChunkFromString(JiraControlQrLinkEncoder.getJiraControlUrl(config.jiraControlUrl, config.jiraControlProjectId, task.key), config.size.tasksQrCodeRenderingInfo))
         } else {
           taskKey += "  "
         }
         if(config.size.hideTasksProjectKey) {
-          val taskId = JiraControlQrLinkEncoder.extractJiraTaskId(task.jiraKey)
+          val taskId = JiraControlQrLinkEncoder.extractJiraTaskId(task.key)
           if(taskId.length < 5) {
             taskKey += "#" + taskId
           } else {
             taskKey += taskId
           }
         } else {
-          taskKey += task.jiraKey
+          taskKey += task.key
         }
         logoAndQrCodePhrase.add(new Chunk(taskKey, config.size.bigFont))
       }

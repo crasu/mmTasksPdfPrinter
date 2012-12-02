@@ -1,7 +1,7 @@
 package com.tngtech.mmtaskspdfprinter.scrum
 
 object Dsl {
-	implicit def intToPoints(n: Int) = new PointBuilder(n)
+  implicit def intToPoints(n: Int) = new PointBuilder(n)
   implicit def intToPriority(n: Int) = new PrioBuilder(n)
   
   final class PointBuilder(n: Int) {

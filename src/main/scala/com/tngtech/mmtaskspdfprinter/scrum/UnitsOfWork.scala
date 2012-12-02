@@ -1,6 +1,6 @@
 package com.tngtech.mmtaskspdfprinter.scrum
 
-sealed trait ScrumPoints {
+trait ScrumPoints {
   def toString(default: String): String
 }
 
@@ -27,11 +27,11 @@ case class Story(name: String,
 	  priority: Option[Int] = None,
 	  tasks: List[Task] = Nil,
 	  acceptanceCriteria: Seq[String] = Nil,
-	  jiraKey: String = "")
+	  key: String = "")
 
 case class Task(description: String,
 	  category: String,
 	  subtasks: List[Subtask] = Nil,
-	  jiraKey: String = "")
+	  key: String = "")
   
-case class Subtask(description: String, jiraKey: String = "")
+case class Subtask(description: String, key: String = "")
