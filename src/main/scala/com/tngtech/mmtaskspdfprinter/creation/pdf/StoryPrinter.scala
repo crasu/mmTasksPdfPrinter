@@ -19,7 +19,7 @@ class StoryPrinter(val contentSize: Rectangle, val config: PdfConfiguration) {
 
     val emptyCell = createStoryCard(Story("", UndefScrumPoints, None, List()))
 
-    val pages = (l1 ++ l2) grouped 2 map { cells =>
+    val pages = (l1 ++ l2) grouped rowSize map { cells =>
       val page = new PdfPTable(1)
       page.setWidthPercentage(100.0f)
       for (c <- cells)
