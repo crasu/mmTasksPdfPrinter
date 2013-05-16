@@ -1,3 +1,5 @@
+# DbFit [![Build Status](https://travis-ci.org/crasu/mmTasksPdfPrinter.png?branch=master)](https://travis-ci.org/crasu/mmTasksPdfPrinter)
+
 # Introduction 
 mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind
 or Freeplane file. It is a Scala/Lift Servlet which parses a mm-file and creates
