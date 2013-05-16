@@ -1,4 +1,4 @@
-# DbFit [![Build Status](https://travis-ci.org/crasu/mmTasksPdfPrinter.png?branch=master)](https://travis-ci.org/crasu/mmTasksPdfPrinter)
+# mmTasksPdfPrinter [![Build Status](https://travis-ci.org/crasu/mmTasksPdfPrinter.png?branch=master)](https://travis-ci.org/crasu/mmTasksPdfPrinter)
 
 # Introduction 
 mmTasksPdfPrinter helps you to print your Story and Task cards out of a Freemind
