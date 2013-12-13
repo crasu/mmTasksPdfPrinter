@@ -12,10 +12,11 @@ scalaVersion := "2.9.2"
 resolvers += "Web plugin repo" at "http://siasia.github.com/maven2"
 
 libraryDependencies ++= Seq(
-  	"net.liftweb" % "lift-mapper_2.9.1" % "2.4-M4" % "compile->default",
+  	"net.liftweb" % "lift-mapper_2.9.2" % "2.5-M1" % "compile->default",
 	"commons-lang" % "commons-lang" % "2.6" % "compile->default",
 	"com.itextpdf" % "itextpdf" % "5.3.2" % "compile->default",
-	"org.mortbay.jetty" % "jetty" % "6.1.26" % "container",
+    "org.eclipse.jetty" % "jetty-webapp" % "9.1.0.v20131115" % "container",
+    "org.eclipse.jetty" % "jetty-plus"   % "9.1.0.v20131115" % "container",
   	"net.sf.jopt-simple" % "jopt-simple" % "4.3" % "compile->default" withSources,
   	"net.htmlparser.jericho" % "jericho-html" % "3.2" % "compile->default",
 	"commons-httpclient" % "commons-httpclient" % "3.1" % "compile->default"
@@ -24,7 +25,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "junit" % "junit" % "4.10" % "test->default",
   "org.scalatest" %% "scalatest" % "1.8" % "test->default",
-  "org.specs2" % "specs2_2.9.1" % "1.8.1" % "test->default",
+  "org.specs2" % "specs2_2.9.2" % "1.12.4.1" % "test->default",
   "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test->default",
   "org.scala-tools.testing" % "specs_2.9.1" % "1.6.9" % "test->default",
   "org.mockito" % "mockito-core" % "1.9.0" % "test->default",
@@ -32,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.novocode" % "junit-interface" % "0.8" % "test->default"
 )
 
-seq(com.github.siasia.WebPlugin.webSettings :_*)
+seq(webSettings :_*)
 
 // reduce the maximum number of errors shown by the Scala compiler
 maxErrors := 20
