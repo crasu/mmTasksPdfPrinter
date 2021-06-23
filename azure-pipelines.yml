@@ -1,4 +1,5 @@
 # Starter pipeline
+
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
@@ -13,3 +14,7 @@ steps:
 - task: setup-sbt@1
   inputs:
     sbtVersion: '1.4.9'
+  
+- task: CmdLine@2
+  inputs:
+    script: 'sbt clean compile'
